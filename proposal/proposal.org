@@ -19,6 +19,8 @@ always fully evaluates all the expressions given as parameters, a lazy language
 only evaluates expressions when needed. This means that lazy languages can make
 use of infinite data structures and potentially non-terminating function calls.
 
+This project aims to create a compiler that translates code from a lazy language
+to a strict language in order to formalize the connection between the two.
 
 * Related Courses
 + Programming Language Technology
