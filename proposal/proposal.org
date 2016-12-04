@@ -1,0 +1,36 @@
+#+AUTHOR:Philip Tham
+#+TITLE:A Lazy to Strict Language Compiler (Tentative)
+#+OPTIONS: toc:nil
+
+\newpage
+
+* Introduction
++ Lazy language
++ Strict language
++ Compiler to translate code from lazy to strict
++ What can potential problems be?
++ Will this work?
++ Use QuickCheck/Operational Semantics to prove correctness
+
+
+The main difference between lazy and strict programming languages is the steps
+of evaluation that their respective compilers take. While a strict language
+always fully evaluates all the expressions given as parameters, a lazy language
+only evaluates expressions when needed. This means that lazy languages can make
+use of infinite data structures and potentially non-terminating function calls.
+
+
+* Related Courses
++ Programming Language Technology
++ Compiler Construction
++ Models of Computation
++ Introduction to Functional Programming (?)
++ Advanced Functional Programming (?)
+
+
+* Literature List
+Books:
++ http://dragonbook.stanford.edu/
++ https://www.elsevier.com/books/engineering-a-compiler/cooper/978-0-12-088478-0
++ http://research.microsoft.com/en-us/um/people/simonpj/Papers/pj-lester-book/
++ http://www1.digitalgrammars.com/ipl-book/
