@@ -9,8 +9,11 @@
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
 always fully evaluates all the expressions given as parameters, a lazy language
-only evaluates expressions when needed. This means that lazy languages can make
-use of infinite data structures and potentially non-terminating function calls.
+only evaluates expressions when needed. For example, evaluating a logical and
+in a lazy language would terminate the function call once a false has been
+found, even if the expression contains an infinite chain of function calls.
+Evaluation this infinite expression in a strict language would cause an
+non-terminating loop.
 
 This project aims to create a compiler that takes code from a lazy programming
 language and compiles it in to a strict programming language in order to 
@@ -41,28 +44,27 @@ for correctness by using the Haskell library QuickCheck.
 
 
 * Related Courses
-** Programming Language Technology (PLT) and Compiler Construction
-The courses PLT and Compiler Construction are basically the cornerstones of this
-project, as it is about creating a compiler that connects two different types of
-programming languages.
+** Programming Language Technology and Compiler Construction
+The courses Programming Language Technology and Compiler Construction are
+basically the cornerstones of this project, as it is about creating a compiler
+that connects two different types of programming languages.
 
 ** Models of Computation
 Models of Computation discusses different computation models. This includes
 programming language of both lazy and strict evaluation processes. For example,
 there is the minimalistic (and theoretical) programming language /X/ (Chi) that
-models lambda calculus. The language includes /weak head normal form/ (lazy 
+models lambda calculus. The language includes weak head normal form (lazy 
 evaluation of certain expressions) and full (strict) evaluation.
 
-** Introduction to Functional Programming and Advanced Functional Programming (?)
+** Introduction to Functional Programming and Advanced Functional Programming
 As this project will be utilizing functional languages (and most likely
 programmed in Haskell), these are necessary courses. It is quite possible that
-the compilers one has created in PLT and Compiler Construction were written in
-Haskell. In such case, these courses may be implied to have been already
-completed.
+the compilers one has created in Programming Language Technology and Compiler
+Construction were written in Haskell. However, as there is no requirement on
+functional programming, they should be included here.
 
 
 * Literature List
-Books:
 + http://dragonbook.stanford.edu/
 + https://www.elsevier.com/books/engineering-a-compiler/cooper/978-0-12-088478-0
 + http://research.microsoft.com/en-us/um/people/simonpj/Papers/pj-lester-book/
