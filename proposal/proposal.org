@@ -5,13 +5,6 @@
 \newpage
 
 * Introduction
-+ Lazy language
-+ Strict language
-+ Compiler to translate code from lazy to strict
-+ What can potential problems be?
-+ Will this work?
-+ Use QuickCheck/Operational Semantics to prove correctness
-
 
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
@@ -19,15 +12,53 @@ always fully evaluates all the expressions given as parameters, a lazy language
 only evaluates expressions when needed. This means that lazy languages can make
 use of infinite data structures and potentially non-terminating function calls.
 
-This project aims to create a compiler that translates code from a lazy language
-to a strict language in order to formalize the connection between the two.
+This project aims to create a compiler that takes code from a lazy programming
+language and compiles it in to a strict programming language in order to 
+formalize the connection between the two. This compiler will be written in
+the programming language Haskell. 
+*The source and destination languages will be left open for discussion for now.*
+
+\noindent
+Possible lazy source languages:
++ CakeML
++ Haskell
+
+\noindent
+Possible strict destination languages:
++ C#
++ Python
+
+It is necessary to show that the compiler correctly expresses laziness in the
+strict language. Operational semantics will be used to prove that the steps of
+evaluation are correct. If time allows for it, the compiler will also be tested
+for correctness by using the Haskell library QuickCheck.
+
+
+* Limitations of the Project
+
++ GHC version?
++ Might not support all types of operations depending on time
+
 
 * Related Courses
-+ Programming Language Technology
-+ Compiler Construction
-+ Models of Computation
-+ Introduction to Functional Programming (?)
-+ Advanced Functional Programming (?)
+** Programming Language Technology (PLT) and Compiler Construction
+The courses PLT and Compiler Construction are basically the cornerstones of this
+project, as it is about creating a compiler that connects two different types of
+programming languages.
+
+** Models of Computation
+Models of Computation discusses different computation models. This includes
+programming language of both lazy and strict evaluation processes. For example,
+there is the minimalistic (and theoretical) programming language /X/ (Chi) that
+models lambda calculus. The language includes /weak head normal form/ (lazy 
+evaluation of certain expressions) and full (strict) evaluation.
+
+** Introduction to Functional Programming and Advanced Functional Programming (?)
+As this project will be utilizing functional languages (and most likely
+programmed in Haskell), these are necessary courses. It is quite possible that
+the compilers one has created in PLT and Compiler Construction were written in
+Haskell. In such case, these courses may be implied to have been already
+completed.
 
 
 * Literature List
