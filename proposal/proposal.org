@@ -12,14 +12,14 @@ always fully evaluates all the expressions given as parameters, a lazy language
 only evaluates expressions when needed. For example, evaluating a logical and
 in a lazy language would terminate the function call once a false has been
 found, even if the expression contains an infinite chain of function calls.
-Evaluation this infinite expression in a strict language would cause an
+Evaluating this infinite expression in a strict language would cause an
 non-terminating loop.
 
 This project aims to create a compiler that takes code from a lazy programming
 language and compiles it in to a strict programming language in order to 
 formalize the connection between the two. This compiler will be written in
 the programming language Haskell. 
-*The source and destination languages will be left open for discussion for now.*
+*The source and target languages will be left open for discussion for now.*
 
 \noindent
 Possible lazy source languages:
@@ -27,7 +27,7 @@ Possible lazy source languages:
 + Haskell
 
 \noindent
-Possible strict destination languages:
+Possible strict target languages:
 + C#
 + Python
 
