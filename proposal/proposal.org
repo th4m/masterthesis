@@ -12,7 +12,7 @@ always fully evaluates all the expressions given as parameters, a lazy language
 only evaluates expressions when needed. For example, evaluating a logical and
 in a lazy language would terminate the function call once a false has been
 found, even if the expression contains an infinite chain of function calls.
-Evaluating this infinite expression in a strict language would cause an
+Evaluating this infinite expression in a strict language would cause a
 non-terminating loop.
 
 This project aims to create a compiler that takes code from a lazy programming
@@ -20,7 +20,7 @@ language and compiles it into a strict programming language in order to
 formalize the connection between the two. The compiler will be written in
 the programming language Haskell. The source language that the compiler takes
 as input will be Haskell, a lazy functional language, and the target language
-that the compiler will output to will be CakeML, a strict functional language
+to which the compiler will output will be CakeML, a strict functional language
 based on a subset of Standard ML.
 
 To show that the compiler performs correctly, this project will employ the
@@ -45,13 +45,13 @@ will be considered:
 
 * Related Courses
 There are a number of courses in Chalmers that are interesting from this
-project's perpective.
+project's perspective.
 
 ** Programming Language Technology and Compiler Construction
 The courses Programming Language Technology and Compiler Construction are
 basically the cornerstones of this project, as it is about creating a compiler
 that connects two different types of programming languages. Programming
-Language Technology is the course that introduces the concept of compilers
+Language Technology is the course that introduces the concept of compilers,
 and Compiler Construction allows students to create a compiler as a project.
 Both courses also encourage writing compilers in Haskell.
 
