@@ -1,6 +1,8 @@
 #+AUTHOR:Philip Tham
 #+TITLE:A Lazy to Strict Language Compiler (Tentative)
 #+OPTIONS: toc:nil
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage{fontenc}
 
 \newpage
 
@@ -16,12 +18,13 @@ Evaluating this infinite expression in a strict language would cause a
 non-terminating loop.
 
 This project aims to create a compiler that takes code from a lazy programming
-language and compiles it into a strict programming language in order to
-formalize the connection between the two. The compiler will be written in
-the programming language Haskell. The source language that the compiler takes
-as input will be Haskell, a lazy functional language, and the target language
-to which the compiler will output will be CakeML, a strict functional language
-based on a subset of Standard ML.
+language and compiles it into a strict programming language. The purpose of
+creating such a compiler is to show a formal connection between lazy and 
+strict evaluation. The compiler will be written in the programming language
+Haskell. The source language that the compiler takes as input will be Haskell,
+a lazy functional language, and the target language to which the compiler will
+output will be CakeML, a strict functional language based on a subset of
+Standard ML.
 
 To show that the compiler performs correctly, this project will employ the
 automated testing library QuickCheck for Haskell. QuickCheck generates random
@@ -44,7 +47,7 @@ will be considered:
 
 
 * Related Courses
-There are a number of courses in Chalmers that are interesting from this
+There are a number of courses at Chalmers that are interesting from this
 project's perspective.
 
 ** Programming Language Technology and Compiler Construction
@@ -65,7 +68,7 @@ evaluation of certain expressions) and full (strict) evaluation.
 ** Introduction to Functional Programming and Advanced Functional Programming
 As the languages used in this project are of the functional programming
 paradigm, these two courses are essential. The primary programming language 
-taught in the two courses on functional programming in Chalmers is Haskell.
+taught in the two courses on functional programming at Chalmers is Haskell.
 The courses go through several basic to advanced techniques of Haskell,
 and also have students write small-scale projects in the language.
 
