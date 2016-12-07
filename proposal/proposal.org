@@ -4,7 +4,7 @@
 
 \newpage
 
-* Introduction
+* Introduction and Project Description
 
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
@@ -16,38 +16,44 @@ Evaluating this infinite expression in a strict language would cause an
 non-terminating loop.
 
 This project aims to create a compiler that takes code from a lazy programming
-language and compiles it in to a strict programming language in order to 
-formalize the connection between the two. This compiler will be written in
-the programming language Haskell. 
-*The source and target languages will be left open for discussion for now.*
+language and compiles it into a strict programming language in order to
+formalize the connection between the two. The compiler will be written in
+the programming language Haskell. The source language that the compiler takes
+as input will be Haskell, a lazy functional language, and the target language
+that the compiler will output to will be CakeML, a strict functional language
+based on a subset of Standard ML.
 
-\noindent
-Possible lazy source languages:
-+ CakeML
-+ Haskell
+To show that the compiler performs correctly, this project will employ the
+automated testing library QuickCheck for Haskell. QuickCheck generates random
+test data according to the provided specification and uses them to test
+properties. This means that it is possible to write the operational semantics
+of the language as functions in Haskell and test them with QuickCheck.
 
-\noindent
-Possible strict target languages:
-+ C#
-+ Python
-
-It is necessary to show that the compiler correctly expresses laziness in the
-strict language. Operational semantics will be used to prove that the steps of
-evaluation are correct. If time allows for it, the compiler will also be tested
-for correctness by using the Haskell library QuickCheck.
+In summary, the project will be done in two major steps:
++ Create a compiler that translates code from the lazy programming language Haskell to the strict functional language CakeML
++ Test the compiler by using QuickCheck
 
 
 * Limitations of the Project
 
-+ GHC version?
-+ Might not support all types of operations depending on time
+In order to keep the project within a reasonable scale, certain limitations
+will be considered:
+
++ This project will only be using the core language of Haskell. Using all of the programming language would make the scale of the project too large, making it impossible to finish within the given time.
++ The GHC version of this project will be 8.0.1, as it is the latest stable version at the time of writing.
 
 
 * Related Courses
+There are a number of courses in Chalmers that are interesting from this
+project's perpective.
+
 ** Programming Language Technology and Compiler Construction
 The courses Programming Language Technology and Compiler Construction are
 basically the cornerstones of this project, as it is about creating a compiler
-that connects two different types of programming languages.
+that connects two different types of programming languages. Programming
+Language Technology is the course that introduces the concept of compilers
+and Compiler Construction allows students to create a compiler as a project.
+Both courses also encourage writing compilers in Haskell.
 
 ** Models of Computation
 Models of Computation discusses different computation models. This includes
@@ -57,11 +63,12 @@ models lambda calculus. The language includes weak head normal form (lazy
 evaluation of certain expressions) and full (strict) evaluation.
 
 ** Introduction to Functional Programming and Advanced Functional Programming
-As this project will be utilizing functional languages (and most likely
-programmed in Haskell), these are necessary courses. It is quite possible that
-the compilers one has created in Programming Language Technology and Compiler
-Construction were written in Haskell. However, as there is no requirement on
-functional programming, they should be included here.
+As the languages used in this project are of the functional programming
+paradigm, these two courses are essential. The primary programming language 
+taught in the two courses on functional programming in Chalmers is Haskell.
+The courses go through several basic to advanced techniques of Haskell,
+and also have students write small-scale projects in the language.
+
 
 
 * Literature List
