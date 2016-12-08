@@ -34,7 +34,7 @@ of the language as functions in Haskell and test them with QuickCheck.
 
 In summary, the project will be done in two major steps:
 + Create a compiler that translates code from the lazy programming language Haskell to the strict functional language CakeML
-+ Test the compiler by using QuickCheck
++ Test the compiler by writing operational semantics in the form of functions and running them with QuickCheck
 
 
 * Limitations of the Project
@@ -61,9 +61,9 @@ Both courses also encourage writing compilers in Haskell.
 ** Models of Computation
 Models of Computation discusses different computation models. This includes
 programming language of both lazy and strict evaluation processes. For example,
-there is the minimalistic (and theoretical) programming language /X/ (Chi) that
-models lambda calculus. The language includes weak head normal form (lazy 
-evaluation of certain expressions) and full (strict) evaluation.
+there is the minimalistic (and theoretical) programming language /X/ (Greek 
+letter Chi) that models lambda calculus. The language includes weak head normal
+form (lazy evaluation of certain expressions) and full (strict) evaluation.
 
 ** Introduction to Functional Programming and Advanced Functional Programming
 As the languages used in this project are of the functional programming
