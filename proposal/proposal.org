@@ -11,8 +11,8 @@
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
 always fully evaluates all the expressions given as parameters, a lazy language
-only evaluates expressions when needed. For example, evaluating a logical and
-in a lazy language would terminate the function call once a false has been
+only evaluates expressions when needed. For example, evaluating a logical conjunction
+in a lazy language would terminate the function call once a \texttt{false} has been
 found, even if the expression contains an infinite chain of function calls.
 Evaluating this infinite expression in a strict language would cause a
 non-terminating loop.
