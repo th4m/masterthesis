@@ -11,26 +11,30 @@
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
 always fully evaluates all the expressions given as parameters, a lazy language
-only evaluates expressions when needed. For example, evaluating a logical conjunction
-in a lazy language would terminate the function call once a \texttt{false} has been
-found, even if the expression contains an infinite chain of function calls.
-Evaluating this infinite expression in a strict language would cause a
-non-terminating loop.
+only evaluates expressions when needed. For example, it is possible to express
+infinite data structures, such as lists, in a lazy language. Using these
+infinite data structures would not cause non-termination, as long as the
+program is not trying to access all of its elements. In Haskell, a lazy
+functional language, it is possible to write \texttt{take 5 [1..]} and get the
+result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
+an expression of an infinite list. This is because the list is not generated
+until it is needed, and only the necessary amount is generated.
 
 This project aims to create a compiler that takes code from a lazy programming
-language and compiles it into a strict programming language. The purpose of
-creating such a compiler is to show a formal connection between lazy and 
-strict evaluation. The compiler will be written in the programming language
-Haskell. The source language that the compiler takes as input will be Haskell,
-a lazy functional language, and the target language to which the compiler will
+language and compiles it into a strict programming language. The resulting
+strict code should have the same semantic evaluation as the given lazy code. 
+The purpose of creating such a compiler is to show a formal connection between
+lazy and strict evaluation. The compiler will be written in the programming
+language Haskell. The source language that the compiler takes as input will be
+Haskell and the target language to which the compiler will
 output will be CakeML, a strict functional language based on a subset of
 Standard ML.
 
-To show that the compiler performs correctly, this project will employ the
-automated testing library QuickCheck for Haskell. QuickCheck generates random
-test data according to the provided specification and uses them to test
-properties. This means that it is possible to write the operational semantics
-of the language as functions in Haskell and test them with QuickCheck.
+To show that the compiler generates semantically equivalent code, this project
+will employ the automated testing library QuickCheck for Haskell. QuickCheck
+generates random test data according to the provided specification and uses them
+to test properties. This means that it is possible to write the operational
+semantics of the language as functions in Haskell and test them with QuickCheck.
 
 In summary, the project will be done in two major steps:
 + Create a compiler that translates code from the lazy programming language Haskell to the strict functional language CakeML
@@ -47,7 +51,7 @@ will be considered:
 
 
 * Related Courses
-There are a number of courses at Chalmers that are interesting from this
+There are a number of courses at Chalmers that are relevant from this
 project's perspective.
 
 ** Programming Language Technology and Compiler Construction
@@ -60,7 +64,7 @@ Both courses also encourage writing compilers in Haskell.
 
 ** Models of Computation
 Models of Computation discusses different computation models. This includes
-programming language of both lazy and strict evaluation processes. For example,
+programming languages of both lazy and strict evaluation processes. For example,
 there is the minimalistic (and theoretical) programming language /X/ (Greek 
 letter Chi) that models lambda calculus. The language includes weak head normal
 form (lazy evaluation of certain expressions) and full (strict) evaluation.
