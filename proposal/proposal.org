@@ -1,5 +1,5 @@
 #+AUTHOR:Philip Tham
-#+TITLE:A Lazy to Strict Language Compiler (Tentative)
+#+TITLE:A Lazy to Strict Language Compiler
 #+OPTIONS: toc:nil
 #+LATEX_CLASS: article
 #+LATEX_HEADER: \usepackage{fontenc}
