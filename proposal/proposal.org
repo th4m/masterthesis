@@ -30,6 +30,12 @@ Haskell and the target language to which the compiler will
 output will be CakeML, a strict functional language based on a subset of
 Standard ML.
 
+The necessary operational semantics of Haskell will be written as a part of the
+project. As the semantics of CakeML is specified in higher-order logic (HOL),
+the operational semantics for CakeML will be translated from HOL to Haskell
+functions. The semantics of the two languages will then be connected in the
+compiler.
+
 To show that the compiler generates semantically equivalent code, this project
 will employ the automated testing library QuickCheck for Haskell. QuickCheck
 generates random test data according to the provided specification and uses them
