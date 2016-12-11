@@ -18,7 +18,7 @@ program is not trying to access all of its elements. In Haskell, a lazy
 functional language, it is possible to write \texttt{take 5 [1..]} and get the
 result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
 an expression of an infinite list. This is because the list is not generated
-until it is needed, and only the necessary amount is generated.
+until it is needed, and only the necessary amount of elements is generated.
 
 This project aims to create a compiler that takes code from a lazy programming
 language and compiles it into a strict programming language. The resulting
@@ -26,21 +26,22 @@ strict code should have the same semantic evaluation as the given lazy code.
 The purpose of creating such a compiler is to show a formal connection between
 lazy and strict evaluation. The compiler will be written in the programming
 language Haskell. The source language that the compiler takes as input will be
-Haskell and the target language to which the compiler will
-output will be CakeML, a strict functional language based on a subset of
-Standard ML.
+Haskell and the target language to which the compiler will output will be
+CakeML, a strict functional language based on a subset of Standard ML.
 
 The necessary operational semantics of Haskell will be written as a part of the
 project. As the semantics of CakeML is specified in higher-order logic (HOL),
 the operational semantics for CakeML will be translated from HOL to Haskell
-functions. The semantics of the two languages will then be connected in the
+functions. The semantics of the two languages will then be connected by the
 compiler.
 
 To show that the compiler generates semantically equivalent code, this project
-will employ the automated testing library QuickCheck for Haskell. QuickCheck
-generates random test data according to the provided specification and uses them
-to test properties. This means that it is possible to write the operational
-semantics of the language as functions in Haskell and test them with QuickCheck.
+will employ the automated testing library QuickCheck for Haskell. In contrast to
+unit-testing, which takes user-given data for its tests, QuickCheck does
+property-based testing; it generates random test data according to the provided
+specification and uses them to test properties. This means that it is possible
+to write the operational semantics of the language as functions in Haskell and
+test them with QuickCheck.
 
 In summary, the project will be done in two major steps:
 + Create a compiler that translates code from the lazy programming language Haskell to the strict functional language CakeML
@@ -71,7 +72,7 @@ Both courses also encourage writing compilers in Haskell.
 ** Models of Computation
 Models of Computation discusses different computation models. This includes
 programming languages of both lazy and strict evaluation processes. For example,
-there is the minimalistic (and theoretical) programming language /X/ (Greek 
+there is the minimalistic (and theoretical) programming language \chi (Greek 
 letter Chi) that models lambda calculus. The language includes weak head normal
 form (lazy evaluation of certain expressions) and full (strict) evaluation.
 
