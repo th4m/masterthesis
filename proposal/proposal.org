@@ -7,7 +7,7 @@
 \newpage
 
 * Introduction and Project Description
-
+  
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
 always fully evaluates all the expressions given as parameters, a lazy language
@@ -44,8 +44,8 @@ to write the operational semantics of the language as functions in Haskell and
 test them with QuickCheck.
 
 In summary, the project will be done in two major steps:
-+ Create a compiler that translates code from the lazy programming language Haskell to the strict functional language CakeML
-+ Test the compiler by writing operational semantics in the form of functions and running them with QuickCheck
++ Create a compiler that translates code from the lazy programming language Haskell to the strict functional language CakeML.
++ Test the compiler by writing operational semantics in the form of functions and running them with QuickCheck.
 
 
 * Limitations of the Project
@@ -58,6 +58,7 @@ will be considered:
 
 
 * Related Courses
+
 There are a number of courses at Chalmers that are relevant from this
 project's perspective.
 
@@ -83,6 +84,19 @@ taught in the two courses on functional programming at Chalmers is Haskell.
 The courses go through several basic to advanced techniques of Haskell,
 and also have students write small-scale projects in the language.
 
+
+
+* Approach and Time Plan
+
+This section describes the project workflow divided into smaller segments. The time plan is estimated for 20 weeks.
+
++ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. Also work on planning report.
++ Weeks 3-4: Write operational semantics for a subset of Haskell with primitive operations in the form of Haskell functions.
++ Weeks 5-6: Write compiler to translate primitives from Haskell to CakeML.
++ Weeks 7-8: Write and run QuickCheck tests for the compiler. This will make use of the operational semantics written in earlier weeks.
++ Weeks 9-12: Expand the compiler to include lazy and other useful semantics. Also expand tests as needed.
++ Weeks 13-14: If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL.
++ Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
 
 
 * Literature List
