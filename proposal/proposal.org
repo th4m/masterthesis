@@ -6,7 +6,7 @@
 
 \newpage
 
-* Introduction and Project Description
+* Introduction
   
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
@@ -20,7 +20,10 @@ result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
 an expression of an infinite list. This is because the list is not generated
 until it is needed, and only the necessary amount of elements is generated.
 
-This project aims to create a compiler that takes code from a lazy programming
+
+* Project Description
+
+This project will create a compiler that takes code from a lazy programming
 language and compiles it into a strict programming language. The resulting
 strict code should have the same semantic evaluation as the given lazy code. 
 The purpose of creating such a compiler is to show a formal connection between
@@ -57,6 +60,18 @@ will be considered:
 + The GHC version of this project will be 8.0.1, as it is the latest stable version at the time of writing.
 
 
+* Approach and Time Plan
+
+This section describes the project workflow divided into smaller segments. The time plan is estimated for 20 weeks.
+
++ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. Also work on planning report.
++ Weeks 3-4: Write operational semantics for a subset of Haskell with primitive operations in the form of Haskell functions.
++ Weeks 5-6: Write compiler to translate primitives from Haskell to CakeML.
++ Weeks 7-8: Write and run QuickCheck tests for the compiler. This will make use of the operational semantics written in earlier weeks.
++ Weeks 9-14: Expand the compiler to include lazy and other useful semantics. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL.
++ Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
+
+
 * Related Courses
 
 There are a number of courses at Chalmers that are relevant from this
@@ -86,21 +101,12 @@ and also have students write small-scale projects in the language.
 
 
 
-* Approach and Time Plan
-
-This section describes the project workflow divided into smaller segments. The time plan is estimated for 20 weeks.
-
-+ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. Also work on planning report.
-+ Weeks 3-4: Write operational semantics for a subset of Haskell with primitive operations in the form of Haskell functions.
-+ Weeks 5-6: Write compiler to translate primitives from Haskell to CakeML.
-+ Weeks 7-8: Write and run QuickCheck tests for the compiler. This will make use of the operational semantics written in earlier weeks.
-+ Weeks 9-12: Expand the compiler to include lazy and other useful semantics. Also expand tests as needed.
-+ Weeks 13-14: If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL.
-+ Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
-
-
 * Literature List
 + http://dragonbook.stanford.edu/
 + https://www.elsevier.com/books/engineering-a-compiler/cooper/978-0-12-088478-0
 + http://research.microsoft.com/en-us/um/people/simonpj/Papers/pj-lester-book/
 + http://www1.digitalgrammars.com/ipl-book/
+
+
+\bibliographystyle{IEEEtrans}
+\bibliography{ref}
