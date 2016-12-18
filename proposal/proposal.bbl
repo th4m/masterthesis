@@ -21,9 +21,9 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
-\bibitem{jones1992implementing}
-S.~L.~P. Jones, ``Implementing lazy functional languages on stock hardware: the
-  spineless tagless g-machine,'' \emph{Journal of functional programming},
-  vol.~2, no.~02, pp. 127--202, 1992.
+\bibitem{Ingerman:1961:TWC:366062.366084}
+P.~Z. Ingerman, ``Thunks: A way of compiling procedure statements with some
+  comments on procedure declarations,'' \emph{Commun. ACM}, vol.~4, no.~1, pp.
+  55--58, Jan. 1961.
 
 \end{thebibliography}

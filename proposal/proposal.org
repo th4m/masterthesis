@@ -7,7 +7,7 @@
 \newpage
 
 * Introduction
-  
+
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
 always fully evaluates all the expressions given as parameters, a lazy language
@@ -31,6 +31,15 @@ lazy and strict evaluation. The compiler will be written in the programming
 language Haskell. The source language that the compiler takes as input will be
 Haskell and the target language to which the compiler will output will be
 CakeML, a strict functional language based on a subset of Standard ML.
+
+Internally, the compiler will take a Haskell function and translate it to one
+or more CakeML functions in order to get a semantically equivalent evaluation.
+When it comes to handling laziness, lazy Haskell functions will be translated
+to explicit thunk values\cite{Ingerman:1961:TWC:366062.366084} in CakeML.
+Thunks are expressions that have yet to be evaluated. In machine code, this
+means that a function's argument is given as an address to jump to, instead of
+an explicit value. Thus, when an expression's value is needed, the compiler
+will jump to the given address and calculate the value on demand.
 
 The necessary operational semantics of Haskell will be written as a part of the
 project. As the semantics of CakeML is specified in higher-order logic (HOL),
