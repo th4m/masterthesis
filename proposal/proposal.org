@@ -25,10 +25,10 @@ until it is needed, and only the necessary number of elements is generated.
 
 This project will create a compiler that takes code from a lazy programming
 language and compiles it into a strict programming language. The resulting
-strict code should have the same semantic evaluation as the given lazy code. 
-The purpose of creating such a compiler is to explore the formal connection
-between lazy and strict evaluation. The compiler will be written in the
-programming language Haskell. The source language that the compiler takes as
+strict code should have the same user-observable semantics as the given lazy
+code. The purpose of creating such a compiler is to explore the formal
+connection between lazy and strict evaluation. The compiler will be written in
+the programming language Haskell. The source language that the compiler takes as
 input will be Haskell and the target language to which the compiler will output
 will be CakeML, a strict functional language based on a subset of Standard ML.
 
@@ -56,9 +56,9 @@ To show that the compiler generates semantically equivalent code, this project
 will employ the automated testing library QuickCheck for Haskell. In contrast to
 unit-testing, which takes user-given data for its tests, QuickCheck does
 property-based testing; it generates random test data according to the provided
-specification and uses them to test properties. This means that it is possible
-to write the operational semantics of the language as functions in Haskell and
-test them with QuickCheck.
+specification and uses them to test properties. As part of this project, I will
+write operational semantics of the language as functions in Haskell and explore
+whether it is possible to test a compiler's formal correctness using QuickCheck.
 
 In summary, the project will consist of two major parts that will be developed
 in parallel:
@@ -79,11 +79,11 @@ will be considered:
 
 This section describes the project workflow divided into smaller segments. The time plan is estimated for 20 weeks.
 
-+ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Also work on planning report.
++ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Start drafting on a compiler. Also work on planning report.
 + Weeks 3-4: Write operational semantics for a subset of Haskell with primitive operations in the form of Haskell functions. The subset of Haskell operations will mostly be dependent on what is needed for the CakeML operations written in the first two weeks.
-+ Weeks 5-6: Write compiler to translate primitives from Haskell to CakeML.
++ Weeks 5-6: Write compiler to translate primitives from Haskell to CakeML. The initial compiler will only use simple stateless thunks.
 + Weeks 7-8: Write and run QuickCheck tests for the compiler. The properties for the tests will make use of the operational semantics written in earlier weeks.
-+ Weeks 9-14: Expand the compiler to include lazy and other useful semantics, translating lazy Haskell expressions to CakeML thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL.
++ Weeks 9-14: Expand the compiler to include lazy and other useful semantics (e.g. pattern matching), improve the compiler to target stateful thunks in CakeML that avoid repeated evaluation of the same thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL.
 + Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
 
 
