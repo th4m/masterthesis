@@ -11,7 +11,7 @@
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective compilers take. While a strict language
 always fully evaluates all the expressions given as parameters, a lazy language
-only evaluates expressions when needed. For example, it is easy to express
+only evaluates expressions when needed \cite{ThunkHas27:online}. For example, it is easy to express
 infinite data structures, such as infinite lists, in a lazy language. Using
 these infinite data structures would not cause non-termination, as long as the
 program is not trying to access all of its elements. In Haskell, a lazy
@@ -28,42 +28,46 @@ language and compiles it into a strict programming language. The resulting
 strict code should have the same semantic evaluation as the given lazy code. 
 The purpose of creating such a compiler is to explore the formal connection
 between lazy and strict evaluation. The compiler will be written in the
-programming language Haskell. The source language that the compiler takes as
-input will be Haskell and the target language to which the compiler will output
-will be CakeML, a strict functional language based on a subset of Standard ML.
+programming language Haskell. The source language for the compiler will be
+CakeML with custom semantics for laziness and the target language to which
+the compiler will output will be CakeML with its standard semantics. This
+means that semantics to express laziness will be defined as part of this
+project and translated to the original semantics of CakeML.
 
-Internally, the compiler will take a Haskell function and translate it to one
-or more CakeML functions in order to get a semantically equivalent evaluation.
-When it comes to handling laziness, lazy Haskell functions will be translated
-to explicit thunk values\cite{Ingerman:1961:TWC:366062.366084} in CakeML.
-Thunks are expressions that have yet to be evaluated. Thunk values are not
-primitive in CakeML. Our compiler from Haskell to CakeML will create code that
+Internally, the compiler will take a 
+CakeML function with lazy semantics and translate it to one
+or more strict CakeML functions in order to get a semantically equivalent
+evaluation. When it comes to handling laziness, lazy functions will be
+translated to explicit thunk values\cite{Ingerman:1961:TWC:366062.366084} in
+CakeML. Thunks are expressions that have yet to be evaluated. Thunk values are
+not primitive in CakeML. Our compiler will create code that
 implements the thunk values in CakeML. The compiler will target the stateful
 features of CakeML to avoid repeated evaluation of the same thunk values.
 
-# In machine code, this
-# means that a function's argument is given as an address to jump to, instead of
-# an explicit value. Thus, when an expression's value is needed, the compiler
-# will jump to the given address and calculate the value on demand.
-
-The necessary operational semantics of Haskell will be written as a part of the
-project. As the semantics of CakeML is specified in higher-order logic (HOL),
+The operational semantics of lazy CakeML will be written as a part of the
+project. As the semantics of CakeML is specified in higher-order logic (HOL)
+\cite{HOLInter57:online},
 the operational semantics for CakeML will be translated from HOL to Haskell
-functions. The semantics of the two languages will then be connected by the
-compiler.
+functions. The compiler will then connect the lazy and strict semantics.
 
-To show that the compiler generates semantically equivalent code, this project
-will employ the automated testing library QuickCheck for Haskell. In contrast to
+Tests will be written to show that the compiler generates semantically
+equivalent code. This project will employ manual unit testing to test
+expressions and steps of evaluation.
+A interesting and different approach to testing the compiler would be to
+use property-based checking, with the automated testing library QuickCheck for
+Haskell \cite{Introduc44:online}. In contrast to
 unit-testing, which takes user-given data for its tests, QuickCheck does
 property-based testing; it generates random test data according to the provided
 specification and uses them to test properties. This means that it is possible
 to write the operational semantics of the language as functions in Haskell and
-test them with QuickCheck.
+test them with QuickCheck. If time allows for it, this project will investigate
+the usage of QuickCheck to test the generated compiler.
 
-In summary, the project will consist of two major parts that will be developed
+In summary, the project will consist of three major parts that will be developed
 in parallel:
-+ Creating a compiler that translates code from the lazy programming language Haskell to the strict functional language CakeML.
-+ Testing the compiler by writing operational semantics in the form of functions and running them with QuickCheck.
++ Writing lazy semantics for the programming language CakeML
++ Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML
++ Testing the compiler by writing operational semantics in the form of functions and running unit tests, and possibly QuickCheck.
 
 
 * Limitations of the Project
@@ -71,7 +75,6 @@ in parallel:
 In order to keep the project within a reasonable scale, certain limitations
 will be considered:
 
-+ This project will only be using the core language of Haskell. Using all of the programming language would make the scale of the project too large, making it impossible to finish within the given time.
 + The GHC version of this project will be 8.0.1, as it is the latest stable version at the time of writing.
 
 
@@ -123,5 +126,5 @@ and also have students write small-scale projects in the language.
 + http://www1.digitalgrammars.com/ipl-book/
 
 
-\bibliographystyle{IEEEtrans}
+\bibliographystyle{unsrt}
 \bibliography{ref}
