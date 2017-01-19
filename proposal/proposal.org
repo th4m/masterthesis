@@ -58,10 +58,9 @@ use property-based checking, with the automated testing library QuickCheck for
 Haskell \cite{Introduc44:online}. In contrast to
 unit-testing, which takes user-given data for its tests, QuickCheck does
 property-based testing; it generates random test data according to the provided
-specification and uses them to test properties. This means that it is possible
-to write the operational semantics of the language as functions in Haskell and
-test them with QuickCheck. If time allows for it, this project will investigate
-the usage of QuickCheck to test the generated compiler.
+specification and uses them to test properties. If time allows for it, this 
+project will investigate
+the possibility of using QuickCheck to test a compiler's formal correctness.
 
 In summary, the project will consist of three major parts that will be developed
 in parallel:
@@ -82,11 +81,11 @@ will be considered:
 
 This section describes the project workflow divided into smaller segments. The time plan is estimated for 20 weeks.
 
-+ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Also work on planning report.
++ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Start drafting on a compiler. Also work on planning report.
 + Weeks 3-4: Write operational semantics for a subset of Haskell with primitive operations in the form of Haskell functions. The subset of Haskell operations will mostly be dependent on what is needed for the CakeML operations written in the first two weeks.
-+ Weeks 5-6: Write compiler to translate primitives from Haskell to CakeML.
++ Weeks 5-6: Write compiler to translate primitives from Haskell to CakeML. The initial compiler will only use simple stateless thunks.
 + Weeks 7-8: Write and run QuickCheck tests for the compiler. The properties for the tests will make use of the operational semantics written in earlier weeks.
-+ Weeks 9-14: Expand the compiler to include lazy and other useful semantics, translating lazy Haskell expressions to CakeML thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL.
++ Weeks 9-14: Expand the compiler to include lazy and other useful semantics (e.g. pattern matching), improve the compiler to target stateful thunks in CakeML that avoid repeated evaluation of the same thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL.
 + Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
 
 
