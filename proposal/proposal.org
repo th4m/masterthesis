@@ -4,8 +4,6 @@
 #+LATEX_CLASS: article
 #+LATEX_HEADER: \usepackage{fontenc}
 
-\newpage
-
 * Introduction
 
 The main difference between lazy and strict programming languages is the steps
@@ -18,7 +16,7 @@ program is not trying to access all of its elements. In Haskell, a lazy
 functional language, it is possible to write \texttt{take 5 [1..]} and get the
 result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
 an expression of an infinite list. This is because the list is not generated
-until it is needed, and only the necessary number of elements is generated.
+until it is needed, and only the necessary number of elements are generated.
 
 
 * Project Description
@@ -27,7 +25,7 @@ This project will create a compiler that takes code from a lazy programming
 language and compiles it into a strict programming language. The resulting
 strict code should have the same user-observable evaluation as the given lazy
 code. The purpose of creating such a compiler is to explore the formal
-connectionbetween lazy and strict evaluation. The compiler will be written in
+connection between lazy and strict evaluation. The compiler will be written in
 the programming language Haskell. The source language for the compiler will be
 CakeML with custom semantics for laziness and the target language to which
 the compiler will output will be CakeML with its standard strict semantics. This
@@ -69,23 +67,14 @@ in parallel:
 + Testing the compiler by writing operational semantics in the form of functions and running unit tests, and possibly QuickCheck.
 
 
-* Limitations of the Project
-
-In order to keep the project within a reasonable scale, certain limitations
-will be considered:
-
-+ The GHC version of this project will be 8.0.1, as it is the latest stable version at the time of writing.
-
-
 * Approach and Time Plan
 
 This section describes the project workflow divided into smaller segments. The time plan is estimated for 20 weeks.
 
-+ Weeks 1-2: Investigate the primitive operations of CakeML and translate the operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Start drafting on a compiler. Also work on planning report (finished week 2).
-+ Weeks 3-4: Write compiler to have it take CakeML code as input and output the operational semantics as CakeML code. The initial compiler will only use simple stateless thunks.
-+ Weeks 5-6: Write and run tests for the compiler. The properties for the tests will make use of the operational semantics written in earlier weeks.
-+ Weeks 7-8: Research previous work on strict vs lazy. Also start sketching on how to expand the compiler with laziness.
-+ Weeks 9-14: Expand the compiler to include lazy and other useful semantics (e.g. pattern matching), improve the compiler to target stateful thunks in CakeML that avoid repeated evaluation of the same thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL, as well as using property-based testing.
++ Weeks 1-2: Investigate the primitive operations of CakeML and manually translate the current CakeML operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Start drafting on a compiler. Also work on planning report (finished week 2).
++ Weeks 3-5: Write compiler to have it take lazy CakeML code as input and produce output that is strict CakeML code implementing the same lazy behavior as the lazy input code. The initial compiler will only use simple stateless thunks. Also research previous work on strict vs lazy in parallel to writing the compiler.
++ Weeks 6-8: Write and run tests for the compiler. The properties for the tests will make use of the operational semantics written in earlier weeks.
++ Weeks 9-14: Expand the compiler to include lazy pattern matching and other useful semantics, and improve the compiler to target stateful thunks in CakeML that avoid repeated evaluation of the same thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL, as well as using property-based testing.
 + Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
 
 
