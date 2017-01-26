@@ -1,7 +1,11 @@
 module Main where
 
 import Lib
-import CakeMLSem
+import AbsCakeML
+import SemanticPrimitives
+-- import TypeChecker
+import Evaluate
+
 
 main :: IO ()
 main = someFunc
