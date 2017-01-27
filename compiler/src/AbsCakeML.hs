@@ -19,7 +19,7 @@ data Exp
 -- | Identifiers
 data Id a
   = Short a
-  | Long (ModN, a)
+  | Long ModN a
 
 -- | Variable Names
 type VarN = String
@@ -40,9 +40,13 @@ mk_id :: Maybe ModN -> a -> Id a
 mk_id mn_opt n =
   case mn_opt of
     Nothing -> Short n
-    Just mn -> Long (mn, n)
+    Just mn -> Long mn n
 
-
+id_to_n :: Id a -> a
+id_to_n id =
+  case id of
+    Short n  -> n
+    Long _ n -> n
 
 
 
