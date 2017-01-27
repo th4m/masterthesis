@@ -11,6 +11,7 @@ data Opn
   = Plus
   | Minus
 
+-- | Expressions
 data Exp
   = Literal Lit
   | App Op [Exp]
@@ -48,9 +49,6 @@ id_to_n id =
     Short n  -> n
     Long _ n -> n
 
-
-
-
 -- | Type Constructors
 data TCtor
   = TC_int
@@ -58,10 +56,5 @@ data TCtor
   | TC_string
   | TC_fn
 
-
-
-
-
 data Op
   = OPN Opn
-

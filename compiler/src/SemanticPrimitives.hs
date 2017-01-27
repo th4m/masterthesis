@@ -20,4 +20,7 @@ data Result a b
   | RErr (Error_Result b)
 
 -- data Environment v = Env {
---   v :: 
+--   v ::
+-- Temporary until language can handle more than literals
+type Environment = String
+type State = String
