@@ -6,6 +6,13 @@ import SemanticPrimitives
 
 evaluate :: State -> Environment -> [Exp] -> (State, Result [V] V)
 evaluate st _env []          = (st, RVal [])
+evaluate st env (e1:e2:es)   =
+  case evaluate st env [e1] of
+    (st', RVal v1) ->
+      case evaluate st' env (e1:es) of
+        (st'', RVal vs) -> (st'', RVal (head v1:vs))
+        res -> res
+    res -> res
 evaluate st _env [Literal l] = (st, RVal [Litv l])
 evaluate st _env [App op es] = undefined
 evaluate st  env [Var vname] = undefined
