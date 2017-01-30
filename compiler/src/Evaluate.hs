@@ -14,5 +14,10 @@ evaluate st env (e1:e2:es)   =
         res -> res
     res -> res
 evaluate st _env [Literal l] = (st, RVal [Litv l])
-evaluate st _env [App op es] = undefined
+evaluate st env  [App op es] =
+  case evaluate st env (reverse es) of
+    (st', RVal vs) ->
+      case op of
+        OpApp -> undefined
+        other -> undefined
 evaluate st  env [Var vname] = undefined

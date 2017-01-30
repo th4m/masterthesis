@@ -58,3 +58,4 @@ data TCtor
 
 data Op
   = OPN Opn
+  | OpApp
