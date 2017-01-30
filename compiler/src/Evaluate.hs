@@ -19,5 +19,8 @@ evaluate st env  [App op es] =
     (st', RVal vs) ->
       case op of
         OpApp -> undefined
-        other -> undefined
+        other ->
+          case do_app ("apa", "bepa") op (reverse vs) of
+            Just ((refs, ffi), r) -> undefined
+            Nothing               -> undefined
 evaluate st  env [Var vname] = undefined
