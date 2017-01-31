@@ -69,12 +69,25 @@ updateList st n v =
 -- data Environment v = Env {
 --   v ::
 -- Temporary until language can handle more than literals
-type Environment = String
-type State = String
+data Environment v' = Env {
+  v :: TEMP,
+  c :: TEMP,
+  m :: TEMP
+  }
+
+
+data State ffi' = St {
+  temp :: ffi'
+  -- clock :: Natural,
+  -- refs :: Store V --,
+  -- ffi  :: FFI_State ffi',
+  -- defined_types :: Set Tid_or_Exn
+  -- defined_mods :: Set ModN
+ }
 
 
 -- Replace Strings with Store and FFI in future
-do_app :: (String, String) -> Op -> [V] -> Maybe ((String, String), Result V V)
+do_app :: (TEMP, TEMP) -> Op -> [V] -> Maybe ((TEMP, TEMP), Result V V)
 do_app (s, t) op vs =
   case (op, vs) of
     (OPN op, [Litv (IntLit n1), Litv (IntLit n2)]) ->
