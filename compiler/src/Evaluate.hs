@@ -4,6 +4,11 @@ import AbsCakeML
 import SemanticPrimitives
 
 
+
+list_result :: Result a b -> Result [a] b
+list_result (RVal v) = RVal [v]
+list_result (RErr e) = RErr e
+
 evaluate :: State -> Environment -> [Exp] -> (State, Result [V] V)
 evaluate st _env []          = (st, RVal [])
 evaluate st env (e1:e2:es)   =
@@ -21,6 +26,9 @@ evaluate st env  [App op es] =
         OpApp -> undefined
         other ->
           case do_app ("apa", "bepa") op (reverse vs) of
-            Just ((refs, ffi), r) -> undefined
-            Nothing               -> undefined
+            Just ((refs, ffi), r) -> ("cepa", list_result r)
+            Nothing               -> (st', RErr (RAbort RType_Error))
 evaluate st  env [Var vname] = undefined
+
+
+
