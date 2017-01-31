@@ -10,6 +10,9 @@ data Lit
 data Opn
   = Plus
   | Minus
+  | Times
+  | Divide
+  | Modulo
 
 -- | Expressions
 data Exp

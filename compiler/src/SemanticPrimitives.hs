@@ -83,5 +83,8 @@ do_app (s, t) op vs =
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
   case n of
-    Plus  -> (+)
-    Minus -> (-)
+    Plus   -> (+)
+    Minus  -> (-)
+    Times  -> (*)
+    Divide -> (div)
+    Modulo -> (mod)
