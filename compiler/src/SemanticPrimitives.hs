@@ -1,6 +1,7 @@
 module SemanticPrimitives where
 
 import AbsCakeML
+import Numeric.Natural
 
 -- | Value Forms
 data V
@@ -18,6 +19,52 @@ data Error_Result a
 data Result a b
   = RVal a
   | RErr (Error_Result b)
+
+-- | Stores
+data Store_V a
+  = RefV a
+  -- W8Array [Word8]
+  | VArray [a]
+  deriving Show
+
+store_v_same_type :: Store_V a -> Store_V a -> Bool
+store_v_same_type v1 v2 =
+  case (v1, v2) of
+    (RefV _, RefV _)     -> True
+    -- (W8Array _, W8Array _) -> True
+    (VArray _, VArray _) -> True
+    _                    -> False
+
+type Store a
+  = [Store_V a]
+
+empty_store :: Store a
+empty_store = []
+
+store_lookup :: Natural -> Store a -> Maybe (Store_V a)
+store_lookup l st =
+  if fromIntegral l < length st then
+    Just (st !! fromIntegral l)
+  else
+    Nothing
+
+store_alloc :: Store_V a -> Store a -> (Store a, Natural)
+store_alloc v st =
+  ((st ++ [v]), toEnum (length st))
+
+store_assign :: Natural -> Store_V a -> Store a -> Maybe (Store a)
+store_assign n v st =
+  if fromIntegral n < length st && store_v_same_type v (st !! (fromIntegral n)) then
+    Just $ updateList st n v
+  else
+    Nothing
+
+updateList :: [a] -> Natural -> a -> [a]
+updateList st n v =
+  case splitAt ((fromIntegral n)) st of
+    (first, (_:rest)) -> first ++ (v:rest)
+    _                 -> st
+
 
 -- data Environment v = Env {
 --   v ::
