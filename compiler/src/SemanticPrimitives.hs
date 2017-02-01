@@ -3,6 +3,7 @@ module SemanticPrimitives where
 import AbsCakeML
 import Numeric.Natural
 import Data.Set
+import qualified Data.Map as Map
 
 data TId_or_Exn
   = TypeId (Id TypeN)
@@ -71,13 +72,12 @@ updateList st n v =
     _                 -> st
 
 
--- data Environment v = Env {
---   v ::
--- Temporary until language can handle more than literals
+type AList_Mod_Env k v = Map.Map ModN (Map.Map k v, Map.Map k v)
+
 data Environment v' = Env {
-  v :: TEMP,
-  c :: TEMP,
-  m :: TEMP
+  v :: Map.Map VarN V,
+  c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
+  m :: Map.Map ModN (Map.Map VarN V)
   }
 
 
@@ -88,7 +88,6 @@ data State = St {
  }
 
 
--- Replace Strings with Store and FFI in future
 do_app :: Store V -> Op -> [V] -> Maybe (Store V, Result V V)
 do_app s op vs =
   case (op, vs) of
