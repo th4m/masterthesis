@@ -2,6 +2,11 @@ module SemanticPrimitives where
 
 import AbsCakeML
 import Numeric.Natural
+import Data.Set
+
+data TId_or_Exn
+  = TypeId (Id TypeN)
+  | TypeExn (Id ConN)
 
 -- | Value Forms
 data V
@@ -76,22 +81,19 @@ data Environment v' = Env {
   }
 
 
-data State ffi' = St {
-  temp :: ffi'
-  -- clock :: Natural,
-  -- refs :: Store V --,
-  -- ffi  :: FFI_State ffi',
-  -- defined_types :: Set Tid_or_Exn
-  -- defined_mods :: Set ModN
+data State = St {
+  refs          :: Store V,
+  defined_types :: Set TId_or_Exn,
+  defined_mods  :: Set ModN
  }
 
 
 -- Replace Strings with Store and FFI in future
-do_app :: (TEMP, TEMP) -> Op -> [V] -> Maybe ((TEMP, TEMP), Result V V)
-do_app (s, t) op vs =
+do_app :: Store V -> Op -> [V] -> Maybe (Store V, Result V V)
+do_app s op vs =
   case (op, vs) of
     (OPN op, [Litv (IntLit n1), Litv (IntLit n2)]) ->
-      Just ((s, t), RVal (Litv (IntLit (opn_lookup op n1 n2))))
+      Just (s, RVal (Litv (IntLit (opn_lookup op n1 n2))))
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
