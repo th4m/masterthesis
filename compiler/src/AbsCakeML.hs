@@ -5,6 +5,7 @@ data Lit
   = IntLit Int
   | CharLit Char
   | StrLit String
+  deriving (Eq)
 
 -- | Built-in binary operations
 data Opn
@@ -27,11 +28,13 @@ data Exp
   | App Op [Exp]
   | Var (Id VarN)
   | Log LOp Exp Exp
+  | If Exp Exp Exp
 
 -- | Identifiers
 data Id a
   = Short a
   | Long ModN a
+  deriving (Eq)
 
 -- | Variable Names
 type VarN = String

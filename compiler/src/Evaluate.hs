@@ -45,3 +45,10 @@ evaluate st env [Log lop e1 e2] =
         Just (Val v) -> (st', RVal [v])
         Nothing      -> (st', RErr (RAbort RType_Error))
     res -> res
+evaluate st env [If e1 e2 e3] =
+  case evaluate st env [e1] of
+    (st', RVal v) ->
+      case do_if (head v) e2 e3 of
+        Just e  -> evaluate st' env [e]
+        Nothing -> (st', RErr (RAbort RType_Error))
+    res -> res

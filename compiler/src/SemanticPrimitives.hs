@@ -8,7 +8,7 @@ import qualified Data.Map as Map
 data TId_or_Exn
   = TypeId (Id TypeN)
   | TypeExn (Id ConN)
-
+  deriving (Eq)
 
 type AList_Mod_Env k v = Map.Map ModN (Map.Map k v, Map.Map k v)
 
@@ -22,6 +22,7 @@ data Environment v' = Env {
 data V
   = LitV Lit
   | ConV (Maybe (ConN, TId_or_Exn)) [V]
+  deriving (Eq)
   -- More in the future?
 
 data Abort
@@ -122,6 +123,16 @@ do_log l v e =
     (_, ConV (Just ("true",  TypeId (Short "bool"))) [])  -> Just (Val v)
     (_, ConV (Just ("false", TypeId (Short "bool"))) [])  -> Just (Val v)
     _                                                     -> Nothing
+
+do_if :: V -> Exp -> Exp -> Maybe Exp
+do_if v e1 e2 =
+  if v == boolv True then
+    Just e1
+  else if v == boolv False then
+    Just e2
+  else
+    Nothing
+
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
