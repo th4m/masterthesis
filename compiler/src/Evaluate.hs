@@ -19,6 +19,10 @@ evaluate st env (e1:e2:es)   =
         (st'', RVal vs) -> (st'', RVal (head v1:vs))
         res -> res
     res -> res
+evaluate st env [Raise e]    =
+  case evaluate st env [e] of
+    (st', RVal v) -> (st', RErr (RRaise (head v)))
+    res           -> res
 evaluate st _env [Literal l] = (st, RVal [Litv l])
 evaluate st env  [App op es] =
   case evaluate st env (reverse es) of

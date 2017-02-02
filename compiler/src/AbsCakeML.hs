@@ -16,9 +16,10 @@ data Opn
 
 -- | Expressions
 data Exp
-  = Literal Lit
+  = Raise Exp
+  | Literal Lit
   | App Op [Exp]
-  | Var VarN -- Should probably be changed in future
+  | Var (Id VarN)
 
 -- | Identifiers
 data Id a
