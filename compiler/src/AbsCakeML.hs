@@ -26,6 +26,7 @@ data Exp
   | Literal Lit
   | App Op [Exp]
   | Var (Id VarN)
+  | Log LOp Exp Exp
 
 -- | Identifiers
 data Id a
@@ -70,3 +71,7 @@ data Op
   = OPN Opn
   | OPB Opb
   | OpApp
+
+data LOp
+  = And
+  | Or

@@ -97,6 +97,9 @@ data State = St {
   defined_mods  :: Set ModN
  }
 
+data Exp_or_Val
+  = Exp Exp
+  | Val V
 
 boolv :: Bool -> V
 boolv b = if b
@@ -110,6 +113,15 @@ do_app s op vs =
       Just (s, RVal (LitV (IntLit (opn_lookup op n1 n2))))
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (s, RVal (boolv (opb_lookup op n1 n2)))
+
+do_log :: LOp -> V -> Exp -> Maybe Exp_or_Val
+do_log l v e =
+  case (l, v) of
+    (And, ConV (Just ("true", TypeId (Short "bool"))) []) -> Just (Exp e)
+    (Or, ConV (Just ("false", TypeId (Short "bool"))) []) -> Just (Exp e)
+    (_, ConV (Just ("true",  TypeId (Short "bool"))) [])  -> Just (Val v)
+    (_, ConV (Just ("false", TypeId (Short "bool"))) [])  -> Just (Val v)
+    _                                                     -> Nothing
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
