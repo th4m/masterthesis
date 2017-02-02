@@ -23,6 +23,10 @@ evaluate st env [Raise e]    =
   case evaluate st env [e] of
     (st', RVal v) -> (st', RErr (RRaise (head v)))
     res           -> res
+evaluate st env [Var n]      =
+  case lookup_var_id n env of
+    Just v  -> (st, RVal [v])
+    Nothing -> (st, RErr (RAbort RType_Error))
 evaluate st _env [Literal l] = (st, RVal [Litv l])
 evaluate st env  [App op es] =
   case evaluate st env (reverse es) of
@@ -33,7 +37,7 @@ evaluate st env  [App op es] =
           case do_app (refs st) op (reverse vs) of
             Just (refs', r) -> (st'{refs = refs'}, list_result r)
             Nothing         -> (st', RErr (RAbort RType_Error))
-evaluate st  env [Var vname] = undefined
+
 
 
 

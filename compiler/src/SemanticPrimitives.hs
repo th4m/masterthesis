@@ -9,6 +9,15 @@ data TId_or_Exn
   = TypeId (Id TypeN)
   | TypeExn (Id ConN)
 
+
+type AList_Mod_Env k v = Map.Map ModN (Map.Map k v, Map.Map k v)
+
+data Environment v' = Env {
+  v :: Map.Map VarN V,
+  c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
+  m :: Map.Map ModN (Map.Map VarN V)
+  }
+
 -- | Value Forms
 data V
   = Litv Lit
@@ -65,21 +74,21 @@ store_assign n v st =
   else
     Nothing
 
+-- Helper function
 updateList :: [a] -> Natural -> a -> [a]
 updateList st n v =
   case splitAt ((fromIntegral n)) st of
     (first, (_:rest)) -> first ++ (v:rest)
     _                 -> st
 
-
-type AList_Mod_Env k v = Map.Map ModN (Map.Map k v, Map.Map k v)
-
-data Environment v' = Env {
-  v :: Map.Map VarN V,
-  c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
-  m :: Map.Map ModN (Map.Map VarN V)
-  }
-
+lookup_var_id :: Id VarN -> Environment V -> Maybe V
+lookup_var_id id env =
+  case id of
+    Short x  -> Map.lookup x (v env)
+    Long x y ->
+      case Map.lookup x (m env) of
+        Nothing   -> Nothing
+        Just env' -> Map.lookup y env'
 
 data State = St {
   refs          :: Store V,
