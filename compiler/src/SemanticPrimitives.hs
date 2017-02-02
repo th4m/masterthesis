@@ -20,7 +20,8 @@ data Environment v' = Env {
 
 -- | Value Forms
 data V
-  = Litv Lit
+  = LitV Lit
+  | ConV (Maybe (ConN, TId_or_Exn)) [V]
   -- More in the future?
 
 data Abort
@@ -97,11 +98,18 @@ data State = St {
  }
 
 
+boolv :: Bool -> V
+boolv b = if b
+  then ConV (Just ("true", TypeId (Short "bool"))) []
+  else ConV (Just ("false", TypeId (Short "bool"))) []
+
 do_app :: Store V -> Op -> [V] -> Maybe (Store V, Result V V)
 do_app s op vs =
   case (op, vs) of
-    (OPN op, [Litv (IntLit n1), Litv (IntLit n2)]) ->
-      Just (s, RVal (Litv (IntLit (opn_lookup op n1 n2))))
+    (OPN op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (s, RVal (LitV (IntLit (opn_lookup op n1 n2))))
+    (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (s, RVal (boolv (opb_lookup op n1 n2)))
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
@@ -111,3 +119,11 @@ opn_lookup n =
     Times  -> (*)
     Divide -> (div)
     Modulo -> (mod)
+
+opb_lookup :: Opb -> (Int -> Int -> Bool)
+opb_lookup n =
+  case n of
+    Lt  -> (<)
+    Gt  -> (>)
+    LEq -> (<=)
+    GEq -> (>=)

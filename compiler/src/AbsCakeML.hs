@@ -14,6 +14,12 @@ data Opn
   | Divide
   | Modulo
 
+data Opb
+  = Lt
+  | Gt
+  | LEq
+  | GEq
+
 -- | Expressions
 data Exp
   = Raise Exp
@@ -62,8 +68,5 @@ data TCtor
 
 data Op
   = OPN Opn
+  | OPB Opb
   | OpApp
-
-
-
-data TEMP = TEMP
