@@ -15,7 +15,7 @@ evaluate st _env []          = (st, RVal [])
 evaluate st env (e1:e2:es)   =
   case evaluate st env [e1] of
     (st', RVal v1) ->
-      case evaluate st' env (e1:es) of
+      case evaluate st' env (e2:es) of
         (st'', RVal vs) -> (st'', RVal (head v1:vs))
         res -> res
     res -> res
