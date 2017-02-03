@@ -27,6 +27,7 @@ evaluate st env [Var n]      =
   case lookup_var_id n env of
     Just v  -> (st, RVal [v])
     Nothing -> (st, RErr (RAbort RType_Error))
+evaluate st env [Fun x e] = (st, RVal [Closure env x e])
 evaluate st _env [Literal l] = (st, RVal [LitV l])
 evaluate st env  [App op es] =
   case evaluate st env (reverse es) of

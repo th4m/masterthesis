@@ -17,11 +17,15 @@ data Environment v' = Env {
   c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
   m :: Map.Map ModN (Map.Map VarN V)
   }
+  deriving (Eq)
 
 -- | Value Forms
 data V
   = LitV Lit
+  -- Constructor Application
   | ConV (Maybe (ConN, TId_or_Exn)) [V]
+  -- Function Closures
+  | Closure (Environment V) VarN Exp
   deriving (Eq)
   -- More in the future?
 
@@ -132,7 +136,6 @@ do_if v e1 e2 =
     Just e2
   else
     Nothing
-
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
