@@ -32,12 +32,12 @@ evaluate st _env [Literal l] = (st, RVal [LitV l])
 evaluate st env  [App op es] =
   case evaluate st env (reverse es) of
     (st', RVal vs) ->
-      case op of
-        OpApp -> undefined
-        other ->
-          case do_app (refs st) op (reverse vs) of
-            Just (refs', r) -> (st'{refs = refs'}, list_result r)
-            Nothing         -> (st', RErr (RAbort RType_Error))
+      if op == OpApp then
+        undefined
+      else
+        case do_app (refs st) op (reverse vs) of
+          Just (refs', r) -> (st'{refs = refs'}, list_result r)
+          Nothing         -> (st', RErr (RAbort RType_Error))
 evaluate st env [Log lop e1 e2] =
   case evaluate st env [e1] of
     (st', RVal v1) ->
