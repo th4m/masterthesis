@@ -3,19 +3,29 @@ module SemanticPrimitives where
 import AbsCakeML
 import Numeric.Natural
 import Data.Set
-import qualified Data.Map as Map
+-- import qualified Data.Map as Map
 
 data TId_or_Exn
   = TypeId (Id TypeN)
   | TypeExn (Id ConN)
   deriving (Eq)
 
-type AList_Mod_Env k v = Map.Map ModN (Map.Map k v, Map.Map k v)
+type AList k v = [(k, v)]
+
+alist_lookup :: Ord k => k -> AList k v -> Maybe v
+alist_lookup _          [] = Nothing
+alist_lookup a ((k, v):as) =
+  if k == a then
+    Just v
+  else
+    alist_lookup a as
+
+type AList_Mod_Env k v = AList ModN (AList k v, AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
 
 data Environment v' = Env {
-  v :: Map.Map VarN V,
+  v :: AList VarN V, -- Map.Map VarN V,
   c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
-  m :: Map.Map ModN (Map.Map VarN V)
+  m :: AList ModN (AList VarN V) -- Map.Map ModN (Map.Map VarN V)
   }
   deriving (Eq)
 
@@ -90,11 +100,11 @@ updateList st n v =
 lookup_var_id :: Id VarN -> Environment V -> Maybe V
 lookup_var_id id env =
   case id of
-    Short x  -> Map.lookup x (v env)
+    Short x  -> alist_lookup x (v env)
     Long x y ->
-      case Map.lookup x (m env) of
+      case alist_lookup x (m env) of
         Nothing   -> Nothing
-        Just env' -> Map.lookup y env'
+        Just env' -> alist_lookup y env'
 
 data State = St {
   refs          :: Store V,
@@ -136,6 +146,12 @@ do_if v e1 e2 =
     Just e2
   else
     Nothing
+
+do_opapp :: [V] -> Maybe (Environment V, Exp)
+do_opapp vs =
+  case vs of
+    [Closure env n e, v'] ->
+      Just (env {v = ((n, v'):(v env))}, e)
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
