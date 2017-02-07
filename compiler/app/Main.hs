@@ -8,4 +8,4 @@ import Evaluate
 
 
 main :: IO ()
-main = someFunc
+main = undefined

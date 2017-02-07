@@ -1,6 +1,8 @@
 module SemanticPrimitives where
 
 import AbsCakeML
+import Lib
+
 import Numeric.Natural
 import Data.Set
 -- import qualified Data.Map as Map
@@ -9,16 +11,6 @@ data TId_or_Exn
   = TypeId (Id TypeN)
   | TypeExn (Id ConN)
   deriving (Eq)
-
-type AList k v = [(k, v)]
-
-alist_lookup :: Ord k => k -> AList k v -> Maybe v
-alist_lookup _          [] = Nothing
-alist_lookup a ((k, v):as) =
-  if k == a then
-    Just v
-  else
-    alist_lookup a as
 
 type AList_Mod_Env k v = AList ModN (AList k v, AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
 
