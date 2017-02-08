@@ -1,5 +1,7 @@
 module Lib where
 
+import Data.List
+
 type AList k v = [(k, v)]
 
 alist_lookup :: Ord k => k -> AList k v -> Maybe v
@@ -16,3 +18,10 @@ opt_bind n v e =
     Nothing -> e
     Just n' -> (n', v):e
 
+allDistinct :: (Ord a, Eq a) => [a] -> Bool
+allDistinct xs = checkSortedList (sort xs)
+  where
+    checkSortedList :: (Ord a, Eq a) => [a] -> Bool
+    checkSortedList []       = True
+    checkSortedList [x]      = True
+    checkSortedList (x:y:ys) = x /= y && checkSortedList (y:ys)

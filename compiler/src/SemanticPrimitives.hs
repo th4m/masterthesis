@@ -14,6 +14,20 @@ data TId_or_Exn
 
 type AList_Mod_Env k v = AList ModN (AList k v, AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
 
+merge_alist_mod_env (menv1, env1) (menv2, env2) =
+  (menv1 ++ menv2, env1 ++ env2)
+
+lookup_alist_mod_env id (mcenv, cenv) =
+  case id of
+    Short x  -> alist_lookup x cenv
+    Long x y ->
+      case alist_lookup x mcenv of
+        Nothing    -> Nothing
+        Just cenv' -> alist_lookup y cenv
+
+type Flat_Env_CTor = AList ConN (Natural, TId_or_Exn)
+type Env_CTor      = AList_Mod_Env ConN (Natural, TId_or_Exn)
+
 data Environment v' = Env {
   v :: AList VarN V, -- Map.Map VarN V,
   c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
@@ -97,6 +111,14 @@ lookup_var_id id env =
       case alist_lookup x (m env) of
         Nothing   -> Nothing
         Just env' -> alist_lookup y env'
+
+data Match_Result a 
+  = No_Match
+  | Match_Type_Error
+  | Match a
+
+
+
 
 data State = St {
   refs          :: Store V,

@@ -63,3 +63,8 @@ evaluate st env [Let xo e1 e2]  =
     res           -> res
 evaluate st env [LetRec funs e] = undefined
 evaluate st env [TAnnot e t]    = evaluate st env [e]
+
+evaluate_match :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
+evaluate_match st _env v []          err_v = (st, RErr (RRaise err_v))
+evaluate_match st  env v ((p,e):pes) err_v =
+  undefined

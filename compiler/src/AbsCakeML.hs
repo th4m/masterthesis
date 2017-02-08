@@ -7,13 +7,13 @@ data Lit
   = IntLit Int
   | CharLit Char
   | StrLit String
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 -- | Identifiers
 data Id a
   = Short a
   | Long ModN a
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 -- | Variable Names
 type VarN = String
@@ -48,14 +48,14 @@ data TCtor
   | TC_char
   | TC_string
   | TC_fn
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 -- | Types
 data T
   = TVar TVarN
   | TVar_DB Natural
   | TApp [T] TCtor
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 -- | Patterns
 data Pat
@@ -64,7 +64,7 @@ data Pat
   | PCon (Maybe (Id ConN)) [Pat]
   | PRef Pat
   | PTAnnot Pat T
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 -- | Expressions
 data Exp
@@ -81,13 +81,13 @@ data Exp
   | Let (Maybe VarN) Exp Exp
   | LetRec [(VarN, VarN, Exp)] Exp
   | TAnnot Exp T
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 data Op
   = OPN Opn
   | OPB Opb
   | OpApp
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 -- | Built-in binary operations
 data Opn
@@ -96,17 +96,36 @@ data Opn
   | Times
   | Divide
   | Modulo
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 data Opb
   = Lt
   | Gt
   | LEq
   | GEq
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
 data LOp
   = And
   | Or
-  deriving (Eq)
+  deriving (Eq, Show, Ord)
 
+
+
+pat_bindings :: Pat -> [VarN] -> [VarN]
+pat_bindings (PVar n)      already_bound =
+  n:already_bound
+pat_bindings (PLit l)      already_bound =
+  already_bound
+pat_bindings (PCon _ ps)   already_bound =
+  pats_bindings ps already_bound
+pat_bindings (PRef p)      already_bound =
+  pat_bindings p already_bound
+pat_bindings (PTAnnot p _) already_bound =
+  pat_bindings p already_bound
+
+pats_bindings :: [Pat] -> [VarN] -> [VarN]
+pats_bindings []     already_bound =
+  already_bound
+pats_bindings (p:ps) already_bound =
+  pats_bindings ps (pat_bindings p already_bound)
