@@ -42,8 +42,14 @@ data V
   | ConV (Maybe (ConN, TId_or_Exn)) [V]
   -- Function Closures
   | Closure (Environment V) VarN Exp
+--  | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
+  | Loc Natural
+  | VectorV [V]
   deriving (Eq)
   -- More in the future?
+
+type Env_Val = AList VarN V
+type Env_Mod = AList ModN Env_Val
 
 data Abort
   = RType_Error
@@ -112,6 +118,14 @@ lookup_var_id id env =
         Nothing   -> Nothing
         Just env' -> alist_lookup y env'
 
+lit_same_type :: Lit -> Lit -> Bool
+lit_same_type l1 l2 =
+  case (l1, l2) of
+    (IntLit  _, IntLit  _) -> True
+    (CharLit _, CharLit _) -> True
+    (StrLit  _, StrLit  _) -> True
+    _                      -> False
+
 data Match_Result a 
   = No_Match
   | Match_Type_Error
@@ -132,8 +146,43 @@ ctor_same_type c1 c2 =
     (Nothing, Nothing)           -> True
     (Just (_, t1), Just (_, t2)) -> same_tid t1 t2
     _                            -> False
-  
 
+pmatch :: Env_CTor -> Store V -> Pat -> V -> Env_Val -> Match_Result Env_Val
+pmatch envC s (PVar x) v' env = Match $ (x, v'):env
+pmatch envC s (PLit l) (LitV l') env =
+  if l == l' then
+    Match env
+  else if lit_same_type l l' then
+    No_Match
+  else
+    Match_Type_Error
+pmatch envC s (PCon (Just n) ps) (ConV (Just (n', t')) vs) env =
+  undefined
+  -- case lookup_alist_mod_env n envC of
+  --   Just (l, t) ->
+  --     if same_tid t t' && length ps == 1 then
+  --       if same_ctor (id_to_n n, t) (n', t') then
+  --         pmatch_list envC s ps vs env
+  --       else
+  --         No_Match
+  --     else
+  --       Match_Type_Error
+  --   _           -> Match_Type_Error
+pmatch envC s (PCon Nothing ps) (ConV Nothing vs) env =
+  if length ps == length vs then
+    pmatch_list envC s ps vs env
+  else
+    Match_Type_Error
+pmatch envC s (PRef p) (Loc lnum) env =
+  case store_lookup lnum s of
+    Just (RefV v) -> pmatch envC s p v env
+    Just _        -> Match_Type_Error
+    Nothing       -> Match_Type_Error
+pmatch envC s (PTAnnot p t) v env =
+  pmatch envC s p v env
+pmatch envC _ _ _ env = Match_Type_Error
+
+pmatch_list envC s [] [] env = Match env
 
 data State = St {
   refs          :: Store V,
