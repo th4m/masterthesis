@@ -117,7 +117,22 @@ data Match_Result a
   | Match_Type_Error
   | Match a
 
+same_tid :: TId_or_Exn -> TId_or_Exn -> Bool
+same_tid (TypeId tn1) (TypeId tn2) = tn1 == tn2
+same_tid (TypeExn _ ) (TypeExn _ ) = True
+same_tid _            _            = False
 
+same_ctor :: (ConN, TId_or_Exn) -> (ConN, TId_or_Exn) -> Bool
+same_ctor (cn1, TypeExn mn1) (cn2, TypeExn mn2) = cn1 == cn2 && mn1 == mn2
+same_ctor (cn1, _)           (cn2, _)           = cn1 == cn2
+
+ctor_same_type :: Maybe (ConN, TId_or_Exn) -> Maybe (ConN, TId_or_Exn) -> Bool
+ctor_same_type c1 c2 =
+  case (c1, c2) of
+    (Nothing, Nothing)           -> True
+    (Just (_, t1), Just (_, t2)) -> same_tid t1 t2
+    _                            -> False
+  
 
 
 data State = St {
