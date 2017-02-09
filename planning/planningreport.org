@@ -1,0 +1,157 @@
+#+AUTHOR:Philip Tham
+#+TITLE:A Lazy to Strict Language Compiler
+#+OPTIONS: toc:nil
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage{fontenc}
+
+* Introduction
+
+The main difference between lazy and strict programming languages is the steps
+of evaluation that their respective compilers take. While a strict language
+always fully evaluates all the expressions given as parameters, a lazy language
+only evaluates expressions when needed \cite{ThunkHas27:online}. For example, it is easy to express
+infinite data structures, such as infinite lists, in a lazy language. Using
+these infinite data structures would not cause non-termination, as long as the
+program is not trying to access all of its elements. In Haskell, a lazy
+functional language, it is possible to write \texttt{take 5 [1..]} and get the
+result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
+an expression of an infinite list. This is because the list is not generated
+until it is needed, and only the necessary number of elements are generated.
+
+
+* Project Description
+
+This project will create a compiler that takes code from a lazy programming
+language and compiles it into a strict programming language. The resulting
+strict code should have the same user-observable evaluation as the given lazy
+code. The purpose of creating such a compiler is to explore the formal
+connection between lazy and strict evaluation. The compiler will be written in
+the programming language Haskell. The source language for the compiler will be
+CakeML with custom semantics for laziness and the target language to which
+the compiler will output will be CakeML with its standard strict semantics. This
+means that the semantics to express laziness will be defined as part of this
+project and translated to the original semantics of CakeML.
+
+Internally, the compiler will take a
+CakeML function with lazy semantics and translate it to one
+or more strict CakeML functions in order to get a semantically equivalent
+evaluation. When it comes to handling laziness, lazy functions will be
+translated to explicit thunk values\cite{Ingerman:1961:TWC:366062.366084} in
+CakeML. Thunks are expressions that have yet to be evaluated. Thunk values are
+not primitive in CakeML. Our compiler will create code that
+implements the thunk values in CakeML. The compiler will target the stateful
+features of CakeML to avoid repeated evaluation of the same thunk values.
+
+The operational semantics of lazy CakeML will be written as a part of the
+project. As the semantics of CakeML is specified in higher-order logic (HOL)
+\cite{HOLInter57:online},
+the operational semantics for CakeML will be translated from HOL to Haskell
+functions. The compiler will then connect the lazy and strict semantics.
+
+Tests will be written to show that the compiler generates semantically
+equivalent code. This project will employ manual unit testing to test
+expressions and steps of evaluation.
+A interesting and different approach to testing the compiler would be to
+use property-based checking, with the automated testing library QuickCheck for
+Haskell \cite{Introduc44:online}. In contrast to
+unit-testing, which takes user-given data for its tests, QuickCheck does
+property-based testing; it generates random test data according to the provided
+specification and uses them to test properties. If time allows for it, this 
+project will investigate
+the possibility of using QuickCheck to test a compiler's formal correctness.
+
+In summary, the project will consist of three major parts that will be developed
+in parallel:
++ Writing lazy semantics for the programming language CakeML
++ Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML
++ Testing the compiler by writing operational semantics in the form of functions and running unit tests, and possibly QuickCheck.
+
+
+* Aim of the Project
+
+This project aims to have completed a compiler that can take lazy CakeML
+code and convert it to strict CakeML code. This includes features such as
+lazy pattern matching and infinite data structures.
+
+
+
+* Problem Formulation
+
+The compiler for this project will be written in Haskell. This requires
+that the semantics of CakeML are translated to Haskell. 
++ Setting up for compiler by translating CakeML's semantics to Haskell functions
++ Write compiler for new (lazy) semantics
+  + Output strict semantics
++ Test the compiler
+  + Unit tests, mainly
+  + If there is time, property-based testing with QuickCheck
+
+The alloted time should be enough to complete the given tasks. However,
+in the case of complications and delays, some compromising must be done.
+As the process of implementing features of the compiler is iterative,
+the compiler should have a functional version fairly early into the project.
+This means that lazy features will be implemented as much as time allows.
+
+
+* Method of Accomplishment
+
+As the objective of this project is to implement a compiler with certain
+features, the process will be iterative. The initial step is to translate
+the semantics of CakeML from Lem to Haskell. Once the semantics have been
+translated and tested, the actual compiler will be written. From this
+point, the compiler will be expanded feature-by-feature, ensuring that
+there is always a version with some functionality.
+
+
+* Approach and Time Plan
+  
+This section describes the project workflow divided into smaller segments. The time plan is estimated for 20 weeks.
+
++ Weeks 1-2: Investigate the primitive operations of CakeML and manually translate the current CakeML operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Start drafting on a compiler. Also work on planning report (finished week 2).
++ Weeks 3-5: Write compiler to have it take lazy CakeML code as input and produce output that is strict CakeML code implementing the same lazy behavior as the lazy input code. The initial compiler will only use simple stateless thunks. Also research previous work on strict vs lazy in parallel to writing the compiler.
++ Weeks 6-8: Write and run tests for the compiler. The properties for the tests will make use of the operational semantics written in earlier weeks.
++ Weeks 9-14: Expand the compiler to include lazy pattern matching and other useful semantics, and improve the compiler to target stateful thunks in CakeML that avoid repeated evaluation of the same thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL, as well as using property-based testing.
++ Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
+
+Mandatory Seminar Dates:
++ Writing Seminar I: February 24th, 09.00-12.30.
++ Writing Seminar II: Dates will be announced by Chalmers in March/April. Hopefully the seminar will be in late April or early May.
+
+* Related Courses
+
+There are a number of courses at Chalmers that are relevant from this
+project's perspective.
+
+** Programming Language Technology and Compiler Construction
+The courses Programming Language Technology and Compiler Construction are
+basically the cornerstones of this project, as it is about creating a compiler
+that connects two different types of programming languages. Programming
+Language Technology is the course that introduces the concept of compilers,
+and Compiler Construction allows students to create a compiler as a project.
+Both courses also encourage writing compilers in Haskell.
+
+** Models of Computation
+Models of Computation discusses different computation models. This includes
+programming languages of both lazy and strict evaluation processes. For example,
+there is the minimalistic (and theoretical) programming language \chi (Greek 
+letter Chi) that models lambda calculus. The language includes weak head normal
+form (lazy evaluation of certain expressions) and full (strict) evaluation.
+
+** Introduction to Functional Programming and Advanced Functional Programming
+As the languages used in this project are of the functional programming
+paradigm, these two courses are essential. The primary programming language 
+taught in the two courses on functional programming at Chalmers is Haskell.
+The courses go through several basic to advanced techniques of Haskell,
+and also have students write small-scale projects in the language.
+
+
+
+* Literature List
++ http://dragonbook.stanford.edu/
++ https://www.elsevier.com/books/engineering-a-compiler/cooper/978-0-12-088478-0
++ http://research.microsoft.com/en-us/um/people/simonpj/Papers/pj-lester-book/
++ http://www1.digitalgrammars.com/ipl-book/
+
+
+\bibliographystyle{unsrt}
+\bibliography{ref}
