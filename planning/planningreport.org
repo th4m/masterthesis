@@ -78,19 +78,18 @@ lazy pattern matching and infinite data structures.
 * Problem Formulation
 
 The compiler for this project will be written in Haskell. This requires
-that the semantics of CakeML are translated to Haskell. 
-+ Setting up for compiler by translating CakeML's semantics to Haskell functions
-+ Write compiler for new (lazy) semantics
-  + Output strict semantics
-+ Test the compiler
-  + Unit tests, mainly
-  + If there is time, property-based testing with QuickCheck
+that the semantics of CakeML are translated to Haskell. The compiler
+would then need to be able to take lazy semantics as input and output
+strict semantics. Once this has been implemented, we must test the
+compiler; mainly through unit tests, and also property-based tests,
+if time allows.
 
 The alloted time should be enough to complete the given tasks. However,
 in the case of complications and delays, some compromising must be done.
 As the process of implementing features of the compiler is iterative,
 the compiler should have a functional version fairly early into the project.
-This means that lazy features will be implemented as much as time allows.
+This means that lazy features will be implemented as much as time allows
+and as expansions to the compiler, one by one.
 
 
 * Method of Accomplishment
@@ -100,7 +99,9 @@ features, the process will be iterative. The initial step is to translate
 the semantics of CakeML from Lem to Haskell. Once the semantics have been
 translated and tested, the actual compiler will be written. From this
 point, the compiler will be expanded feature-by-feature, ensuring that
-there is always a version with some functionality.
+there is always a version with some functionality. The steps of implementation
+will then basically be: extend the compiler with lazy feature, test the
+new feature, repeat.
 
 
 * Approach and Time Plan
@@ -116,6 +117,7 @@ This section describes the project workflow divided into smaller segments. The t
 Mandatory Seminar Dates:
 + Writing Seminar I: February 24th, 09.00-12.30.
 + Writing Seminar II: Dates will be announced by Chalmers in March/April. Hopefully the seminar will be in late April or early May.
+
 
 * Related Courses
 
