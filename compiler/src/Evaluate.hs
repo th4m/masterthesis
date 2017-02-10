@@ -23,8 +23,11 @@ evaluate st env [Raise e]    =
   case evaluate st env [e] of
     (st', RVal v) -> (st', RErr (RRaise (head v)))
     res           -> res
-evaluate st env [Handle e pes] = undefined
-evaluate st env [Con cn es]    = undefined
+evaluate st env [Handle e pes] =
+  case evaluate st env [e] of
+    (st', RErr (RRaise v)) -> evaluate_match st' env v pes v
+    res                    -> res
+evaluate st env [Con cn es]  = undefined
 evaluate st env [Var n]      =
   case lookup_var_id n env of
     Just v  -> (st, RVal [v])
@@ -55,7 +58,11 @@ evaluate st env [If e1 e2 e3] =
         Just e  -> evaluate st' env [e]
         Nothing -> (st', RErr (RAbort RType_Error))
     res -> res
-evaluate st env [Mat e pes]     = undefined
+evaluate st env [Mat e pes]     =
+  case evaluate st env [e] of
+    (st', RVal v) ->
+      evaluate_match st' env (head v) pes bindv
+    res           -> res
 evaluate st env [Let xo e1 e2]  =
   case evaluate st env [e1] of
     (st', RVal v') ->
@@ -66,5 +73,11 @@ evaluate st env [TAnnot e t]    = evaluate st env [e]
 
 evaluate_match :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
 evaluate_match st _env v []          err_v = (st, RErr (RRaise err_v))
-evaluate_match st  env v ((p,e):pes) err_v =
-  undefined
+evaluate_match st  env v' ((p,e):pes) err_v =
+  if allDistinct (pat_bindings p []) then
+    case pmatch (c env) (refs st) p v' (v env) of
+      Match env_v'     -> evaluate st env {v = env_v'} [e]
+      No_Match         -> evaluate_match st env v' pes err_v
+      Match_Type_Error -> (st, RErr (RAbort RType_Error))
+  else
+    (st, RErr (RAbort RType_Error))

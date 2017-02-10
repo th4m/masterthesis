@@ -12,7 +12,7 @@ data TId_or_Exn
   | TypeExn (Id ConN)
   deriving (Eq)
 
-type AList_Mod_Env k v = AList ModN (AList k v, AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
+type AList_Mod_Env k v = (AList ModN (AList k v), AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
 
 merge_alist_mod_env (menv1, env1) (menv2, env2) =
   (menv1 ++ menv2, env1 ++ env2)
@@ -47,6 +47,8 @@ data V
   | VectorV [V]
   deriving (Eq)
   -- More in the future?
+
+bindv = ConV (Just ("Bind", TypeExn (Short "Bind"))) []
 
 type Env_Val = AList VarN V
 type Env_Mod = AList ModN Env_Val
@@ -157,17 +159,16 @@ pmatch envC s (PLit l) (LitV l') env =
   else
     Match_Type_Error
 pmatch envC s (PCon (Just n) ps) (ConV (Just (n', t')) vs) env =
-  undefined
-  -- case lookup_alist_mod_env n envC of
-  --   Just (l, t) ->
-  --     if same_tid t t' && length ps == 1 then
-  --       if same_ctor (id_to_n n, t) (n', t') then
-  --         pmatch_list envC s ps vs env
-  --       else
-  --         No_Match
-  --     else
-  --       Match_Type_Error
-  --   _           -> Match_Type_Error
+  case lookup_alist_mod_env n envC of
+    Just (l, t) ->
+      if same_tid t t' && length ps == 1 then
+        if same_ctor (id_to_n n, t) (n', t') then
+          pmatch_list envC s ps vs env
+        else
+          No_Match
+      else
+        Match_Type_Error
+    _           -> Match_Type_Error
 pmatch envC s (PCon Nothing ps) (ConV Nothing vs) env =
   if length ps == length vs then
     pmatch_list envC s ps vs env
