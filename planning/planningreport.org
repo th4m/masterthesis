@@ -79,10 +79,10 @@ lazy pattern matching and infinite data structures.
 
 The compiler for this project will be written in Haskell. This requires
 that the semantics of CakeML are translated to Haskell. The compiler
-would then need to be able to take lazy semantics as input and output
-strict semantics. Once this has been implemented, we must test the
-compiler; mainly through unit tests, and also property-based tests,
-if time allows.
+would then need to be able to take lazy semantics (which also needs to
+be defined) as input and output strict semantics. Once this has been 
+implemented, we must test the compiler; mainly through unit tests,
+and also property-based tests, if time allows.
 
 The alloted time should be enough to complete the given tasks. However,
 in the case of complications and delays, some compromising must be done.
@@ -97,7 +97,8 @@ and as expansions to the compiler, one by one.
 As the objective of this project is to implement a compiler with certain
 features, the process will be iterative. The initial step is to translate
 the semantics of CakeML from Lem to Haskell. Once the semantics have been
-translated and tested, the actual compiler will be written. From this
+translated and tested, new semantics for laziness will be created, followed
+by the actual compiler. From this
 point, the compiler will be expanded feature-by-feature, ensuring that
 there is always a version with some functionality. The steps of implementation
 will then basically be: extend the compiler with lazy feature, test the
