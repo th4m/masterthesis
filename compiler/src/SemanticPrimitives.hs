@@ -191,6 +191,26 @@ data State = St {
   defined_mods  :: Set ModN
  }
 
+-- | Check that a constructor is properly applied
+do_con_check :: Env_CTor -> Maybe (Id ConN) -> Natural -> Bool
+do_con_check cenv n_opt l =
+  case n_opt of
+    Nothing -> True
+    Just n  ->
+      case lookup_alist_mod_env n cenv of
+        Nothing       -> False
+        Just (l', ns) -> l == l'
+
+build_conv :: Env_CTor -> Maybe (Id ConN) -> [V] -> Maybe V
+build_conv envC cn vs =
+  case cn of
+    Nothing ->
+      Just (ConV Nothing vs)
+    Just id ->
+      case lookup_alist_mod_env id envC of
+        Nothing       -> Nothing
+        Just (len, t) -> Just (ConV (Just (id_to_n id, t))vs)
+
 data Exp_or_Val
   = Exp Exp
   | Val V

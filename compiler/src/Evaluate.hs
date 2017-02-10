@@ -27,7 +27,16 @@ evaluate st env [Handle e pes] =
   case evaluate st env [e] of
     (st', RErr (RRaise v)) -> evaluate_match st' env v pes v
     res                    -> res
-evaluate st env [Con cn es]  = undefined
+evaluate st env [Con cn es]  =
+  if do_con_check (c env) cn (fromIntegral (length es)) then
+    case evaluate st env (reverse es) of
+      (st', RVal vs) ->
+        case build_conv (c env) cn (reverse vs) of
+          Just v  -> (st', RVal [v])
+          Nothing -> (st', RErr (RAbort RType_Error))
+      res            -> res
+  else
+    (st, RErr (RAbort RType_Error))
 evaluate st env [Var n]      =
   case lookup_var_id n env of
     Just v  -> (st, RVal [v])
