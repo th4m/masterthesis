@@ -77,8 +77,10 @@ lazy pattern matching and infinite data structures.
 
 * Problem Formulation
 
-The compiler for this project will be written in Haskell. This requires
-that the semantics of CakeML are translated to Haskell. The compiler
+The compiler for this project will be written in Haskell. The basic
+semantics of CakeML is defined in Lem, a lightweight tool for writing
+large scale semantic definitions \cite{Lem33:online}. This requires
+that the semantics of CakeML is translated to Haskell. The compiler
 would then need to be able to take lazy semantics (which also needs to
 be defined) as input and output strict semantics. Once this has been 
 implemented, we must test the compiler; mainly through unit tests,
@@ -111,7 +113,8 @@ This section describes the project workflow divided into smaller segments. The t
 
 + Weeks 1-2: Investigate the primitive operations of CakeML and manually translate the current CakeML operational semantics to Haskell functions. This includes basic operations such as addition and logical comparisons. Start drafting on a compiler. Also work on planning report (finished week 2).
 + Weeks 3-5: Write compiler to have it take lazy CakeML code as input and produce output that is strict CakeML code implementing the same lazy behavior as the lazy input code. The initial compiler will only use simple stateless thunks. Also research previous work on strict vs lazy in parallel to writing the compiler.
-+ Weeks 6-8: Write and run tests for the compiler. The properties for the tests will make use of the operational semantics written in earlier weeks.
++ Weeks 6-8: Write and run tests for the compiler. The properties for the tests will make use of the operational semantics written in earlier weeks
+  + The half-time report should be prepared at the end of this stage, once the compiler has a functional and tested version.
 + Weeks 9-14: Expand the compiler to include lazy pattern matching and other useful semantics, and improve the compiler to target stateful thunks in CakeML that avoid repeated evaluation of the same thunks. Also expand tests as needed. If time allows for it, investigate another approach on the project, where the compiler could have been written in HOL, as well as using property-based testing.
 + Weeks 15-20: Focus on the report. Possibly expand the compiler if time allows for it.
 
