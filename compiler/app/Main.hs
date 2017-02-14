@@ -6,6 +6,5 @@ import SemanticPrimitives
 -- import TypeChecker
 import Evaluate
 
-
 main :: IO ()
 main = undefined
