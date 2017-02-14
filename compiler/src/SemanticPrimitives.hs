@@ -4,13 +4,13 @@ import AbsCakeML
 import Lib
 
 import Numeric.Natural
-import Data.Set
+import qualified Data.Set as S
 -- import qualified Data.Map as Map
 
 data TId_or_Exn
   = TypeId (Id TypeN)
   | TypeExn (Id ConN)
-  deriving (Eq)
+  deriving (Eq, Ord, Show)
 
 type AList_Mod_Env k v = (AList ModN (AList k v), AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
 
@@ -33,7 +33,7 @@ data Environment v' = Env {
   c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
   m :: AList ModN (AList VarN V) -- Map.Map ModN (Map.Map VarN V)
   }
-  deriving (Eq)
+  deriving (Eq, Ord, Show)
 
 -- | Value Forms
 data V
@@ -42,10 +42,10 @@ data V
   | ConV (Maybe (ConN, TId_or_Exn)) [V]
   -- Function Closures
   | Closure (Environment V) VarN Exp
---  | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
+  | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
   | Loc Natural
   | VectorV [V]
-  deriving (Eq)
+  deriving (Eq, Ord, Show)
   -- More in the future?
 
 bindv = ConV (Just ("Bind", TypeExn (Short "Bind"))) []
@@ -187,9 +187,24 @@ pmatch_list envC s [] [] env = Match env
 
 data State = St {
   refs          :: Store V,
-  defined_types :: Set TId_or_Exn,
-  defined_mods  :: Set ModN
+  defined_types :: S.Set TId_or_Exn,
+  defined_mods  :: S.Set ModN
  }
+
+build_rec_env :: [(VarN, VarN, Exp)] -> Environment V -> Env_Val -> Env_Val
+build_rec_env funs cl_env add_to_env =
+  foldr f' add_to_env funs
+  where f' = \(f,x,e) env' -> (f, RecClosure cl_env funs f):env'
+
+find_recfun :: VarN -> [(VarN, a, b)] -> Maybe (a, b)
+find_recfun n funs =
+  case funs of
+    []            -> Nothing
+    (f,x,e):funs' ->
+      if f == n then
+        Just (x,e)
+      else
+        find_recfun n funs
 
 -- | Check that a constructor is properly applied
 do_con_check :: Env_CTor -> Maybe (Id ConN) -> Natural -> Bool
@@ -251,6 +266,14 @@ do_opapp vs =
   case vs of
     [Closure env n e, v'] ->
       Just (env {v = ((n, v'):(v env))}, e)
+    [RecClosure env funs n, v'] ->
+      if allDistinct (map (\(f,x,e) -> f) funs) then
+        case find_recfun n funs of
+          Just (n,e) -> Just (env {v=(n,v'):(build_rec_env funs env (v env))}, e)
+          Nothing    -> Nothing
+      else
+        Nothing
+    _ -> Nothing
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =

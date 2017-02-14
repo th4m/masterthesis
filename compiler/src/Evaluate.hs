@@ -47,7 +47,11 @@ evaluate st env  [App op es] =
   case evaluate st env (reverse es) of
     (st', RVal vs) ->
       if op == OpApp then
-        undefined
+        case do_opapp (reverse vs) of
+          Just (env', e) ->
+            (st', RErr (RAbort RTimeout_Error))
+          Nothing ->
+            (st', RErr (RAbort RType_Error))
       else
         case do_app (refs st) op (reverse vs) of
           Just (refs', r) -> (st'{refs = refs'}, list_result r)
@@ -77,7 +81,11 @@ evaluate st env [Let xo e1 e2]  =
     (st', RVal v') ->
       evaluate st' env {v = opt_bind xo (head v') (v env)} [e2]
     res           -> res
-evaluate st env [LetRec funs e] = undefined
+evaluate st env [LetRec funs e] =
+  if allDistinct (map (\(x,y,z) -> x) funs) then
+    evaluate st (env {v = build_rec_env funs env (v env)}) [e]
+  else
+    (st, RErr (RAbort RType_Error))
 evaluate st env [TAnnot e t]    = evaluate st env [e]
 
 evaluate_match :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
