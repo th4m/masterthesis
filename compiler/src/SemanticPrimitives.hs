@@ -56,14 +56,17 @@ type Env_Mod = AList ModN Env_Val
 data Abort
   = RType_Error
   | RTimeout_Error
+  deriving (Eq, Ord, Show)
 
 data Error_Result a
   = RRaise a
   | RAbort Abort
+  deriving (Eq, Ord, Show)
 
 data Result a b
   = RVal a
   | RErr (Error_Result b)
+  deriving (Eq, Ord, Show)
 
 -- | Stores
 data Store_V a
@@ -132,6 +135,7 @@ data Match_Result a
   = No_Match
   | Match_Type_Error
   | Match a
+  deriving (Eq, Ord, Show)
 
 same_tid :: TId_or_Exn -> TId_or_Exn -> Bool
 same_tid (TypeId tn1) (TypeId tn2) = tn1 == tn2
@@ -190,6 +194,7 @@ data State = St {
   defined_types :: S.Set TId_or_Exn,
   defined_mods  :: S.Set ModN
  }
+  deriving Show
 
 build_rec_env :: [(VarN, VarN, Exp)] -> Environment V -> Env_Val -> Env_Val
 build_rec_env funs cl_env add_to_env =
