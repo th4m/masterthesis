@@ -50,6 +50,11 @@ ifEx2 = ex $ If false true false
 andEx b1 b2 = ex $ Log And b1 b2
 orEx  b1 b2 = ex $ Log Or b1 b2
 
+recAndEx b1 = Log And b1 (recAndEx b1)
+
+--recMulEx (Literal (IntLit 0)) = Literal (IntLit 0)
+recMulEx n1 = App (OPN Times) [n1, (recMulEx n1)]
+
 -- | let cepa = 3; cepa <= 3 && cepa >= 3
 letEx = ex $
   Let (Just "cepa") (Literal (IntLit 3))
@@ -59,3 +64,4 @@ letEx = ex $
     ((App (OPB GEq) [Var (Short "cepa"),
                      Literal (IntLit 3)]))
   )
+
