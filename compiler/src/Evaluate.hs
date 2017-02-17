@@ -108,6 +108,8 @@ force st (Thunk env exp) = case exp of
   Var n       -> case lookup_var_id n env of
     Just v  -> (st, RVal [v])
     Nothing -> (st, RErr (RAbort RType_Error))
+  Fun x e     -> (st, RVal [Closure env x e])
+  Literal l   -> (st, RVal [LitV l])
   If e1 e2 e3 -> case force st (Thunk env e1) of
     (st', RVal vs) -> case head vs of
       Thunk env' e -> (st', RVal [Thunk env' (If e e2 e3)])
@@ -115,4 +117,5 @@ force st (Thunk env exp) = case exp of
         Just e  -> (st', RVal [Thunk env e])
         Nothing -> (st', RErr (RAbort RType_Error))
     res -> res
+  TAnnot e t  -> evaluate st env [e]
 force  st v              = (st, RVal [v])
