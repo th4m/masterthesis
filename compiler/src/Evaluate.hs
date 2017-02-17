@@ -98,3 +98,10 @@ evaluate_match st  env v' ((p,e):pes) err_v =
       Match_Type_Error -> (st, RErr (RAbort RType_Error))
   else
     (st, RErr (RAbort RType_Error))
+
+
+-- | force should take a Thunk and return a Thunk or a fully
+--   evaluated value
+force :: V -> V
+force (Thunk env exp) = undefined
+force  v              = undefined

@@ -45,6 +45,7 @@ data V
   | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
   | Loc Natural
   | VectorV [V]
+  | Thunk (Environment V) Exp
   deriving (Eq, Ord, Show)
   -- More in the future?
 
