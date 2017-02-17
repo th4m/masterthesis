@@ -105,17 +105,25 @@ evaluate_match st  env v' ((p,e):pes) err_v =
 --   Represents small-steps semantics.
 force :: State -> V -> (State, Result [V] V)
 force st (Thunk env exp) = case exp of
-  Var n       -> case lookup_var_id n env of
+  Raise e       -> undefined
+  Handle e      -> undefined
+  Con cn es     -> undefined
+  Var n         -> case lookup_var_id n env of
     Just v  -> (st, RVal [v])
     Nothing -> (st, RErr (RAbort RType_Error))
-  Fun x e     -> (st, RVal [Closure env x e])
-  Literal l   -> (st, RVal [LitV l])
-  If e1 e2 e3 -> case force st (Thunk env e1) of
+  Fun x e       -> (st, RVal [Closure env x e])
+  Literal l     -> (st, RVal [LitV l])
+  App op es     -> undefined
+  Log lop e1 e2 -> undefined
+  Mat e pes     -> undefined
+  Let xo e1 e2  -> undefined
+  LetRec funs e -> undefined
+  If e1 e2 e3   -> case force st (Thunk env e1) of
     (st', RVal vs) -> case head vs of
       Thunk env' e -> (st', RVal [Thunk env' (If e e2 e3)])
       v            -> case do_if v e2 e3 of
         Just e  -> (st', RVal [Thunk env e])
         Nothing -> (st', RErr (RAbort RType_Error))
     res -> res
-  TAnnot e t  -> evaluate st env [e]
+  TAnnot e t    -> evaluate st env [e]
 force  st v              = (st, RVal [v])
