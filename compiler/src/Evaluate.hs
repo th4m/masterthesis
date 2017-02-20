@@ -56,6 +56,7 @@ evaluate st env  [App op es] =
         case do_app (refs st) op (reverse vs) of
           Just (refs', r) -> (st'{refs = refs'}, list_result r)
           Nothing         -> (st', RErr (RAbort RType_Error))
+    res -> res
 evaluate st env [Log lop e1 e2] =
   case evaluate st env [e1] of
     (st', RVal v1) ->
