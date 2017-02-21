@@ -101,62 +101,64 @@ evaluate_match st  env v' ((p,e):pes) err_v =
     (st, RErr (RAbort RType_Error))
 
 
--- | force should take a Thunk and return a Thunk or a fully
+-- | evaluateSmall should take a Thunk and return a Thunk or a fully
 --   evaluated value.
 --   Represents small-steps semantics.
-force :: State -> V -> (State, Result [V] V)
-force st (Thunk env exp) = case exp of
-  Raise e       -> case force st (Thunk env e) of
+evaluateSmall :: State -> Environment V -> [Exp] -> (State, Result [V] V)
+evaluateSmall st env [Raise e]       =
+  case evaluateSmall st env [e] of
     (st', RVal v) -> case head v of
       Thunk env' e' -> (st', RVal [Thunk env' (Raise e')])
       v' -> (st', RErr (RRaise (head v)))
     res -> res
-  Handle e pes  -> case force st (Thunk env e) of
+evaluateSmall st env [Handle e pes]  =
+  case evaluateSmall st env [e] of
     (st', RVal v) -> case head v of
       Thunk env' e' -> (st', RVal [Thunk env' (Handle e' pes)])
       v' -> (st', RVal [v'])
     (st', RErr (RRaise v)) -> undefined --evaluate_match
     res -> res
-  Con cn es     ->
-    if do_con_check (c env) cn (fromIntegral (length es)) then
-      undefined
-    else
-      (st, RErr (RAbort RType_Error))
-  Var n         -> case lookup_var_id n env of
+evaluateSmall st env [Con cn es]     =
+  if do_con_check (c env) cn (fromIntegral (length es)) then
+    undefined
+  else
+    (st, RErr (RAbort RType_Error))
+evaluateSmall st env [Var n]         =
+  case lookup_var_id n env of
     Just v  -> (st, RVal [v])
     Nothing -> (st, RErr (RAbort RType_Error))
-  -- Fun case does not evaluate anything, only encapsulates in a constructor
-  Fun x e       -> (st, RVal [Closure env x e])
-  -- Literal case also only encapsulates in a constructor
-  Literal l     -> (st, RVal [LitV l])
+evaluateSmall st env [Fun x e]       = (st, RVal [Closure env x e])
+evaluateSmall st env [Literal l]     = (st, RVal [LitV l])
   -- App case wants to check es expressions last, for laziness
-  App op es     ->
-    if op == OpApp then
-      undefined --do_opapp
-    else
-      undefined --do_app
-  Log lop e1 e2 -> undefined
-  Mat e pes     -> case force st (Thunk env e) of
+evaluateSmall st env [App op es]     =
+  if op == OpApp then
+    undefined --do_opapp
+  else
+    undefined --do_app
+evaluateSmall st env [Log lop e1 e2] = undefined
+evaluateSmall st env [Mat e pes]     =
+  case evaluateSmall st env [e] of
     (st', RVal v) -> case head v of
       Thunk env' e' -> (st', RVal [Thunk env' (Mat e' pes)])
       val -> undefined --evaluate_match
     res -> res
-  Let xo e1 e2  -> case force st (Thunk env e1) of
+evaluateSmall st env [Let xo e1 e2]  =
+  case evaluateSmall st env [e1] of
     (st', RVal v') -> case head v' of
       Thunk env' e -> (st', RVal [Thunk env' (Let xo e e2)])
-      val -> force st' (Thunk env {v = opt_bind xo val (v env)} e2)
+      val -> evaluateSmall st' env {v = opt_bind xo val (v env)} [e2]
     res -> res
-  LetRec funs e ->
-    if allDistinct (map (\(x,y,z) -> x) funs) then
-      undefined
-    else
-      (st, RErr (RAbort RType_Error))
-  If e1 e2 e3   -> case force st (Thunk env e1) of
+evaluateSmall st env [LetRec funs e] =
+  if allDistinct (map (\(x,y,z) -> x) funs) then
+    undefined
+  else
+    (st, RErr (RAbort RType_Error))
+evaluateSmall st env [If e1 e2 e3]   =
+  case evaluateSmall st env [e1] of
     (st', RVal vs) -> case head vs of
       Thunk env' e -> (st', RVal [Thunk env' (If e e2 e3)])
       v            -> case do_if v e2 e3 of
         Just e  -> (st', RVal [Thunk env e])
         Nothing -> (st', RErr (RAbort RType_Error))
     res -> res
-  TAnnot e t    -> evaluate st env [e]
-force  st v              = (st, RVal [v])
+evaluateSmall st env [TAnnot e t]    = evaluateSmall st env [e]
