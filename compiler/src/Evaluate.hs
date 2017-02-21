@@ -107,20 +107,50 @@ evaluate_match st  env v' ((p,e):pes) err_v =
 force :: State -> V -> (State, Result [V] V)
 force st (Thunk env exp) = case exp of
   Raise e       -> case force st (Thunk env e) of
-    (st', RVal v) -> (st', RErr (RRaise (head v)))
+    (st', RVal v) -> case head v of
+      Thunk env' e' -> (st', RVal [Thunk env' (Raise e')])
+      v' -> (st', RErr (RRaise (head v)))
     res -> res
-  Handle e      -> undefined
-  Con cn es     -> undefined
+  Handle e pes  -> case force st (Thunk env e) of
+    (st', RVal v) -> case head v of
+      Thunk env' e' -> (st', RVal [Thunk env' (Handle e' pes)])
+      v' -> (st', RVal [v'])
+    (st', RErr (RRaise v)) -> undefined --evaluate_match
+    res -> res
+  Con cn es     ->
+    if do_con_check (c env) cn (fromIntegral (length es)) then
+      undefined
+    else
+      (st, RErr (RAbort RType_Error))
   Var n         -> case lookup_var_id n env of
     Just v  -> (st, RVal [v])
     Nothing -> (st, RErr (RAbort RType_Error))
+  -- Fun case does not evaluate anything, only encapsulates in a constructor
   Fun x e       -> (st, RVal [Closure env x e])
+  -- Literal case also only encapsulates in a constructor
   Literal l     -> (st, RVal [LitV l])
-  App op es     -> undefined
+  -- App case wants to check es expressions last, for laziness
+  App op es     ->
+    if op == OpApp then
+      undefined --do_opapp
+    else
+      undefined --do_app
   Log lop e1 e2 -> undefined
-  Mat e pes     -> undefined
-  Let xo e1 e2  -> undefined
-  LetRec funs e -> undefined
+  Mat e pes     -> case force st (Thunk env e) of
+    (st', RVal v) -> case head v of
+      Thunk env' e' -> (st', RVal [Thunk env' (Mat e' pes)])
+      val -> undefined --evaluate_match
+    res -> res
+  Let xo e1 e2  -> case force st (Thunk env e1) of
+    (st', RVal v') -> case head v' of
+      Thunk env' e -> (st', RVal [Thunk env' (Let xo e e2)])
+      val -> force st' (Thunk env {v = opt_bind xo val (v env)} e2)
+    res -> res
+  LetRec funs e ->
+    if allDistinct (map (\(x,y,z) -> x) funs) then
+      undefined
+    else
+      (st, RErr (RAbort RType_Error))
   If e1 e2 e3   -> case force st (Thunk env e1) of
     (st', RVal vs) -> case head vs of
       Thunk env' e -> (st', RVal [Thunk env' (If e e2 e3)])
