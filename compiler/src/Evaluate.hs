@@ -90,7 +90,7 @@ evaluate st env [LetRec funs e] =
 evaluate st env [TAnnot e t]    = evaluate st env [e]
 
 evaluate_match :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
-evaluate_match st _env v []          err_v = (st, RErr (RRaise err_v))
+evaluate_match st _env v []           err_v = (st, RErr (RRaise err_v))
 evaluate_match st  env v' ((p,e):pes) err_v =
   if allDistinct (pat_bindings p []) then
     case pmatch (c env) (refs st) p v' (v env) of

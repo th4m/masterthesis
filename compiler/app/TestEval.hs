@@ -44,11 +44,21 @@ ex e = evaluate empty_st ex_env [e]
 exs :: [Exp] -> (State, Result [V] V)
 exs es = evaluate empty_st ex_env es
 
-ifEx1 = ex $ If true true false
-ifEx2 = ex $ If false true false
+-------------- Some expressions to test --------------
 
-andEx b1 b2 = ex $ Log And b1 b2
-orEx  b1 b2 = ex $ Log Or b1 b2
+plusExp e1 e2 = App (OPN Plus)   [e1, e2]
+subExp  e1 e2 = App (OPN Minus)  [e1, e2]
+mulExp  e1 e2 = App (OPN Times)  [e1, e2]
+divExp  e1 e2 = App (OPN Divide) [e1, e2]
+modExp  e1 e2 = App (OPN Modulo) [e1, e2]
+
+andExp  e1 e2 = Log And e1 e2
+orExp   e1 e2 = Log Or  e1 e2
+
+ifExp1 = If true true false
+ifExp2 = If false true false
+
+---------------------- Examples ----------------------
 
 recAndEx b1 = Log And b1 (recAndEx b1)
 
@@ -67,22 +77,27 @@ letEx = ex $
 
 
 --------------- Test Laziness ---------------
+
 exSmall :: Exp -> (State, Result [V] V)
 exSmall e = evaluateSmall empty_st ex_env [e]
 
-smallPlus e1 e2 = (App (OPN Plus) [e1, e2])
+testSmall :: Exp -> V
+testSmall e = getVal $ exSmall e
 
-getError :: Error_Result a -> a
-getError (RRaise a) = a
-getError (RAbort a) = error $ "RAbort"
+exForce :: Exp -> (State, V)
+exForce e = force st' (head v)
+  where (st', RVal v) = evaluateSmall empty_st ex_env [e]
 
-exForce :: Exp -> V
-exForce e = val
-  where (st, val) = force st' (head v)
-        (st', RVal v) = evaluateSmall empty_st ex_env [e]
+testForce :: Exp -> V
+testForce e = val
+  where (st, val) = exForce e
 
 ---------------------------------------------
 
 getVal :: (State, Result [V] V) -> V
 getVal (st, RVal a) = head a
 getVal (st, RErr b) = getError b
+
+getError :: Error_Result a -> a
+getError (RRaise a) = a
+getError (RAbort a) = error $ "RAbort"
