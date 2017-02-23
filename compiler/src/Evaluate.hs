@@ -105,6 +105,12 @@ evaluate_match st  env v' ((p,e):pes) err_v =
 --   evaluated value.
 --   Represents small-steps semantics.
 evaluateSmall :: State -> Environment V -> [Exp] -> (State, Result [V] V)
+evaluateSmall st env (e1:e2:es)      =
+  case evaluateSmall st env [e1] of
+    (st', RVal v1) ->
+      case head v1 of
+        Thunk env' e ->
+          undefined
 evaluateSmall st env [Raise e]       =
   case evaluateSmall st env [e] of
     (st', RVal v) -> case head v of
@@ -134,7 +140,11 @@ evaluateSmall st env [App op es]     =
   if op == OpApp then
     undefined --do_opapp
   else
-    undefined --do_app
+    case evaluateSmall st env (head es) of
+      (st', RVal v) ->
+        case head v of
+          Thunk env' e -> undefined
+          v' -> undefined
 evaluateSmall st env [Log lop e1 e2] = undefined
 evaluateSmall st env [Mat e pes]     =
   case evaluateSmall st env [e] of
@@ -162,3 +172,9 @@ evaluateSmall st env [If e1 e2 e3]   =
         Nothing -> (st', RErr (RAbort RType_Error))
     res -> res
 evaluateSmall st env [TAnnot e t]    = evaluateSmall st env [e]
+
+force :: State -> V -> (State, V)
+force st (Thunk env e) = case evaluateSmall st env [e] of
+  (st', RVal [Thunk env' e']) -> force st' (Thunk env' e')
+  (st', RVal v) -> (st', head v)
+force _ v = v
