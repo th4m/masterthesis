@@ -65,3 +65,24 @@ letEx = ex $
                      Literal (IntLit 3)]))
   )
 
+
+--------------- Test Laziness ---------------
+exSmall :: Exp -> (State, Result [V] V)
+exSmall e = evaluateSmall empty_st ex_env [e]
+
+smallPlus e1 e2 = (App (OPN Plus) [e1, e2])
+
+getError :: Error_Result a -> a
+getError (RRaise a) = a
+getError (RAbort a) = error $ "RAbort"
+
+exForce :: Exp -> V
+exForce e = val
+  where (st, val) = force st' (head v)
+        (st', RVal v) = evaluateSmall empty_st ex_env [e]
+
+---------------------------------------------
+
+getVal :: (State, Result [V] V) -> V
+getVal (st, RVal a) = head a
+getVal (st, RErr b) = getError b
