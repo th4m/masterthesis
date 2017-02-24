@@ -108,9 +108,10 @@ evaluateSmall :: State -> Environment V -> [Exp] -> (State, Result [V] V)
 evaluateSmall st env (e1:e2:es)      =
   case evaluateSmall st env [e1] of
     (st', RVal v1) ->
-      case head v1 of
-        Thunk env' e ->
-          undefined
+      case evaluateSmall st' env (e2:es) of
+        (st'', RVal vs) -> (st'', RVal (head v1:vs))
+        res -> res
+    res -> res
 evaluateSmall st env [Raise e]       =
   case evaluateSmall st env [e] of
     (st', RVal v) -> case head v of
