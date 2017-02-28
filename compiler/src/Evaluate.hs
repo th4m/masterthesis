@@ -120,15 +120,17 @@ evaluateSmall st env [Raise e]       =
       v' -> (st', RErr (RRaise (head v)))
     res -> res
 evaluateSmall st env [Handle e pes]  =
-  case evaluateSmall st env [e] of
-    (st', RVal v) -> case head v of
-      Thunk env' e' -> (st', RVal [Thunk env' (Handle e' pes)])
-      v' -> (st', RVal [v'])
-    (st', RErr (RRaise v)) -> undefined --evaluate_match
-    res -> res
+  case forceExpList st env [e] of
+    (st', RErr (RRaise v)) -> undefined -- evaluate_match
+    res                    -> res
 evaluateSmall st env [Con cn es]     =
   if do_con_check (c env) cn (fromIntegral (length es)) then
-    undefined
+    case forceExpList st env (reverse es) of
+      (st', RVal vs) ->
+        case build_conv (c env) cn (reverse vs) of
+          Just v  -> (st', RVal [v])
+          Nothing -> (st', RErr (RAbort RType_Error))
+      res -> res
   else
     (st, RErr (RAbort RType_Error))
 evaluateSmall st env [Var n]         =
@@ -137,50 +139,38 @@ evaluateSmall st env [Var n]         =
     Nothing -> (st, RErr (RAbort RType_Error))
 evaluateSmall st env [Fun x e]       = (st, RVal [Closure env x e])
 evaluateSmall st env [Literal l]     = (st, RVal [LitV l])
-  -- App case wants to check es expressions last, for laziness
 evaluateSmall st env [App op es]     =
-  if op == OpApp then
-    undefined --do_opapp
-  else
-    case es of -- es should contain two elements
-      [Literal l1, Literal l2] ->
-        case do_app (refs st) op [LitV l1, LitV l2] of
-          Just (refs', r) -> (st{refs = refs'}, list_result r)
-          Nothing         -> (st, RErr (RAbort RType_Error))
-      [Literal l1, e2'] -> case evaluateSmall st env [e2'] of
-        (st', RVal v) ->
-          case head v of
-            Thunk env' e -> (st', RVal [Thunk env' (App op [Literal l1, e])])
-            LitV l2      -> (st', RVal [Thunk env  (App op [Literal l1, Literal l2])])
-            v -> (st', RErr (RAbort RType_Error))
-      [e1', e2']         ->
-        case evaluateSmall st env [e1'] of
-          (st', RVal v) ->
-            case head v of
-              Thunk env' e -> (st', RVal [Thunk env' (App op [e, e2'])])
-              LitV l1      -> (st', RVal [Thunk env  (App op [Literal l1, e2'])])
-              v' -> (st', RErr (RAbort RType_Error))
+  case forceExpList st env es of
+    (st', RVal vs) ->
+      if op == OpApp then
+        case do_opapp (reverse vs) of
+          Just (env', e) ->
+            (st', RErr (RAbort RTimeout_Error))
+          Nothing ->
+            (st', RErr (RAbort RType_Error))
+      else
+        case do_app (refs st) op (reverse vs) of
+          Just (refs', r) -> (st'{refs = refs'}, list_result r)
+          Nothing         -> (st', RErr (RAbort RType_Error))
 evaluateSmall st env [Log lop e1 e2] =
   case evaluateSmall st env [e1] of
     (st', RVal v1) ->
-      case head v1 of
-        Thunk env' e1' -> (st', RVal [Thunk env' (Log lop e1' e2)])
-        v1' -> case do_log lop v1' e2 of
-          Just (Exp e) -> evaluateSmall st' env [e2]
-          Just (Val v) -> (st', RVal [v])
-          Nothing      -> (st', RErr (RAbort RType_Error))
+      case do_log lop v1' e2 of
+        Just (Exp e) -> (st'', RVal [Thunk env e2])
+        Just (Val v) -> (st'', RVal [v])
+        Nothing      -> (st'', RErr (RAbort RType_Error))
+      where (st'', v1') = force st' (head v1)
     res -> res
-evaluateSmall st env [Mat e pes]     =
-  case evaluateSmall st env [e] of
-    (st', RVal v) -> case head v of 
-      Thunk env' e' -> (st', RVal [Thunk env' (Mat e' pes)])
-      val -> undefined --evaluate_match
-    res -> res
+evaluateSmall st env [Mat e pes]     = undefined
+  -- case evaluateSmall st env [e] of
+  --   (st', RVal v) -> case head v of 
+  --     Thunk env' e' -> (st', RVal [Thunk env' (Mat e' pes)])
+  --     val -> undefined --evaluate_match
+  --   res -> res
 evaluateSmall st env [Let xo e1 e2]  =
   case evaluateSmall st env [e1] of
-    (st', RVal v') -> case head v' of
-      Thunk env' e -> (st', RVal [Thunk env' (Let xo e e2)])
-      val -> evaluateSmall st' env {v = opt_bind xo val (v env)} [e2]
+    (st', RVal v') -> case force st' (head v') of
+      (st'', val) -> evaluateSmall st' env {v = opt_bind xo val (v env)} [e2]
     res -> res
 evaluateSmall st env [LetRec funs e] =
   if allDistinct (map (\(x,y,z) -> x) funs) then
@@ -189,11 +179,11 @@ evaluateSmall st env [LetRec funs e] =
     (st, RErr (RAbort RType_Error))
 evaluateSmall st env [If e1 e2 e3]   =
   case evaluateSmall st env [e1] of
-    (st', RVal vs) -> case head vs of
-      Thunk env' e -> (st', RVal [Thunk env' (If e e2 e3)])
-      v            -> case do_if v e2 e3 of
-        Just e  -> (st', RVal [Thunk env e])
-        Nothing -> (st', RErr (RAbort RType_Error))
+    (st', RVal v) ->
+      case do_if v' e2 e3 of
+        Just e  -> (st'', RVal [Thunk env e])
+        Nothing -> (st'', RErr (RAbort RType_Error))
+      where (st'', v') = force st' (head v)
     res -> res
 evaluateSmall st env [TAnnot e t]    = evaluateSmall st env [e]
 
@@ -202,3 +192,12 @@ force st (Thunk env e) = case evaluateSmall st env [e] of
   (st', RVal [Thunk env' e']) -> force st' (Thunk env' e')
   (st', RVal v) -> (st', head v)
 force st v = (st, v)
+
+forceExpList :: State -> Environment V -> [Exp] -> (State, Result [V] V)
+forceExpList st _env []    = (st, RVal [])
+forceExpList st env (e:es) =
+  case evaluateSmall st env [e] of
+    (st', RVal v') -> (st''', RVal (val:vals))
+      where (st'' , val)  = force st' (head v')
+            (st''', RVal vals) = forceExpList st'' env es
+    res -> res
