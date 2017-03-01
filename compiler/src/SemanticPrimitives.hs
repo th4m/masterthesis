@@ -249,6 +249,14 @@ do_app s op vs =
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (s, RVal (boolv (opb_lookup op n1 n2)))
 
+doAppLazy :: Op -> [V] -> Maybe (Result V V)
+doAppLazy op vs =
+  case (op, vs) of
+    (OPN op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (RVal (LitV (IntLit (opn_lookup op n1 n2))))
+    (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (RVal (boolv (opb_lookup op n1 n2)))
+
 do_log :: LOp -> V -> Exp -> Maybe Exp_or_Val
 do_log l v e =
   case (l, v) of
