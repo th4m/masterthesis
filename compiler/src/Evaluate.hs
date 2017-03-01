@@ -152,6 +152,7 @@ evaluateSmall st env [App op es]     =
         case do_app (refs st) op (reverse vs) of
           Just (refs', r) -> (st'{refs = refs'}, list_result r)
           Nothing         -> (st', RErr (RAbort RType_Error))
+    (st', RErr v)  -> undefined
 evaluateSmall st env [Log lop e1 e2] =
   case evaluateSmall st env [e1] of
     (st', RVal v1) ->
@@ -161,12 +162,11 @@ evaluateSmall st env [Log lop e1 e2] =
         Nothing      -> (st'', RErr (RAbort RType_Error))
       where (st'', v1') = force st' (head v1)
     res -> res
-evaluateSmall st env [Mat e pes]     = undefined
-  -- case evaluateSmall st env [e] of
-  --   (st', RVal v) -> case head v of 
-  --     Thunk env' e' -> (st', RVal [Thunk env' (Mat e' pes)])
-  --     val -> undefined --evaluate_match
-  --   res -> res
+evaluateSmall st env [Mat e pes]     =
+  case evaluateSmall st env [e] of
+    (st', RVal v') -> evaluate_match_small st'' env val pes bindv
+      where (st'', val) = force st' (head v')
+    res -> res
 evaluateSmall st env [Let xo e1 e2]  =
   case evaluateSmall st env [e1] of
     (st', RVal v') -> case force st' (head v') of
@@ -187,10 +187,24 @@ evaluateSmall st env [If e1 e2 e3]   =
     res -> res
 evaluateSmall st env [TAnnot e t]    = evaluateSmall st env [e]
 
+evaluate_match_small :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
+evaluate_match_small st _env v []           err_v = (st, RErr (RRaise err_v))
+evaluate_match_small st  env v' ((p,e):pes) err_v =
+  if allDistinct (pat_bindings p []) then
+    case pmatch (c env) (refs st) p v' (v env) of
+      Match env_v'     -> evaluateSmall st env {v = env_v'} [e]
+      No_Match         -> evaluate_match_small st env v' pes err_v
+      Match_Type_Error -> (st, RErr (RAbort RType_Error))
+  else
+    (st, RErr (RAbort RType_Error))
+
+
+
 force :: State -> V -> (State, V)
 force st (Thunk env e) = case evaluateSmall st env [e] of
   (st', RVal [Thunk env' e']) -> force st' (Thunk env' e')
   (st', RVal v) -> (st', head v)
+  (st', RErr v) -> undefined
 force st v = (st, v)
 
 forceExpList :: State -> Environment V -> [Exp] -> (State, Result [V] V)
