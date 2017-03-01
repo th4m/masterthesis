@@ -49,7 +49,8 @@ evaluate st env  [App op es] =
       if op == OpApp then
         case do_opapp (reverse vs) of
           Just (env', e) ->
-            (st', RErr (RAbort RTimeout_Error))
+            -- (st', RErr (RAbort RTimeout_Error))
+            evaluate st' env' [e]
           Nothing ->
             (st', RErr (RAbort RType_Error))
       else
@@ -148,7 +149,8 @@ evaluateSmall st env [App op es]     =
       if op == OpApp then
         case do_opapp (reverse vs) of
           Just (env', e) ->
-            (st', RErr (RAbort RTimeout_Error))
+            evaluateSmall st' env' [e]
+            -- (st', RErr (RAbort RTimeout_Error))
           Nothing ->
             (st', RErr (RAbort RType_Error))
       else
