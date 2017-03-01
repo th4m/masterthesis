@@ -125,7 +125,7 @@ evaluateSmall env [Raise e]       =
 evaluateSmall env [Handle e pes]  =
   case forceExpList env [e] of
     RErr (RRaise v) -> evaluate_match_small env v pes v
-    res                    -> res
+    res             -> res
 evaluateSmall env [Con cn es]     =
   if do_con_check (c env) cn (fromIntegral (length es)) then
     case forceExpList env (reverse es) of
@@ -158,23 +158,19 @@ evaluateSmall env [App op es]     =
           Nothing  -> RErr (RAbort RType_Error)
     RErr v  -> undefined
 evaluateSmall env [Log lop e1 e2] =
-  case evaluateSmall env [e1] of
-    RVal v1 ->
-      case do_log lop v1' e2 of
-        Just (Exp e) -> RVal [Thunk env e]
-        Just (Val v) -> RVal [v]
-        Nothing      -> RErr (RAbort RType_Error)
-      where v1' = force (head v1)
+  case forceExpList env [e1] of
+    RVal v1 -> case do_log lop (head v1) e2 of
+      Just (Exp e) -> RVal [Thunk env e]
+      Just (Val v) -> RVal [v]
+      Nothing      -> RErr (RAbort RType_Error)
     res -> res
 evaluateSmall env [Mat e pes]     =
-  case evaluateSmall env [e] of
-    RVal v' -> evaluate_match_small env val pes bindv
-      where val = force (head v')
+  case forceExpList env [e] of
+    RVal v -> evaluate_match_small env (head v) pes bindv
     res -> res
 evaluateSmall env [Let xo e1 e2]  =
-  case evaluateSmall env [e1] of
-    RVal v' -> case force (head v') of
-      val -> evaluateSmall env {v = opt_bind xo val (v env)} [e2]
+  case forceExpList env [e1] of
+    RVal v' ->  evaluateSmall env {v = opt_bind xo (head v') (v env)} [e2]
     res -> res
 evaluateSmall env [LetRec funs e] =
   if allDistinct (map (\(x,y,z) -> x) funs) then
@@ -182,12 +178,11 @@ evaluateSmall env [LetRec funs e] =
   else
     RErr (RAbort RType_Error)
 evaluateSmall env [If e1 e2 e3]   =
-  case evaluateSmall env [e1] of
+  case forceExpList env [e1] of
     RVal v ->
-      case do_if v' e2 e3 of
+      case do_if (head v) e2 e3 of
         Just e  -> RVal [Thunk env e]
         Nothing -> RErr (RAbort RType_Error)
-      where v' = force (head v)
     res -> res
 evaluateSmall env [TAnnot e t]    = evaluateSmall env [e]
 
@@ -204,18 +199,20 @@ evaluate_match_small  env v' ((p,e):pes) err_v = undefined
 
 
 
-force :: V -> V
+force :: V -> Result [V] V
 force (Thunk env e) = case evaluateSmall env [e] of
   RVal [Thunk env' e'] -> force (Thunk env' e')
-  RVal v -> head v
-  res -> undefined
-force v = v
+  res -> res
+force v = RVal [v]
 
 forceExpList :: Environment V -> [Exp] -> Result [V] V
 forceExpList _env []    = RVal []
 forceExpList env (e:es) =
   case evaluateSmall env [e] of
-    RVal v' -> RVal (val:vals)
-      where val  = force (head v')
-            RVal vals = forceExpList env es
+    RVal v' -> case force (head v') of
+      RVal val ->
+        case forceExpList env es of
+          RVal vs -> RVal ((head val):vs)
+          res -> res
+      res -> res
     res -> res
