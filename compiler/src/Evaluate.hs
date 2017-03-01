@@ -90,7 +90,7 @@ evaluate st env [LetRec funs e] =
 evaluate st env [TAnnot e t]    = evaluate st env [e]
 
 evaluate_match :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
-evaluate_match st _env v []           err_v = (st, RErr (RRaise err_v))
+evaluate_match st _env _v []          err_v = (st, RErr (RRaise err_v))
 evaluate_match st  env v' ((p,e):pes) err_v =
   if allDistinct (pat_bindings p []) then
     case pmatch (c env) (refs st) p v' (v env) of
@@ -100,6 +100,9 @@ evaluate_match st  env v' ((p,e):pes) err_v =
   else
     (st, RErr (RAbort RType_Error))
 
+
+
+------- Lazy Semantics ------
 
 -- | evaluateSmall should take a Thunk and return a Thunk or a fully
 --   evaluated value.
@@ -117,11 +120,11 @@ evaluateSmall st env [Raise e]       =
   case evaluateSmall st env [e] of
     (st', RVal v) -> case head v of
       Thunk env' e' -> (st', RVal [Thunk env' (Raise e')])
-      v' -> (st', RErr (RRaise (head v)))
+      v' -> (st', RErr (RRaise v'))
     res -> res
 evaluateSmall st env [Handle e pes]  =
   case forceExpList st env [e] of
-    (st', RErr (RRaise v)) -> undefined -- evaluate_match
+    (st', RErr (RRaise v)) -> evaluate_match_small st' env v pes v
     res                    -> res
 evaluateSmall st env [Con cn es]     =
   if do_con_check (c env) cn (fromIntegral (length es)) then
@@ -174,7 +177,7 @@ evaluateSmall st env [Let xo e1 e2]  =
     res -> res
 evaluateSmall st env [LetRec funs e] =
   if allDistinct (map (\(x,y,z) -> x) funs) then
-    undefined
+    evaluateSmall st (env {v = build_rec_env funs env (v env)}) [e]
   else
     (st, RErr (RAbort RType_Error))
 evaluateSmall st env [If e1 e2 e3]   =
@@ -188,7 +191,7 @@ evaluateSmall st env [If e1 e2 e3]   =
 evaluateSmall st env [TAnnot e t]    = evaluateSmall st env [e]
 
 evaluate_match_small :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
-evaluate_match_small st _env v []           err_v = (st, RErr (RRaise err_v))
+evaluate_match_small st _env _v []          err_v = (st, RErr (RRaise err_v))
 evaluate_match_small st  env v' ((p,e):pes) err_v =
   if allDistinct (pat_bindings p []) then
     case pmatch (c env) (refs st) p v' (v env) of
