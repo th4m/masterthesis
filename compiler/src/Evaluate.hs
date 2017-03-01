@@ -170,7 +170,7 @@ evaluateSmall st env [Mat e pes]     = undefined
 evaluateSmall st env [Let xo e1 e2]  =
   case evaluateSmall st env [e1] of
     (st', RVal v') -> case force st' (head v') of
-      (st'', val) -> evaluateSmall st' env {v = opt_bind xo val (v env)} [e2]
+      (st'', val) -> evaluateSmall st'' env {v = opt_bind xo val (v env)} [e2]
     res -> res
 evaluateSmall st env [LetRec funs e] =
   if allDistinct (map (\(x,y,z) -> x) funs) then
