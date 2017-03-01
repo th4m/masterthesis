@@ -157,7 +157,7 @@ evaluateSmall st env [Log lop e1 e2] =
   case evaluateSmall st env [e1] of
     (st', RVal v1) ->
       case do_log lop v1' e2 of
-        Just (Exp e) -> (st'', RVal [Thunk env e2])
+        Just (Exp e) -> (st'', RVal [Thunk env e])
         Just (Val v) -> (st'', RVal [v])
         Nothing      -> (st'', RErr (RAbort RType_Error))
       where (st'', v1') = force st' (head v1)
