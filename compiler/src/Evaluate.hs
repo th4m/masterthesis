@@ -143,7 +143,7 @@ evaluateSmall env [Var n]         =
 evaluateSmall env [Fun x e]       = RVal [Closure env x e]
 evaluateSmall env [Literal l]     = RVal [LitV l]
 evaluateSmall env [App op es]     =
-  case forceExpList env es of
+  case forceExpList env (reverse es) of
     RVal vs ->
       if op == OpApp then
         case do_opapp (reverse vs) of
@@ -156,7 +156,7 @@ evaluateSmall env [App op es]     =
         case doAppLazy op (reverse vs) of
           Just r   -> (list_result r)
           Nothing  -> RErr (RAbort RType_Error)
-    RErr v  -> undefined
+    res -> res
 evaluateSmall env [Log lop e1 e2] =
   case forceExpList env [e1] of
     RVal v1 -> case do_log lop (head v1) e2 of
