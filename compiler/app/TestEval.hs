@@ -78,25 +78,24 @@ letEx = ex $
 
 --------------- Test Laziness ---------------
 
-exSmall :: Exp -> (State, Result [V] V)
-exSmall e = evaluateSmall empty_st ex_env [e]
+exSmall :: Exp -> Result [V] V
+exSmall e = evaluateSmall ex_env [e]
 
 testSmall :: Exp -> V
 testSmall e = getVal $ exSmall e
 
-exForce :: Exp -> (State, V)
-exForce e = force st' (head v)
-  where (st', RVal v) = evaluateSmall empty_st ex_env [e]
+exForce :: Exp -> V
+exForce e = getVal $ force $ head v
+  where RVal v = evaluateSmall ex_env [e]
 
 testForce :: Exp -> V
-testForce e = val
-  where (st, val) = exForce e
+testForce e = exForce e
 
 ---------------------------------------------
 
-getVal :: (State, Result [V] V) -> V
-getVal (st, RVal a) = head a
-getVal (st, RErr b) = getError b
+getVal :: Result [V] V -> V
+getVal (RVal a) = head a
+getVal (RErr b) = getError b
 
 getError :: Error_Result a -> a
 getError (RRaise a) = a
