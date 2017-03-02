@@ -49,7 +49,6 @@ data V
   | VectorV [V]
   | Thunk (Environment V) Exp
   deriving (Eq, Ord, Show)
-  -- More in the future?
 
 bindv = ConV (Just ("Bind", TypeExn (Short "Bind"))) []
 
@@ -278,6 +277,47 @@ do_if v e1 e2 =
   else
     Nothing
 
+data Eq_Result
+  = Eq_Val Bool
+  | Eq_Type_Error
+
+do_eq :: V -> V -> Eq_Result
+do_eq (LitV l1) (LitV l2) =
+  if lit_same_type l1 l2 then
+    Eq_Val (l1 == l2)
+  else
+    Eq_Type_Error
+do_eq (Loc l1)           (Loc l2)           = Eq_Val (l1 == l2)
+do_eq (ConV cn1 vs1)     (ConV cn2 vs2)     =
+  if cn1 == cn2 && (length vs1 == length vs2) then
+    do_eq_list vs1 vs2
+  else if ctor_same_type cn1 cn2 then
+    Eq_Val False
+  else
+    Eq_Type_Error
+do_eq (VectorV vs1)      (VectorV vs2)      =
+  if length vs1 == length vs2 then
+    do_eq_list vs1 vs2
+  else
+    Eq_Val False
+do_eq (Closure _ _ _)    (Closure _ _ _)    = Eq_Val True
+do_eq (Closure _ _ _)    (RecClosure _ _ _) = Eq_Val True
+do_eq (RecClosure _ _ _) (Closure _ _ _)    = Eq_Val True
+do_eq (RecClosure _ _ _) (RecClosure _ _ _) = Eq_Val True
+do_eq _                  _                  = Eq_Type_Error
+
+do_eq_list :: [V] -> [V] -> Eq_Result
+do_eq_list [] [] = Eq_Val True
+do_eq_list (v1:vs1) (v2:vs2) =
+  case do_eq v1 v2 of
+    Eq_Type_Error -> Eq_Type_Error
+    Eq_Val r ->
+      if not r then
+        Eq_Val False
+      else
+        do_eq_list vs1 vs2
+do_eq_list _ _ = Eq_Val False
+
 do_opapp :: [V] -> Maybe (Environment V, Exp)
 do_opapp vs =
   case vs of
@@ -341,6 +381,12 @@ doAppLazy op vs =
       Just $ RVal $ LitV $ Word8 $ opw8_lookup op w1 w2
     (OPW W64 op, [LitV (Word64 w1), LitV (Word64 w2)]) ->
       Just $ RVal $ LitV $ Word64 $ opw64_lookup op w1 w2
+    -- Shift operations
+    (Equality, [v1, v2]) ->
+      case do_eq v1 v2 of
+        Eq_Type_Error -> Nothing
+        Eq_Val b      -> Just $ RVal $ boolv b
+    _ -> Nothing
 
 pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val
 pmatchLazy envC (PVar x) v' env = Match $ (x, v'):env
