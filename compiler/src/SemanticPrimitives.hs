@@ -4,6 +4,8 @@ import AbsCakeML
 import Lib
 
 import Numeric.Natural
+import Data.Word
+import Data.Bits
 import qualified Data.Set as S
 -- import qualified Data.Map as Map
 
@@ -72,7 +74,7 @@ data Result a b
 -- | Stores
 data Store_V a
   = RefV a
-  -- W8Array [Word8]
+  | W8Array [Word8]
   | VArray [a]
   deriving Show
 
@@ -127,10 +129,12 @@ lookup_var_id id env =
 lit_same_type :: Lit -> Lit -> Bool
 lit_same_type l1 l2 =
   case (l1, l2) of
-    (IntLit  _, IntLit  _) -> True
-    (CharLit _, CharLit _) -> True
-    (StrLit  _, StrLit  _) -> True
-    _                      -> False
+    (IntLit _, IntLit _) -> True
+    (Char   _, Char   _) -> True
+    (StrLit _, StrLit _) -> True
+    (Word8  _, Word8  _) -> True
+    (Word64 _, Word64 _) -> True
+    _                    -> False
 
 data Match_Result a
   = No_Match
@@ -305,6 +309,23 @@ opb_lookup n =
     LEq -> (<=)
     GEq -> (>=)
 
+opw8_lookup :: Opw -> Word8 -> Word8 -> Word8
+opw8_lookup op =
+  case op of
+    AndW -> (.&.)
+    OrW  -> (.|.)
+    XOr  -> xor
+    Add  -> (+)
+    Sub  -> (-)
+
+opw64_lookup :: Opw -> Word64 -> Word64 -> Word64
+opw64_lookup op =
+  case op of
+    AndW -> (.&.)
+    OrW  -> (.|.)
+    XOr  -> xor
+    Add  -> (+)
+    Sub  -> (-)
 
 ------ Lazy Semantics ------
 
@@ -316,6 +337,10 @@ doAppLazy op vs =
       Just (RVal (LitV (IntLit (opn_lookup op n1 n2))))
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (RVal (boolv (opb_lookup op n1 n2)))
+    (OPW W8 op, [LitV (Word8 w1), LitV (Word8 w2)]) ->
+      Just $ RVal $ LitV $ Word8 $ opw8_lookup op w1 w2
+    (OPW W64 op, [LitV (Word64 w1), LitV (Word64 w2)]) ->
+      Just $ RVal $ LitV $ Word64 $ opw64_lookup op w1 w2
 
 pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val
 pmatchLazy envC (PVar x) v' env = Match $ (x, v'):env
