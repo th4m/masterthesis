@@ -81,22 +81,15 @@ letEx = ex $
 exSmall :: Exp -> Result [V] V
 exSmall e = evaluateSmall ex_env [e]
 
-testSmall :: Exp -> V
-testSmall e = getVal $ exSmall e
+exForce :: Exp -> Result [V] V
+exForce e = forceExpList ex_env [e]
 
-exForce :: Exp -> V
-exForce e = getVal $ force $ head v
-  where RVal v = evaluateSmall ex_env [e]
-
-testForce :: Exp -> V
-testForce e = exForce e
-
+letExSmall = exSmall $
+  Let (Just "cepa") (Literal (IntLit 3))
+  (Log And (
+      App (OPB LEq) [Var (Short "cepa"),
+                     Literal (IntLit 3)])
+    ((App (OPB GEq) [Var (Short "cepa"),
+                     Literal (IntLit 3)]))
+  )
 ---------------------------------------------
-
-getVal :: Result [V] V -> V
-getVal (RVal a) = head a
-getVal (RErr b) = getError b
-
-getError :: Error_Result a -> a
-getError (RRaise a) = a
-getError (RAbort a) = error $ "RAbort"
