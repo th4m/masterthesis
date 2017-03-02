@@ -188,14 +188,14 @@ evaluateSmall env [TAnnot e t]    = evaluateSmall env [e]
 
 evaluate_match_small :: Environment V -> V -> [(Pat, Exp)] -> V -> Result [V] V
 evaluate_match_small _env _v []          err_v = RErr (RRaise err_v)
-evaluate_match_small  env v' ((p,e):pes) err_v = undefined
-  -- if allDistinct (pat_bindings p []) then
-  --   case pmatch (c env) (refs st) p v' (v env) of
-  --     Match env_v'     -> evaluateSmall env {v = env_v'} [e]
-  --     No_Match         -> evaluate_match_small env v' pes err_v
-  --     Match_Type_Error -> RErr (RAbort RType_Error)
-  -- else
-  --   RErr (RAbort RType_Error)
+evaluate_match_small  env v' ((p,e):pes) err_v =
+  if allDistinct (pat_bindings p []) then
+    case pmatchLazy (c env) p v' (v env) of
+      Match env_v'     -> evaluateSmall env {v = env_v'} [e]
+      No_Match         -> evaluate_match_small env v' pes err_v
+      Match_Type_Error -> RErr (RAbort RType_Error)
+  else
+    RErr (RAbort RType_Error)
 
 
 

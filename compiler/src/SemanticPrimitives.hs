@@ -132,7 +132,7 @@ lit_same_type l1 l2 =
     (StrLit  _, StrLit  _) -> True
     _                      -> False
 
-data Match_Result a 
+data Match_Result a
   = No_Match
   | Match_Type_Error
   | Match a
@@ -256,14 +256,6 @@ do_app s op vs =
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (s, RVal (boolv (opb_lookup op n1 n2)))
 
-doAppLazy :: Op -> [V] -> Maybe (Result V V)
-doAppLazy op vs =
-  case (op, vs) of
-    (OPN op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
-      Just (RVal (LitV (IntLit (opn_lookup op n1 n2))))
-    (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
-      Just (RVal (boolv (opb_lookup op n1 n2)))
-
 do_log :: LOp -> V -> Exp -> Maybe Exp_or_Val
 do_log l v e =
   case (l, v) of
@@ -312,3 +304,57 @@ opb_lookup n =
     Gt  -> (>)
     LEq -> (<=)
     GEq -> (>=)
+
+
+------ Lazy Semantics ------
+
+
+doAppLazy :: Op -> [V] -> Maybe (Result V V)
+doAppLazy op vs =
+  case (op, vs) of
+    (OPN op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (RVal (LitV (IntLit (opn_lookup op n1 n2))))
+    (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (RVal (boolv (opb_lookup op n1 n2)))
+
+pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val
+pmatchLazy envC (PVar x) v' env = Match $ (x, v'):env
+pmatchLazy envC (PLit l) (LitV l') env =
+  if l == l' then
+    Match env
+  else if lit_same_type l l' then
+    No_Match
+  else
+    Match_Type_Error
+pmatchLazy envC (PCon (Just n) ps) (ConV (Just (n', t')) vs) env =
+  case lookup_alist_mod_env n envC of
+    Just (l, t) ->
+      if same_tid t t' && length ps == 1 then
+        if same_ctor (id_to_n n, t) (n', t') then
+          pmatchListLazy envC ps vs env
+        else
+          No_Match
+      else
+        Match_Type_Error
+    _           -> Match_Type_Error
+pmatchLazy envC (PCon Nothing ps) (ConV Nothing vs) env =
+  if length ps == length vs then
+    pmatchListLazy envC ps vs env
+  else
+    Match_Type_Error
+pmatchLazy envC (PRef p) (Loc lnum) env = undefined
+  -- case store_lookup lnum s of
+  --   Just (RefV v) -> pmatch envC s p v env
+  --   Just _        -> Match_Type_Error
+  --   Nothing       -> Match_Type_Error
+pmatchLazy envC (PTAnnot p t) v env =
+  pmatchLazy envC p v env
+pmatchLazy envC _ _ env = Match_Type_Error
+
+pmatchListLazy envC [] [] env = Match env
+pmatchListLazy envC (p:ps) (v:vs) env =
+  case pmatchLazy envC p v env of
+    No_Match -> No_Match
+    Match_Type_Error -> Match_Type_Error
+    Match env' -> pmatchListLazy envC ps vs env'
+pmatchListLazy _envC _ _ _env = Match_Type_Error
