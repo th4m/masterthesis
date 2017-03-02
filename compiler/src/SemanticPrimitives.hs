@@ -188,7 +188,14 @@ pmatch envC s (PTAnnot p t) v env =
   pmatch envC s p v env
 pmatch envC _ _ _ env = Match_Type_Error
 
+
 pmatch_list envC s [] [] env = Match env
+pmatch_list envC s (p:ps) (v:vs) env =
+  case pmatch envC s p v env of
+    No_Match -> No_Match
+    Match_Type_Error -> Match_Type_Error
+    Match env' -> pmatch_list envC s ps vs env'
+pmatch_list _envC _s _ _ _env = Match_Type_Error
 
 data State = St {
   refs          :: Store V,
