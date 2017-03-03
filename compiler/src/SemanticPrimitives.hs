@@ -319,6 +319,9 @@ do_eq_list (v1:vs1) (v2:vs2) =
         do_eq_list vs1 vs2
 do_eq_list _ _ = Eq_Val False
 
+prim_exn :: ConN -> V
+prim_exn cn = ConV (Just (cn, TypeExn (Short cn))) []
+
 do_opapp :: [V] -> Maybe (Environment V, Exp)
 do_opapp vs =
   case vs of
@@ -332,6 +335,22 @@ do_opapp vs =
       else
         Nothing
     _ -> Nothing
+
+
+v_to_char_list :: V -> Maybe [Char]
+v_to_char_list (ConV (Just (cn, TypeId (Short tn))) []) =
+  if cn == "nil" && tn == "list" then
+    Just []
+  else
+    Nothing
+v_to_char_list (ConV (Just (cn, TypeId (Short tn))) [LitV (Char c), v]) =
+  if cn == "::" && tn == "list" then
+    case v_to_char_list v of
+      Just cs -> Just (c:cs)
+      Nothing -> Nothing
+  else
+    Nothing
+v_to_char_list _ = Nothing
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
@@ -417,6 +436,20 @@ doAppLazy op vs =
       Just $ RVal $ LitV $ Char $ C.chr i
     (ChOpb op, [LitV (Char c1), LitV (Char c2)]) ->
       Just $ RVal $ boolv $ opb_lookup op (C.ord c1) (C.ord c2)
+    (Implode, [v]) ->
+      case v_to_char_list v of
+        Just ls -> Just $ RVal $ LitV $ StrLit ls
+        Nothing -> Nothing
+    (StrSub, [LitV (StrLit str), LitV (IntLit i)]) ->
+      if i < 0 then
+        Just $ RErr $ RRaise $ prim_exn "SubScript"
+      else
+        if i >= length str then
+          Just $ RErr $ RRaise $ prim_exn "SubScript"
+        else
+          Just $ RVal $ LitV $ Char $ str !! i
+    (StrLen, [LitV (StrLit str)]) ->
+      Just $ RVal $ LitV $ IntLit $ length str
     _ -> Nothing
 
 pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val

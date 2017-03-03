@@ -107,6 +107,10 @@ data Op
   | Ord
   | Chr
   | ChOpb Opb
+  -- String operations
+  | Implode
+  | StrSub
+  | StrLen
   deriving (Eq, Show, Ord)
 
 -- | Built-in binary operations
