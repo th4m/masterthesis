@@ -402,6 +402,14 @@ doAppLazy op vs =
       case do_eq v1 v2 of
         Eq_Type_Error -> Nothing
         Eq_Val b      -> Just $ RVal $ boolv b
+    (WordFromInt W8, [LitV (IntLit i)]) ->
+      Just $ RVal $ LitV $ Word8 $ toEnum i
+    (WordFromInt W64, [LitV (IntLit i)]) ->
+      Just $ RVal $ LitV $ Word8 $ toEnum i
+    (WordToInt W8, [LitV (IntLit i)]) ->
+      Just $ RVal $ LitV $ Word8 $ fromIntegral i
+    (WordToInt W64, [LitV (IntLit i)]) ->
+      Just $ RVal $ LitV $ Word64 $ fromIntegral i
     _ -> Nothing
 
 pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val
