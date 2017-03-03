@@ -103,6 +103,10 @@ data Op
   -- Word/Integer conversions
   | WordFromInt Word_Size
   | WordToInt Word_Size
+  -- Char operations
+  | Ord
+  | Chr
+  | ChOpb Opb
   deriving (Eq, Show, Ord)
 
 -- | Built-in binary operations

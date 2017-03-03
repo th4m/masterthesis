@@ -6,6 +6,7 @@ import Lib
 import Numeric.Natural
 import Data.Word
 import Data.Bits
+import qualified Data.Char as C
 import qualified Data.Set as S
 -- import qualified Data.Map as Map
 
@@ -410,6 +411,12 @@ doAppLazy op vs =
       Just $ RVal $ LitV $ Word8 $ fromIntegral i
     (WordToInt W64, [LitV (IntLit i)]) ->
       Just $ RVal $ LitV $ Word64 $ fromIntegral i
+    (Ord, [LitV (Char c)]) ->
+      Just $ RVal $ LitV $ IntLit $ C.ord c
+    (Chr, [LitV (IntLit i)]) ->
+      Just $ RVal $ LitV $ Char $ C.chr i
+    (ChOpb op, [LitV (Char c1), LitV (Char c2)]) ->
+      Just $ RVal $ boolv $ opb_lookup op (C.ord c1) (C.ord c2)
     _ -> Nothing
 
 pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val
