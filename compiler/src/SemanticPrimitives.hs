@@ -404,13 +404,13 @@ opw64_lookup op =
 -- Unsure if ASR and LSR are the same. They should be when working with unsigned?
 shift8_lookup :: Shift -> Word8 -> Natural -> Word8
 shift8_lookup sh = case sh of
-  ASR -> \w n -> shiftR w (fromIntegral n)
+  ASR -> undefined -- \w n -> shiftR w (fromIntegral n)
   LSR -> \w n -> shiftR w (fromIntegral n)
   LSL -> \w n -> shiftL w (fromIntegral n)
 
 shift64_lookup :: Shift -> Word64 -> Natural -> Word64
 shift64_lookup sh = case sh of
-  ASR -> \w n -> shiftR w (fromIntegral n)
+  ASR -> undefined -- \w n -> shiftR w (fromIntegral n)
   LSR -> \w n -> shiftR w (fromIntegral n)
   LSL -> \w n -> shiftL w (fromIntegral n)
 
@@ -424,26 +424,26 @@ doAppLazy op vs =
       Just (RVal (LitV (IntLit (opn_lookup op n1 n2))))
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (RVal (boolv (opb_lookup op n1 n2)))
-    (OPW W8 op, [LitV (Word8 w1), LitV (Word8 w2)]) ->
-      Just $ RVal $ LitV $ Word8 $ opw8_lookup op w1 w2
-    (OPW W64 op, [LitV (Word64 w1), LitV (Word64 w2)]) ->
-      Just $ RVal $ LitV $ Word64 $ opw64_lookup op w1 w2
-    (Shift W8 op n, [LitV (Word8 w)]) ->
-      Just $ RVal $ LitV $ Word8 $ shift8_lookup op w n
-    (Shift W64 op n, [LitV (Word64 w)]) ->
-      Just $ RVal $ LitV $ Word64 $ shift64_lookup op w n
+    (OPW W8 op, [LitV (Word8 w1), LitV (Word8 w2)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ opw8_lookup op w1 w2
+    (OPW W64 op, [LitV (Word64 w1), LitV (Word64 w2)]) -> undefined
+      -- Just $ RVal $ LitV $ Word64 $ opw64_lookup op w1 w2
+    (Shift W8 op n, [LitV (Word8 w)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ shift8_lookup op w n
+    (Shift W64 op n, [LitV (Word64 w)]) -> undefined
+      -- Just $ RVal $ LitV $ Word64 $ shift64_lookup op w n
     (Equality, [v1, v2]) ->
       case do_eq v1 v2 of
         Eq_Type_Error -> Nothing
         Eq_Val b      -> Just $ RVal $ boolv b
-    (WordFromInt W8, [LitV (IntLit i)]) ->
-      Just $ RVal $ LitV $ Word8 $ toEnum i
-    (WordFromInt W64, [LitV (IntLit i)]) ->
-      Just $ RVal $ LitV $ Word8 $ toEnum i
-    (WordToInt W8, [LitV (IntLit i)]) ->
-      Just $ RVal $ LitV $ Word8 $ fromIntegral i
-    (WordToInt W64, [LitV (IntLit i)]) ->
-      Just $ RVal $ LitV $ Word64 $ fromIntegral i
+    (WordFromInt W8, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ toEnum i
+    (WordFromInt W64, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ toEnum i
+    (WordToInt W8, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ fromIntegral i
+    (WordToInt W64, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word64 $ fromIntegral i
     (Ord, [LitV (Char c)]) ->
       Just $ RVal $ LitV $ IntLit $ C.ord c
     (Chr, [LitV (IntLit i)]) ->
