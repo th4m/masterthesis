@@ -336,6 +336,20 @@ do_opapp vs =
         Nothing
     _ -> Nothing
 
+v_to_list :: V -> Maybe [V]
+v_to_list (ConV (Just (cn, TypeId (Short tn))) []) =
+  if cn == "nil" && tn == "list" then
+    Just []
+  else
+    Nothing
+v_to_list (ConV (Just (cn, TypeId (Short tn))) [v1,v2]) =
+  if cn == "::" && tn == "list" then
+    case v_to_list v2 of
+      Just vs -> Just (v1:vs)
+      Nothing -> Nothing
+  else
+    Nothing
+v_to_list _ = Nothing
 
 v_to_char_list :: V -> Maybe [Char]
 v_to_char_list (ConV (Just (cn, TypeId (Short tn))) []) =
@@ -450,6 +464,20 @@ doAppLazy op vs =
           Just $ RVal $ LitV $ Char $ str !! i
     (StrLen, [LitV (StrLit str)]) ->
       Just $ RVal $ LitV $ IntLit $ length str
+    (VFromList, [v]) ->
+      case v_to_list v of
+        Just vs -> Just $ RVal $ VectorV vs
+        Nothing -> Nothing
+    (VSub, [VectorV vs, LitV (IntLit i)]) ->
+      if i < 0 then
+        Just $ RErr $ RRaise $ prim_exn "Subscript"
+      else
+        if i >= length vs then
+          Just $ RErr $ RRaise $ prim_exn "Subscript"
+        else
+          Just $ RVal $ vs !! i
+    (VLength, [VectorV vs]) ->
+      Just $ RVal $ LitV $ IntLit $ length vs
     _ -> Nothing
 
 pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val

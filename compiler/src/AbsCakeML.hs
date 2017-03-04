@@ -111,6 +111,10 @@ data Op
   | Implode
   | StrSub
   | StrLen
+  -- Vector operations
+  | VFromList
+  | VSub
+  | VLength
   deriving (Eq, Show, Ord)
 
 -- | Built-in binary operations
