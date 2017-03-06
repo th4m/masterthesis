@@ -128,8 +128,6 @@ evaluateSmall env [Handle e pes]  =
     res             -> res
 evaluateSmall env [Con cn es]     =
   if do_con_check (c env) cn (fromIntegral (length es)) then
-    -- case evalAndForce env (reverse es) of
-    --   RVal vs ->
     case build_conv (c env) cn (reverse (map (Thunk env) es)) of -- map (Thunk env) es
       Just v  -> RVal [v]
       Nothing -> RErr (RAbort RType_Error)
@@ -143,20 +141,26 @@ evaluateSmall env [Var n]         =
 evaluateSmall env [Fun x e]       = RVal [Closure env x e]
 evaluateSmall env [Literal l]     = RVal [LitV l]
 evaluateSmall env [App op es]     =
-  case evalAndForce env (reverse es) of -- force depending on operation
-    RVal vs ->
-      if op == OpApp then
-        case do_opapp (reverse vs) of
+  if op == OpApp then
+    case evalAndForce env es of
+      RVal vs ->
+        case do_opapp vs of
           Just (env', e) ->
             evaluateSmall env' [e]
-            -- (st', RErr (RAbort RTimeout_Error))
           Nothing ->
-            RErr (RAbort RType_Error)
-      else
-        case doAppLazy op (reverse vs) of
-          Just r   -> (list_result r)
-          Nothing  -> RErr (RAbort RType_Error)
-    res -> res
+            RErr $ RAbort RType_Error
+      res -> res
+  else
+    case op of
+      OPN op ->
+        evalOnOpn env op es
+      _ ->
+        case evalAndForce env es of
+          RVal vs ->
+            case doAppLazy op vs of
+              Just r  -> list_result r
+              Nothing -> RErr $ RAbort RType_Error
+          res -> res
 evaluateSmall env [Log lop e1 e2] =
   case evalAndForce env [e1] of
     RVal v1 -> case do_log lop (head v1) e2 of
@@ -215,4 +219,53 @@ evalAndForce env (e:es) =
           RVal vs -> RVal ((head val):vs)
           res -> res
       res -> res
+    res -> res
+
+evalOnOpn :: Environment V -> Opn -> [Exp] -> Result [V] V
+evalOnOpn _ _ [] = RVal []
+evalOnOpn env Times  (e:es) =
+  case evalAndForce env [e] of
+    RVal v ->
+      if (head v) == LitV (IntLit 0) then
+        RVal v
+      else
+        case evalAndForce env es of
+          RVal vs ->
+            case doAppLazy (OPN Times) (head v: vs) of
+              Just r  -> list_result r
+              Nothing -> RErr $ RAbort RType_Error
+          res     -> res
+    res -> res
+evalOnOpn env Divide (e:es) =
+  case evalAndForce env [e] of
+    RVal v ->
+      if (head v) == LitV (IntLit 0) then
+        RVal v
+      else
+        case evalAndForce env es of
+          RVal vs ->
+            case doAppLazy (OPN Divide) (head v: vs) of
+              Just r  -> list_result r
+              Nothing -> RErr $ RAbort RType_Error
+          res     -> res
+    res -> res
+evalOnOpn env Modulo (e:es) =
+  case evalAndForce env [e] of
+    RVal v ->
+      if (head v) == LitV (IntLit 0) then
+        RVal v
+      else
+        case evalAndForce env es of
+          RVal vs ->
+            case doAppLazy (OPN Modulo) (head v: vs) of
+              Just r  -> list_result r
+              Nothing -> RErr $ RAbort RType_Error
+          res     -> res
+    res -> res
+evalOnOpn env op      es    = -- Plus and Minus
+  case evalAndForce env es of
+    RVal vs ->
+      case doAppLazy (OPN op) vs of
+        Just r  -> list_result r
+        Nothing -> RErr $ RAbort RType_Error
     res -> res
