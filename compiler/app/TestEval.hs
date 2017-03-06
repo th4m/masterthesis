@@ -82,7 +82,7 @@ exSmall :: Exp -> Result [V] V
 exSmall e = evaluateSmall ex_env [e]
 
 exForce :: Exp -> Result [V] V
-exForce e = forceExpList ex_env [e]
+exForce e = evalAndForce ex_env [e]
 
 letExSmall = exSmall $
   Let (Just "cepa") (Literal (IntLit 3))
