@@ -123,17 +123,17 @@ evaluateSmall env [Raise e]       =
       v' -> RErr (RRaise v')
     res -> res
 evaluateSmall env [Handle e pes]  =
-  case forceExpList env [e] of
+  case evalAndForce env [e] of
     RErr (RRaise v) -> evaluate_match_small env v pes v
     res             -> res
 evaluateSmall env [Con cn es]     =
   if do_con_check (c env) cn (fromIntegral (length es)) then
-    case forceExpList env (reverse es) of
-      RVal vs ->
-        case build_conv (c env) cn (reverse vs) of
-          Just v  -> RVal [v]
-          Nothing -> RErr (RAbort RType_Error)
-      res -> res
+    -- case evalAndForce env (reverse es) of
+    --   RVal vs ->
+    case build_conv (c env) cn (reverse (map (Thunk env) es)) of -- map (Thunk env) es
+      Just v  -> RVal [v]
+      Nothing -> RErr (RAbort RType_Error)
+--res -> res
   else
     RErr (RAbort RType_Error)
 evaluateSmall env [Var n]         =
@@ -143,7 +143,7 @@ evaluateSmall env [Var n]         =
 evaluateSmall env [Fun x e]       = RVal [Closure env x e]
 evaluateSmall env [Literal l]     = RVal [LitV l]
 evaluateSmall env [App op es]     =
-  case forceExpList env (reverse es) of
+  case evalAndForce env (reverse es) of -- force depending on operation
     RVal vs ->
       if op == OpApp then
         case do_opapp (reverse vs) of
@@ -158,18 +158,18 @@ evaluateSmall env [App op es]     =
           Nothing  -> RErr (RAbort RType_Error)
     res -> res
 evaluateSmall env [Log lop e1 e2] =
-  case forceExpList env [e1] of
+  case evalAndForce env [e1] of
     RVal v1 -> case do_log lop (head v1) e2 of
       Just (Exp e) -> RVal [Thunk env e]
       Just (Val v) -> RVal [v]
       Nothing      -> RErr (RAbort RType_Error)
     res -> res
 evaluateSmall env [Mat e pes]     =
-  case forceExpList env [e] of
+  case evalAndForce env [e] of
     RVal v -> evaluate_match_small env (head v) pes bindv
     res -> res
 evaluateSmall env [Let xo e1 e2]  =
-  case forceExpList env [e1] of
+  case evalAndForce env [e1] of
     RVal v' ->  evaluateSmall env {v = opt_bind xo (head v') (v env)} [e2]
     res -> res
 evaluateSmall env [LetRec funs e] =
@@ -178,7 +178,7 @@ evaluateSmall env [LetRec funs e] =
   else
     RErr (RAbort RType_Error)
 evaluateSmall env [If e1 e2 e3]   =
-  case forceExpList env [e1] of
+  case evalAndForce env [e1] of
     RVal v ->
       case do_if (head v) e2 e3 of
         Just e  -> RVal [Thunk env e]
@@ -205,13 +205,13 @@ force (Thunk env e) = case evaluateSmall env [e] of
   res -> res
 force v = RVal [v]
 
-forceExpList :: Environment V -> [Exp] -> Result [V] V
-forceExpList _env []    = RVal []
-forceExpList env (e:es) =
+evalAndForce :: Environment V -> [Exp] -> Result [V] V
+evalAndForce _env []    = RVal []
+evalAndForce env (e:es) =
   case evaluateSmall env [e] of
     RVal v' -> case force (head v') of
       RVal val ->
-        case forceExpList env es of
+        case evalAndForce env es of
           RVal vs -> RVal ((head val):vs)
           res -> res
       res -> res
