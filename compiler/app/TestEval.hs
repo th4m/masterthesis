@@ -52,6 +52,17 @@ mulExp  e1 e2 = App (OPN Times)  [e1, e2]
 divExp  e1 e2 = App (OPN Divide) [e1, e2]
 modExp  e1 e2 = App (OPN Modulo) [e1, e2]
 
+eqExp es = App Equality es
+ordExp c = App Ord [Literal (Char c)]
+chrExp i = App Chr [Literal (IntLit i)]
+chopbExp op c1 c2 = App (ChOpb op) [Literal (Char c1), Literal (Char c2)]
+implExp es = App Implode es
+strsubExp str i = App StrSub [Literal (StrLit str), Literal (IntLit i)]
+strlenExp str = App StrLen [Literal (StrLit str)]
+vlistExp es = App VFromList es
+vsubExp es i = App VSub [(App VFromList es), Literal (IntLit i)]
+vlenExp es = App VLength [App VFromList es]
+
 andExp  e1 e2 = Log And e1 e2
 orExp   e1 e2 = Log Or  e1 e2
 
