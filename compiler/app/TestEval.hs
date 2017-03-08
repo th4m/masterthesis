@@ -24,7 +24,14 @@ insertVarIntoEnv env varn v' =
 -- | Returns an environment with variables "apa" = IntLit 7
 --   and "bepa" = IntLit 5
 ex_env = insertVarIntoEnv env1 "apa" (LitV(IntLit 7))
-  where env1 = insertVarIntoEnv empty_env "bepa" (LitV(IntLit 5))
+  where env1 = insertVarIntoEnv env2 "bepa" (LitV(IntLit 5))
+        env2 = empty_env {c =
+                          ([], [("::", (2, TypeId (Short "list"))),
+                               ("nil", (0, TypeId (Short "list")))])
+                         }
+
+buildList [] = Con (Just (Short "nil")) []
+buildList (e:es) = Con (Just (Short "::")) [e, buildList es]
 
 ------- Some shortcuts -------
 
@@ -87,6 +94,10 @@ letEx = ex $
                      Literal (IntLit 3)]))
   )
 
+intListEx = buildList [ Literal (IntLit 0)
+                      , Literal (IntLit 1)
+                      , Literal (IntLit 2)
+                      , Literal (IntLit 3)]
 
 --------------- Test Laziness ---------------
 

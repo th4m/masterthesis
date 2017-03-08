@@ -4,7 +4,7 @@ import AbsCakeML
 import SemanticPrimitives
 import Lib
 
-
+import Numeric.Natural
 
 list_result :: Result a b -> Result [a] b
 list_result (RVal v) = RVal [v]
@@ -154,6 +154,8 @@ evaluateSmall env [App op es]     =
     case op of
       OPN op ->
         evalOnOpn env op es
+      VFromList ->
+        undefined
       _ ->
         case evalAndForce env es of
           RVal vs ->
@@ -269,3 +271,30 @@ evalOnOpn env op      es    = -- Plus and Minus
         Just r  -> list_result r
         Nothing -> RErr $ RAbort RType_Error
     res -> res
+
+
+forceList :: V -> Result [V] V
+forceList (Thunk env e) = case evaluateSmall env [e] of
+  RVal [ConV _ (_)] -> undefined
+forceList v = RVal [v]
+
+-- forceList :: Environment V -> [Exp] -> Result [V] V
+-- forceList _   [] =
+--   RVal []
+-- forceList env [e@(Con (Just (Short cn)) es)] =
+--   case evaluateSmall env [e] of
+--     (RVal [ConV (Just ("::", TypeId (Short "nil"))) _]) ->
+--       case forceList env es of
+--         RVal vs -> RVal [ConV (Just (cn, TypeId (Short "nil"))) vs]
+--         res -> res
+--     res -> res
+-- forceList _ _ =
+--   RErr $ RAbort RType_Error
+
+-- forceList :: Environment V -> [Exp] -> Natural -> V
+-- forceList _   []     _ =
+--   ConV (Just ("nil", TypeId (Short "list"))) []
+-- --forceList env  es    0 = undefined
+-- forceList env (e:es) n =
+--   ConV (Just ("::", TypeId (Short "list"))) [head v, forceList env es (n-1)]
+--   where RVal v = force (Thunk env e)

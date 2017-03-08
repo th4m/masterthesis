@@ -15,7 +15,7 @@ data TId_or_Exn
   | TypeExn (Id ConN)
   deriving (Eq, Ord, Show)
 
-type AList_Mod_Env k v = (AList ModN (AList k v), AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
+type AList_Mod_Env k v = (AList ModN (AList k v), AList k v) -- (Map.Map ModN (Map.Map k v)), (Map.Map k v)
 
 merge_alist_mod_env (menv1, env1) (menv2, env2) =
   (menv1 ++ menv2, env1 ++ env2)
@@ -259,6 +259,22 @@ do_app s op vs =
       Just (s, RVal (LitV (IntLit (opn_lookup op n1 n2))))
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (s, RVal (boolv (opb_lookup op n1 n2)))
+    (VFromList, [v]) ->
+      case v_to_list v of
+        Just vs -> Just (s, RVal (VectorV vs))
+        Nothing -> Nothing
+    (VSub, [VectorV vs, LitV (IntLit i)]) ->
+      if i < 0 then
+        Just (s, RErr (RRaise (prim_exn "Subscript")))
+      else
+        if i >= length vs then
+          Just (s, RErr (RRaise (prim_exn "Subscript")))
+        else
+          Just (s, RVal (vs !! i))
+    (VLength, [VectorV vs]) ->
+      Just (s, RVal (LitV (IntLit (length vs))))
+    _ -> Nothing
+
 
 do_log :: LOp -> V -> Exp -> Maybe Exp_or_Val
 do_log l v e =
