@@ -481,9 +481,12 @@ doAppLazy op vs =
     (StrLen, [LitV (StrLit str)]) ->
       Just $ RVal $ LitV $ IntLit $ length str
     (VFromList, [v]) ->
-      case v_to_list v of
-        Just vs -> Just $ RVal $ VectorV vs
-        Nothing -> Nothing
+      case buildList v of
+        RVal [vs] ->
+          case v_to_list vs of
+            Just vs' -> Just $ RVal $ VectorV vs'
+            Nothing  -> Nothing
+        _ -> Nothing
     (VSub, [VectorV vs, LitV (IntLit i)]) ->
       if i < 0 then
         Just $ RErr $ RRaise $ prim_exn "Subscript"
@@ -537,3 +540,19 @@ pmatchListLazy envC (p:ps) (v:vs) env =
     Match_Type_Error -> Match_Type_Error
     Match env' -> pmatchListLazy envC ps vs env'
 pmatchListLazy _envC _ _ _env = Match_Type_Error
+
+-- | Recursively builds a "proper" list from a Con-expression.
+--   Pattern matches for Thunks that contain Con-expressions.
+buildList :: V -> Result [V] V
+buildList (Thunk env (Con cn es)) =
+  case cn of
+    Nothing -> RErr $ RAbort RType_Error
+    Just id ->
+      case lookup_alist_mod_env id (c env) of
+        Nothing       -> RErr $ RAbort RType_Error
+        Just (len, t) -> case len of
+          2 -> RVal [ConV (Just (id_to_n id, t)) [Thunk env (head es), head v2]]
+          0 -> RVal [ConV (Just (id_to_n id, t)) []]
+          _ -> RErr $ RAbort $ RType_Error
+          where RVal v2 = buildList (Thunk env (head (tail es)))
+buildList v = RErr $ RAbort $ RType_Error --RVal [v]

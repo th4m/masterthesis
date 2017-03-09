@@ -30,8 +30,8 @@ ex_env = insertVarIntoEnv env1 "apa" (LitV(IntLit 7))
                                ("nil", (0, TypeId (Short "list")))])
                          }
 
-buildList [] = Con (Just (Short "nil")) []
-buildList (e:es) = Con (Just (Short "::")) [e, buildList es]
+buildList' [] = Con (Just (Short "nil")) []
+buildList' (e:es) = Con (Just (Short "::")) [e, buildList' es]
 
 ------- Some shortcuts -------
 
@@ -94,10 +94,10 @@ letEx = ex $
                      Literal (IntLit 3)]))
   )
 
-intListEx = buildList [ Literal (IntLit 0)
-                      , Literal (IntLit 1)
-                      , Literal (IntLit 2)
-                      , Literal (IntLit 3)]
+intListEx = buildList' [ Literal (IntLit 0)
+                       , Literal (IntLit 1)
+                       , Literal (IntLit 2)
+                       , Literal (IntLit 3)]
 
 --------------- Test Laziness ---------------
 

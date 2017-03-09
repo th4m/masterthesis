@@ -155,7 +155,12 @@ evaluateSmall env [App op es]     =
       OPN op ->
         evalOnOpn env op es
       VFromList ->
-        undefined
+        -- case buildList (Thunk env (head es)) of
+        --   RVal vs ->
+            case doAppLazy VFromList [Thunk env (head es)] of
+              Just r  -> list_result r
+              Nothing -> RErr $ RAbort RType_Error
+          -- res -> res
       _ ->
         case evalAndForce env es of
           RVal vs ->
@@ -273,10 +278,6 @@ evalOnOpn env op      es    = -- Plus and Minus
     res -> res
 
 
-forceList :: V -> Result [V] V
-forceList (Thunk env e) = case evaluateSmall env [e] of
-  RVal [ConV _ (_)] -> undefined
-forceList v = RVal [v]
 
 -- forceList :: Environment V -> [Exp] -> Result [V] V
 -- forceList _   [] =
