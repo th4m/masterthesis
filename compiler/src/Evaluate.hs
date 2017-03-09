@@ -155,12 +155,12 @@ evaluateSmall env [App op es]     =
       OPN op ->
         evalOnOpn env op es
       VFromList ->
-        -- case buildList (Thunk env (head es)) of
-        --   RVal vs ->
-            case doAppLazy VFromList [Thunk env (head es)] of
+        case es of
+          [e] ->
+            case doAppLazy VFromList [Thunk env e] of
               Just r  -> list_result r
               Nothing -> RErr $ RAbort RType_Error
-          -- res -> res
+          _   -> RErr $ RAbort RType_Error -- Wrong amount of arguments
       _ ->
         case evalAndForce env es of
           RVal vs ->
