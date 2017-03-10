@@ -213,3 +213,24 @@ allTests = and
   , testStrsub
   , testLength
   ]
+
+-- Strict recursive tests that should not terminate
+testRec1 e =
+  ex $ App OpApp [recEx1, e]
+testRec2 e =
+  ex $ App OpApp [recEx1, e]
+
+-- Lazy recursive tests that should terminate
+testRecSmall1 e =
+  exSmall $ App OpApp [recEx1, e]
+testRecSmall2 e =
+  exSmall $ App OpApp [recEx2, e]
+
+
+-- Recursive expressions to test
+recEx1 =
+  LetRec [("fun", "par", If (Var (Short "par")) appFun false)] (Var (Short "fun"))
+  where appFun = (App OpApp [(Var (Short "fun")), true])
+recEx2 =
+  LetRec [("fun", "par", App (OPN Times) [Var (Short "par"), appFun])] (Var (Short "fun"))
+  where appFun = (App OpApp [Var (Short "fun"), Var (Short "par")])
