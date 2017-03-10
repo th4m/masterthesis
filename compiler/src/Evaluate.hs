@@ -105,8 +105,8 @@ evaluate_match st  env v' ((p,e):pes) err_v =
 
 ------- Lazy Semantics ------
 
--- | evaluateSmall should take a Thunk and return a Thunk or a fully
---   evaluated value.
+-- | evaluateSmall takes an expression and evaluates as little
+--   as possible. 
 evaluateSmall :: Environment V -> [Exp] -> Result [V] V
 evaluateSmall _env []             = RVal []
 evaluateSmall env (e1:e2:es)      =
@@ -128,7 +128,7 @@ evaluateSmall env [Handle e pes]  =
     res             -> res
 evaluateSmall env [Con cn es]     =
   if do_con_check (c env) cn (fromIntegral (length es)) then
-    case build_conv (c env) cn (reverse (map (Thunk env) es)) of -- map (Thunk env) es
+    case build_conv (c env) cn (reverse (map (Thunk env) es)) of
       Just v  -> RVal [v]
       Nothing -> RErr (RAbort RType_Error)
 --res -> res
@@ -180,9 +180,10 @@ evaluateSmall env [Mat e pes]     =
     RVal v -> evaluate_match_small env (head v) pes bindv
     res -> res
 evaluateSmall env [Let xo e1 e2]  =
-  case evalAndForce env [e1] of
-    RVal v' ->  evaluateSmall env {v = opt_bind xo (head v') (v env)} [e2]
-    res -> res
+  evaluateSmall env {v = opt_bind xo (Thunk env e1) (v env)} [e2]
+  -- case evalAndForce env [e1] of
+  --   RVal v' ->  evaluateSmall env {v = opt_bind xo (head v') (v env)} [e2]
+  --   res -> res
 evaluateSmall env [LetRec funs e] =
   if allDistinct (map (\(x,y,z) -> x) funs) then
     evaluateSmall (env {v = build_rec_env funs env (v env)}) [e]
