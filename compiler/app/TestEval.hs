@@ -214,17 +214,19 @@ allTests = and
   , testLength
   ]
 
--- Strict recursive tests that should not terminate
-testRec1 e =
-  ex $ App OpApp [recEx1, e]
-testRec2 e =
-  ex $ App OpApp [recEx1, e]
+-- Testing strict recursive semantics that should not terminate
+testRec1 =
+  ex $ App OpApp [recEx1, true]
+testRec2 =
+  ex $ App OpApp [recEx2, (Literal (IntLit 0))]
 
--- Lazy recursive tests that should terminate
-testRecSmall1 e =
-  exSmall $ App OpApp [recEx1, e]
-testRecSmall2 e =
-  exSmall $ App OpApp [recEx2, e]
+-- Testing lazy recursive that semantics should not terminate
+testRecSmall1 =
+  exForce $ App OpApp [recEx1, true]
+
+-- Testing lazy recursive semantics that should terminate
+testRecSmall2 =
+  exForce $ App OpApp [recEx2, (Literal (IntLit 0))]
 
 
 -- Recursive expressions to test
