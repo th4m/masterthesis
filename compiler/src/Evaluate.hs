@@ -180,13 +180,14 @@ evaluateSmall env [Mat e pes]     =
     RVal v -> evaluate_match_small env (head v) pes bindv
     res -> res
 evaluateSmall env [Let xo e1 e2]  =
-  evaluateSmall env {v = opt_bind xo (Thunk env e1) (v env)} [e2]
+  RVal [Thunk env {v = opt_bind xo (Thunk env e1) (v env)} e2]
   -- case evalAndForce env [e1] of
   --   RVal v' ->  evaluateSmall env {v = opt_bind xo (head v') (v env)} [e2]
   --   res -> res
 evaluateSmall env [LetRec funs e] =
   if allDistinct (map (\(x,y,z) -> x) funs) then
-    evaluateSmall (env {v = build_rec_env funs env (v env)}) [e]
+    RVal [Thunk env {v = build_rec_env funs env (v env)} e]
+    --evaluateSmall (env {v = build_rec_env funs env (v env)}) [e]
   else
     RErr (RAbort RType_Error)
 evaluateSmall env [If e1 e2 e3]   =
