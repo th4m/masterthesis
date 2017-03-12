@@ -219,6 +219,8 @@ testRec1 =
   ex $ App OpApp [recEx1, true]
 testRec2 =
   ex $ App OpApp [recEx2, (Literal (IntLit 0))]
+testRec3 =
+  ex $ Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
 
 -- Testing lazy recursive that semantics should not terminate
 testRecSmall1 =
@@ -227,6 +229,8 @@ testRecSmall1 =
 -- Testing lazy recursive semantics that should terminate
 testRecSmall2 =
   exForce $ App OpApp [recEx2, (Literal (IntLit 0))]
+testRecSmall3 =
+  exForce $ Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
 
 
 -- Recursive expressions to test
