@@ -146,7 +146,8 @@ evaluateLazy env [App op es]     =
       RVal vs ->
         case do_opapp vs of
           Just (env', e) ->
-            evaluateLazy env' [e]
+            -- evaluateLazy env' [e]
+            RVal [Thunk env' e]
           Nothing ->
             RErr $ RAbort RType_Error
       res -> res
@@ -232,72 +233,24 @@ evalAndForce env (e:es) =
 
 evalOnOpn :: Environment V -> Opn -> [Exp] -> Result [V] V
 evalOnOpn _ _ [] = RVal []
-evalOnOpn env Times  (e:es) =
-  case evalAndForce env [e] of
-    RVal v ->
-      if (head v) == LitV (IntLit 0) then
-        RVal v
-      else
-        case evalAndForce env es of
-          RVal vs ->
-            case doAppLazy (OPN Times) (head v: vs) of
-              Just r  -> list_result r
-              Nothing -> RErr $ RAbort RType_Error
-          res     -> res
-    res -> res
-evalOnOpn env Divide (e:es) =
-  case evalAndForce env [e] of
-    RVal v ->
-      if (head v) == LitV (IntLit 0) then
-        RVal v
-      else
-        case evalAndForce env es of
-          RVal vs ->
-            case doAppLazy (OPN Divide) (head v: vs) of
-              Just r  -> list_result r
-              Nothing -> RErr $ RAbort RType_Error
-          res     -> res
-    res -> res
-evalOnOpn env Modulo (e:es) =
-  case evalAndForce env [e] of
-    RVal v ->
-      if (head v) == LitV (IntLit 0) then
-        RVal v
-      else
-        case evalAndForce env es of
-          RVal vs ->
-            case doAppLazy (OPN Modulo) (head v: vs) of
-              Just r  -> list_result r
-              Nothing -> RErr $ RAbort RType_Error
-          res     -> res
-    res -> res
-evalOnOpn env op      es    = -- Plus and Minus
-  case evalAndForce env es of
-    RVal vs ->
-      case doAppLazy (OPN op) vs of
-        Just r  -> list_result r
-        Nothing -> RErr $ RAbort RType_Error
-    res -> res
-
-
-
--- forceList :: Environment V -> [Exp] -> Result [V] V
--- forceList _   [] =
---   RVal []
--- forceList env [e@(Con (Just (Short cn)) es)] =
---   case evaluateLazy env [e] of
---     (RVal [ConV (Just ("::", TypeId (Short "nil"))) _]) ->
---       case forceList env es of
---         RVal vs -> RVal [ConV (Just (cn, TypeId (Short "nil"))) vs]
---         res -> res
---     res -> res
--- forceList _ _ =
---   RErr $ RAbort RType_Error
-
--- forceList :: Environment V -> [Exp] -> Natural -> V
--- forceList _   []     _ =
---   ConV (Just ("nil", TypeId (Short "list"))) []
--- --forceList env  es    0 = undefined
--- forceList env (e:es) n =
---   ConV (Just ("::", TypeId (Short "list"))) [head v, forceList env es (n-1)]
---   where RVal v = force (Thunk env e)
+evalOnOpn env op (e:es)
+  | op `elem` [Times, Divide, Modulo] =
+      case evalAndForce env [e] of
+        RVal v ->
+          if (head v) == LitV (IntLit 0) then
+            RVal v
+          else
+            case evalAndForce env es of
+              RVal vs ->
+                case doAppLazy (OPN op) (head v: vs) of
+                  Just r  -> list_result r
+                  Nothing -> RErr $ RAbort RType_Error
+              res     -> res
+        res -> res
+  | otherwise = -- Plus and Minus
+      case evalAndForce env es of
+        RVal vs ->
+          case doAppLazy (OPN op) vs of
+            Just r  -> list_result r
+            Nothing -> RErr $ RAbort RType_Error
+        res -> res
