@@ -102,7 +102,7 @@ intListEx = buildList' [ Literal (IntLit 0)
 --------------- Test Laziness ---------------
 
 exSmall :: Exp -> Result [V] V
-exSmall e = evaluateSmall ex_env [e]
+exSmall e = evaluateLazy ex_env [e]
 
 exForce :: Exp -> Result [V] V
 exForce e = evalAndForce ex_env [e]

@@ -105,28 +105,28 @@ evaluate_match st  env v' ((p,e):pes) err_v =
 
 ------- Lazy Semantics ------
 
--- | evaluateSmall takes an expression and evaluates as little
+-- | evaluateLazy takes an expression and evaluates as little
 --   as possible. 
-evaluateSmall :: Environment V -> [Exp] -> Result [V] V
-evaluateSmall _env []             = RVal []
-evaluateSmall env (e1:e2:es)      =
-  case evaluateSmall env [e1] of
+evaluateLazy :: Environment V -> [Exp] -> Result [V] V
+evaluateLazy _env []             = RVal []
+evaluateLazy env (e1:e2:es)      =
+  case evaluateLazy env [e1] of
     RVal v1 ->
-      case evaluateSmall env (e2:es) of
+      case evaluateLazy env (e2:es) of
         RVal vs -> RVal (head v1:vs)
         res -> res
     res -> res
-evaluateSmall env [Raise e]       =
-  case evaluateSmall env [e] of
+evaluateLazy env [Raise e]       =
+  case evaluateLazy env [e] of
     RVal v -> case head v of
       Thunk env' e' -> RVal [Thunk env' (Raise e')]
       v' -> RErr (RRaise v')
     res -> res
-evaluateSmall env [Handle e pes]  =
+evaluateLazy env [Handle e pes]  =
   case evalAndForce env [e] of
     RErr (RRaise v) -> evaluate_match_small env v pes v
     res             -> res
-evaluateSmall env [Con cn es]     =
+evaluateLazy env [Con cn es]     =
   if do_con_check (c env) cn (fromIntegral (length es)) then
     case build_conv (c env) cn (reverse (map (Thunk env) es)) of
       Just v  -> RVal [v]
@@ -134,19 +134,19 @@ evaluateSmall env [Con cn es]     =
 --res -> res
   else
     RErr (RAbort RType_Error)
-evaluateSmall env [Var n]         =
+evaluateLazy env [Var n]         =
   case lookup_var_id n env of
     Just v  -> RVal [v]
     Nothing -> RErr (RAbort RType_Error)
-evaluateSmall env [Fun x e]       = RVal [Closure env x e]
-evaluateSmall env [Literal l]     = RVal [LitV l]
-evaluateSmall env [App op es]     =
+evaluateLazy env [Fun x e]       = RVal [Closure env x e]
+evaluateLazy env [Literal l]     = RVal [LitV l]
+evaluateLazy env [App op es]     =
   if op == OpApp then
     case evalAndForce env es of
       RVal vs ->
         case do_opapp vs of
           Just (env', e) ->
-            evaluateSmall env' [e]
+            evaluateLazy env' [e]
           Nothing ->
             RErr $ RAbort RType_Error
       res -> res
@@ -168,43 +168,43 @@ evaluateSmall env [App op es]     =
               Just r  -> list_result r
               Nothing -> RErr $ RAbort RType_Error
           res -> res
-evaluateSmall env [Log lop e1 e2] =
+evaluateLazy env [Log lop e1 e2] =
   case evalAndForce env [e1] of
     RVal v1 -> case do_log lop (head v1) e2 of
       Just (Exp e) -> RVal [Thunk env e]
       Just (Val v) -> RVal [v]
       Nothing      -> RErr (RAbort RType_Error)
     res -> res
-evaluateSmall env [Mat e pes]     =
+evaluateLazy env [Mat e pes]     =
   case evalAndForce env [e] of
     RVal v -> evaluate_match_small env (head v) pes bindv
     res -> res
-evaluateSmall env [Let xo e1 e2]  =
+evaluateLazy env [Let xo e1 e2]  =
   RVal [Thunk env {v = opt_bind xo (Thunk env e1) (v env)} e2]
   -- case evalAndForce env [e1] of
-  --   RVal v' ->  evaluateSmall env {v = opt_bind xo (head v') (v env)} [e2]
+  --   RVal v' ->  evaluateLazy env {v = opt_bind xo (head v') (v env)} [e2]
   --   res -> res
-evaluateSmall env [LetRec funs e] =
+evaluateLazy env [LetRec funs e] =
   if allDistinct (map (\(x,y,z) -> x) funs) then
     RVal [Thunk env {v = build_rec_env funs env (v env)} e]
-    --evaluateSmall (env {v = build_rec_env funs env (v env)}) [e]
+    --evaluateLazy (env {v = build_rec_env funs env (v env)}) [e]
   else
     RErr (RAbort RType_Error)
-evaluateSmall env [If e1 e2 e3]   =
+evaluateLazy env [If e1 e2 e3]   =
   case evalAndForce env [e1] of
     RVal v ->
       case do_if (head v) e2 e3 of
         Just e  -> RVal [Thunk env e]
         Nothing -> RErr (RAbort RType_Error)
     res -> res
-evaluateSmall env [TAnnot e t]    = evaluateSmall env [e]
+evaluateLazy env [TAnnot e t]    = evaluateLazy env [e]
 
 evaluate_match_small :: Environment V -> V -> [(Pat, Exp)] -> V -> Result [V] V
 evaluate_match_small _env _v []          err_v = RErr (RRaise err_v)
 evaluate_match_small  env v' ((p,e):pes) err_v =
   if allDistinct (pat_bindings p []) then
     case pmatchLazy (c env) p v' (v env) of
-      Match env_v'     -> evaluateSmall env {v = env_v'} [e]
+      Match env_v'     -> evaluateLazy env {v = env_v'} [e]
       No_Match         -> evaluate_match_small env v' pes err_v
       Match_Type_Error -> RErr (RAbort RType_Error)
   else
@@ -213,7 +213,7 @@ evaluate_match_small  env v' ((p,e):pes) err_v =
 
 
 force :: V -> Result [V] V
-force (Thunk env e) = case evaluateSmall env [e] of
+force (Thunk env e) = case evaluateLazy env [e] of
   RVal [Thunk env' e'] -> force (Thunk env' e')
   res -> res
 force v = RVal [v]
@@ -221,7 +221,7 @@ force v = RVal [v]
 evalAndForce :: Environment V -> [Exp] -> Result [V] V
 evalAndForce _env []    = RVal []
 evalAndForce env (e:es) =
-  case evaluateSmall env [e] of
+  case evaluateLazy env [e] of
     RVal v' -> case force (head v') of
       RVal val ->
         case evalAndForce env es of
@@ -285,7 +285,7 @@ evalOnOpn env op      es    = -- Plus and Minus
 -- forceList _   [] =
 --   RVal []
 -- forceList env [e@(Con (Just (Short cn)) es)] =
---   case evaluateSmall env [e] of
+--   case evaluateLazy env [e] of
 --     (RVal [ConV (Just ("::", TypeId (Short "nil"))) _]) ->
 --       case forceList env es of
 --         RVal vs -> RVal [ConV (Just (cn, TypeId (Short "nil"))) vs]
