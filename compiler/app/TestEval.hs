@@ -220,7 +220,7 @@ testRec1 =
 testRec2 =
   ex $ App OpApp [recEx2, (Literal (IntLit 0))]
 testRec3 =
-  ex $ Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
+  ex $ recEx3
 
 -- Testing lazy recursive that semantics should not terminate
 testRecSmall1 =
@@ -230,7 +230,7 @@ testRecSmall1 =
 testRecSmall2 =
   exForce $ App OpApp [recEx2, (Literal (IntLit 0))]
 testRecSmall3 =
-  exForce $ Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
+  exForce $ recEx3
 
 
 -- Recursive expressions to test
@@ -240,3 +240,5 @@ recEx1 =
 recEx2 =
   LetRec [("fun", "par", App (OPN Times) [Var (Short "par"), appFun])] (Var (Short "fun"))
   where appFun = (App OpApp [Var (Short "fun"), Var (Short "par")])
+recEx3=
+  Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
