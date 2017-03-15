@@ -1,4 +1,7 @@
-module Evaluate where
+module Evaluate (
+  evaluate,
+  evaluateLazy,
+  evalAndForce) where
 
 import AbsCakeML
 import SemanticPrimitives
