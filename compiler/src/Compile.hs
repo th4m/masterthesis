@@ -26,7 +26,7 @@ compile (Let xo e1 e2) = case xo of
     replace n e1 e2
   Nothing ->
     undefined -- Just do a normal let with e1 and e2?
-compile (LetRec funs e) = undefined
+compile (LetRec funs e) = LetRec funs (compile e) -- Should compile funs too?
 compile (TAnnot e t) = TAnnot (compile e) t
 
 

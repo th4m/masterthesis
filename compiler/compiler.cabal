@@ -23,7 +23,7 @@ library
 
 executable compiler-exe
   hs-source-dirs:      app
-  main-is:             TestEval.hs
+  main-is:             TestComp.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , compiler
