@@ -251,7 +251,7 @@ evalOnOpn env op (e:es)
               res     -> res
         res -> res
   | otherwise = -- Plus and Minus
-      case evalAndForce env es of
+      case evalAndForce env (e:es) of
         RVal vs ->
           case doAppLazy (OPN op) vs of
             Just r  -> list_result r
