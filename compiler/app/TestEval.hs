@@ -1,3 +1,5 @@
+module TestEval where
+
 import AbsCakeML
 import SemanticPrimitives
 import Evaluate
@@ -14,7 +16,7 @@ empty_env = Env {
 empty_st = St {
   refs = empty_store,
   defined_types = S.empty,
-  defined_mods = S.empty  
+  defined_mods = S.empty
            }
 
 insertVarIntoEnv :: Environment V -> VarN -> V -> Environment V
@@ -101,13 +103,19 @@ intListEx = buildList' [ Literal (IntLit 0)
 
 --------------- Test Laziness ---------------
 
-exSmall :: Exp -> Result [V] V
-exSmall e = evaluateLazy ex_env [e]
+exLazy :: Exp -> Result [V] V
+exLazy e = evaluateLazy ex_env [e]
+
+exLazys :: [Exp] -> Result [V] V
+exLazys es = evaluateLazy ex_env es
 
 exForce :: Exp -> Result [V] V
 exForce e = evalAndForce ex_env [e]
 
-letExSmall = exSmall $
+exForces :: [Exp] -> Result [V] V
+exForces es = evalAndForce ex_env es
+
+letExLazy = exLazy $
   Let (Just "cepa") (Literal (IntLit 3))
   (Log And (
       App (OPB LEq) [Var (Short "cepa"),
@@ -214,6 +222,9 @@ allTests = and
   , testLength
   ]
 
+
+-- Testing termination (no formal proof, just try to run the functions)
+
 -- Testing strict recursive semantics that should not terminate
 testRec1 =
   ex $ App OpApp [recEx1, true]
@@ -223,13 +234,13 @@ testRec3 =
   ex $ recEx3
 
 -- Testing lazy recursive that semantics should not terminate
-testRecSmall1 =
+testRecLazy1 =
   exForce $ App OpApp [recEx1, true]
 
 -- Testing lazy recursive semantics that should terminate
-testRecSmall2 =
+testRecLazy2 =
   exForce $ App OpApp [recEx2, (Literal (IntLit 0))]
-testRecSmall3 =
+testRecLazy3 =
   exForce $ recEx3
 
 
@@ -240,5 +251,5 @@ recEx1 =
 recEx2 =
   LetRec [("fun", "par", App (OPN Times) [Var (Short "par"), appFun])] (Var (Short "fun"))
   where appFun = (App OpApp [Var (Short "fun"), Var (Short "par")])
-recEx3=
+recEx3 =
   Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
