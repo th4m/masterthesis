@@ -23,7 +23,15 @@ compile (TAnnot e t) = undefined
 makeThunk :: Exp -> Exp
 makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
 
---force = LetRec ["force", "exp", ...] (Var "force")
+force = LetRec [("force", "exp"
+               , Mat (Var (Short "exp"))
+                 [(thunkPat [], undefined)
+                  ,(litPat [] , undefined)]
+               )]
+        (Var (Short "force"))
+
+thunkPat ps = PCon (Just (Short "Thunk")) ps
+litPat ps = PCon (Just (Short "Val")) ps
 
 compOnOpn :: Opn -> [Exp] -> Exp
 compOnOpn op [e1, e2]

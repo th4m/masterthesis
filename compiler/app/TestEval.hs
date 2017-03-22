@@ -29,7 +29,9 @@ ex_env = insertVarIntoEnv env1 "apa" (LitV(IntLit 7))
   where env1 = insertVarIntoEnv env2 "bepa" (LitV(IntLit 5))
         env2 = empty_env {c =
                           ([], [("::", (2, TypeId (Short "list"))),
-                               ("nil", (0, TypeId (Short "list")))])
+                               ("nil", (0, TypeId (Short "list"))),
+                               ("con", (1, TypeId (Short "test")))]
+                            )
                          }
 
 buildList' [] = Con (Just (Short "nil")) []
@@ -253,3 +255,12 @@ recEx2 =
   where appFun = (App OpApp [Var (Short "fun"), Var (Short "par")])
 recEx3 =
   Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
+
+matEx1 e =
+  Mat e [(PVar "apa", Literal (IntLit 0)), (PVar "bepa", Literal (IntLit 1))]
+
+matEx2 e =
+  Mat e [(PLit (IntLit 0), Literal (StrLit "first")), (PLit (IntLit 1), Literal (StrLit "second"))]
+
+matEx3 e =
+  Mat e [(PCon (Just (Short "con")) [PLit (IntLit 1)], Literal (IntLit 213))]
