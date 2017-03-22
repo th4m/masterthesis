@@ -23,15 +23,28 @@ compile (TAnnot e t) = undefined
 makeThunk :: Exp -> Exp
 makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
 
-force = LetRec [("force", "exp"
+force :: Exp -> Exp
+force e = LetRec [("force", "exp"
                , Mat (Var (Short "exp"))
-                 [(thunkPat [], undefined)
-                  ,(litPat [] , undefined)]
+                 [(thunkPat [expToPat e], compile e)
+                  ,(litPat  [expToPat e], e)]
                )]
         (Var (Short "force"))
 
 thunkPat ps = PCon (Just (Short "Thunk")) ps
-litPat ps = PCon (Just (Short "Val")) ps
+litPat   ps = PCon (Just (Short "Val"))   ps
+
+thunkCon es = Con (Just (Short "Thunk")) es
+litCon   es = Con (Just (Short "Val"))   es
+
+expToPat :: Exp -> Pat
+expToPat (Var n)      = case n of
+  Short n  -> PVar n
+  Long m n -> undefined
+expToPat (Literal l)  = PLit l
+expToPat (Con id ps)  = PCon id $ map expToPat ps
+expToPat (TAnnot e t) = PTAnnot (expToPat e) t
+-- ref-case?
 
 compOnOpn :: Opn -> [Exp] -> Exp
 compOnOpn op [e1, e2]
