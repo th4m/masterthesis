@@ -34,7 +34,9 @@ ex_env = insertVarIntoEnv env1 "apa" (LitV(IntLit 7))
   where env1 = insertVarIntoEnv env2 "bepa" (LitV(IntLit 5))
         env2 = empty_env {c =
                           ([], [("::", (2, TypeId (Short "list"))),
-                               ("nil", (0, TypeId (Short "list")))])
+                               ("nil", (0, TypeId (Short "list"))),
+                               ("Thunk", (1, TypeId (Short "lazy"))),
+                               ("Val", (1, TypeId (Short "lazy")))])
                          }
 
 -- | Insert an expression, and this function will run it with an

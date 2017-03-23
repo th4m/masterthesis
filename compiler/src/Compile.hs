@@ -16,7 +16,8 @@ compile (App op es) = case op of
 compile (Log lop e1 e2) = undefined
 compile (If e1 e2 e3) = undefined
 compile (Mat e pes) = undefined
-compile (Let xo e1 e2) = undefined
+compile (Let xo e1 e2) =
+  Let xo (thunkCon [Fun "" e1]) (compile e2)
 compile (LetRec funs e) = undefined
 compile (TAnnot e t) = undefined
 
@@ -24,15 +25,20 @@ makeThunk :: Exp -> Exp
 makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
 
 force :: Exp -> Exp
-force e = LetRec [("force", "exp"
-               , Mat (Var (Short "exp"))
-                 [(thunkPat [expToPat e], compile e)
-                  ,(litPat  [expToPat e], e)]
-               )]
-        (Var (Short "force"))
+force e =
+  App OpApp [LetRec [("force", "exp"
+                     , Mat (Var (Short "exp"))
+                       [(thunkPat [expToPat (Var (Short "Thunk"))]
+                        , App OpApp [Var (Short "force")
+                                    , App OpApp [Var (Short "Thunk")
+                                                , Literal (IntLit 0)]])
+                       ,(valPat [expToPat (Var (Short "Val"))]
+                        , Var (Short "Val"))]
+                     )] (Var (Short "force"))
+            , e]
 
 thunkPat ps = PCon (Just (Short "Thunk")) ps
-litPat   ps = PCon (Just (Short "Val"))   ps
+valPat   ps = PCon (Just (Short "Val"))   ps
 
 thunkCon es = Con (Just (Short "Thunk")) es
 litCon   es = Con (Just (Short "Val"))   es
