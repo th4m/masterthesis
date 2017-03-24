@@ -1,38 +1,47 @@
 module Compile where
 
 import AbsCakeML
--- import Evaluate
 
 
 compile :: Exp -> Exp
 compile (Raise e) = undefined
 compile (Handle e pes) = undefined
 compile (Con cn es) = undefined
-compile (Var n) = undefined
+compile (Var n) = makeVal $ Var n
 compile (Fun x e) = undefined
-compile (Literal l) = Con (Just (Short "Val")) [Literal l]
+compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case op of
-  OPN op -> undefined
+  OpApp ->
+    App OpApp es -- Should use thunk for second argument
+  OPN op ->
+    App (OPN op) $ map (force) es
+  op' ->
+    App op' es
 compile (Log lop e1 e2) = undefined
 compile (If e1 e2 e3) = undefined
 compile (Mat e pes) = undefined
 compile (Let xo e1 e2) =
-  Let xo (thunkCon [Fun "" e1]) (compile e2)
+  Let xo comp $ (force . compile) e2
+  where comp = compile (App OpApp [Fun "" e1, Literal (IntLit 0)])
 compile (LetRec funs e) = undefined
 compile (TAnnot e t) = undefined
 
+
 makeThunk :: Exp -> Exp
 makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
+makeVal :: Exp -> Exp
+makeVal e = Con (Just (Short "Val")) [e]
+
 
 force :: Exp -> Exp
 force e =
   App OpApp [LetRec [("force", "exp"
                      , Mat (Var (Short "exp"))
-                       [(thunkPat [expToPat (Var (Short "Thunk"))]
+                       [(thunkPat [PVar "Thunk"]
                         , App OpApp [Var (Short "force")
                                     , App OpApp [Var (Short "Thunk")
                                                 , Literal (IntLit 0)]])
-                       ,(valPat [expToPat (Var (Short "Val"))]
+                       ,(valPat [PVar "Val"]
                         , Var (Short "Val"))]
                      )] (Var (Short "force"))
             , e]

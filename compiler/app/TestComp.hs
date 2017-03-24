@@ -78,5 +78,7 @@ recEx2 =
 
 -- timesEx1 = App OpApp [recEx2, (Literal (IntLit 0))]
 
-letEx1 = Let (Just "let1") (App (OPN Times) [Literal (IntLit 0), Literal (IntLit 523)]) (Var (Short "let1"))
+letEx1 = Let (Just "let1") (App (OPN Times) [Literal (IntLit 3), Literal (IntLit 523)]) (Var (Short "let1"))
 letEx2 = Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
+
+
