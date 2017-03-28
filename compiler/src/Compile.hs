@@ -8,21 +8,20 @@ compile (Raise e) = undefined
 compile (Handle e pes) = undefined
 compile (Con cn es) = undefined
 compile (Var n) = makeVal $ Var n
-compile (Fun x e) = undefined
+compile (Fun x e) = makeVal $ Fun x e
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case op of
-  OpApp ->
+  OpApp  ->
     App OpApp es -- Should use thunk for second argument
   OPN op ->
-    App (OPN op) $ map (force) es
-  op' ->
-    App op' es
+    compOnOpn op es -- App (OPN op) $ map undefined undefined
+  _ ->
+    App op es
 compile (Log lop e1 e2) = undefined
 compile (If e1 e2 e3) = undefined
 compile (Mat e pes) = undefined
 compile (Let xo e1 e2) =
-  Let xo comp $ (force . compile) e2
-  where comp = compile (App OpApp [Fun "" e1, Literal (IntLit 0)])
+  Let xo (makeThunk (compile e1)) (makeThunk (compile e2))
 compile (LetRec funs e) = undefined
 compile (TAnnot e t) = undefined
 
@@ -64,6 +63,6 @@ expToPat (TAnnot e t) = PTAnnot (expToPat e) t
 compOnOpn :: Opn -> [Exp] -> Exp
 compOnOpn op [e1, e2]
   | op `elem` [Times, Divide, Modulo] =
-      undefined -- [force (makeThunk e1), force (makeThunk e2)]
+      undefined
   | otherwise =
       undefined
