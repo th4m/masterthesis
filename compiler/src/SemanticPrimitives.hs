@@ -259,6 +259,30 @@ do_app s op vs =
       Just (s, RVal (LitV (IntLit (opn_lookup op n1 n2))))
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (s, RVal (boolv (opb_lookup op n1 n2)))
+    (Equality, [v1, v2]) ->
+      case do_eq v1 v2 of
+        Eq_Type_Error -> Nothing
+        Eq_Val b      -> Just (s, (RVal (boolv b)))
+    (Ord, [LitV (Char c)]) ->
+      Just (s, RVal $ LitV $ IntLit $ C.ord c)
+    (Chr, [LitV (IntLit i)]) ->
+      Just (s, RVal $ LitV $ Char $ C.chr i)
+    (ChOpb op, [LitV (Char c1), LitV (Char c2)]) ->
+      Just (s, RVal $ boolv $ opb_lookup op (C.ord c1) (C.ord c2))
+    (Implode, [v]) ->
+      case v_to_char_list v of
+        Just ls -> Just (s, RVal $ LitV $ StrLit ls)
+        Nothing -> Nothing
+    (StrSub, [LitV (StrLit str), LitV (IntLit i)]) ->
+      if i < 0 then
+        Just (s, RErr $ RRaise $ prim_exn "SubScript")
+      else
+        if i >= length str then
+          Just (s, RErr $ RRaise $ prim_exn "SubScript")
+        else
+          Just (s, RVal $ LitV $ Char $ str !! i)
+    (StrLen, [LitV (StrLit str)]) ->
+      Just (s, RVal $ LitV $ IntLit $ length str)
     (VFromList, [v]) ->
       case v_to_list v of
         Just vs -> Just (s, RVal (VectorV vs))
