@@ -75,10 +75,15 @@ recEx1 =
 recEx2 =
   LetRec [("fun", "par", App (OPN Times) [Var (Short "par"), appFun])] (Var (Short "fun"))
   where appFun = (App OpApp [Var (Short "fun"), Var (Short "par")])
-
 -- timesEx1 = App OpApp [recEx2, (Literal (IntLit 0))]
 
 letEx1 = Let (Just "let1") (App (OPN Times) [Literal (IntLit 3), Literal (IntLit 523)]) (Var (Short "let1"))
-letEx2 = Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
+letEx2 = Let (Just "let2") (App OpApp [recEx1, true]) (Literal (IntLit 0))
 
+-- The following examples use undefined to test evaluation steps
 
+-- If the second argument is evaluated, an error should be returned
+mulEx1 = App (OPN Times) [Literal (IntLit 0), undefined]
+
+-- Needs to be forced after being compiled
+letEx3 = Let (Just "let3") undefined (Literal (IntLit 0))
