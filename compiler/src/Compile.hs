@@ -16,7 +16,7 @@ compile (App op es) = case op of
   OPN op ->
     compOnOpn op es -- App (OPN op) $ map undefined undefined
   _ ->
-    App op es
+    App op $ map (force . compile) es
 compile (Log lop e1 e2) = undefined
 compile (If e1 e2 e3) = undefined
 compile (Mat e pes) = undefined
@@ -63,6 +63,16 @@ expToPat (TAnnot e t) = PTAnnot (expToPat e) t
 compOnOpn :: Opn -> [Exp] -> Exp
 compOnOpn op [e1, e2]
   | op `elem` [Times, Divide, Modulo] =
-      undefined
+      -- let XV = (force (compile e1)) in
+      Let (Just "XV") (force (compile e1)) $
+      -- if XV == 0 then 0
+      If (App Equality [Var (Short "XV"), Literal (IntLit 0)]) (Literal (IntLit 0)) $
+      -- else let YV == (force (compile e2)) in XV + YV
+      Let (Just "YV") (force (compile e2)) (App (OPN op) [Var (Short "XV"), Var (Short "YV")])
   | otherwise =
-      undefined
+      -- let XV = (force (compile e1)) in
+      Let (Just "XV") (force (compile e1)) $
+      -- let YV = (force (compile e2)) in
+      Let (Just "YV") (force (compile e2)) $
+      -- XY + YV
+      App (OPN op) [Var (Short "XV"), Var (Short "YV")]
