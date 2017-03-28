@@ -4,27 +4,28 @@ import AbsCakeML
 
 
 compile :: Exp -> Exp
-compile (Raise e) = undefined
-compile (Handle e pes) = undefined
-compile (Con cn es) = undefined
+compile (Raise e) = makeThunk $ Raise $ compile e
+compile (Handle e pes) = makeThunk $ Handle (forceCompile e) pes
+compile (Con cn es) = Con cn $ map thunkCompile es
 compile (Var n) = makeVal $ Var n
-compile (Fun x e) = makeVal $ Fun x e
+compile (Fun x e) = makeVal $ Fun x e -- compile e?
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case op of
   OpApp  ->
-    App OpApp es -- Should use thunk for second argument
+    makeThunk $ App OpApp $ map forceCompile es -- ?
   OPN op ->
-    compOnOpn op es -- App (OPN op) $ map undefined undefined
+    compOnOpn op es
   _ ->
-    App op $ map (force . compile) es
-compile (Log lop e1 e2) = undefined
-compile (If e1 e2 e3) = undefined
-compile (Mat e pes) = undefined
-compile (Let xo e1 e2) =
-  Let xo (makeThunk (compile e1)) (makeThunk (compile e2))
-compile (LetRec funs e) = undefined
-compile (TAnnot e t) = undefined
+    makeVal $ App op $ map forceCompile es -- ?
+compile (Log lop e1 e2) = Log lop (forceCompile e1) $ thunkCompile e2
+compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
+compile (Mat e pes) = Mat (forceCompile e) pes
+compile (Let xo e1 e2) =  Let xo (thunkCompile e1) (thunkCompile e2)
+compile (LetRec funs e) = LetRec funs $ thunkCompile e
+compile (TAnnot e t) = thunkCompile e
 
+forceCompile = force . compile
+thunkCompile = makeThunk . compile
 
 makeThunk :: Exp -> Exp
 makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]

@@ -85,5 +85,9 @@ letEx2 = Let (Just "let2") (App OpApp [recEx1, true]) (Literal (IntLit 0))
 -- If the second argument is evaluated, an error should be returned
 mulEx1 = App (OPN Times) [Literal (IntLit 0), undefined]
 
--- Needs to be forced after being compiled
+-- Force needed after compile
 letEx3 = Let (Just "let3") undefined (Literal (IntLit 0))
+
+-- Force needed after compile
+ifEx1  = If true (Literal (IntLit 0)) undefined
+ifEx2  = If false undefined (Literal (IntLit 0))
