@@ -60,11 +60,13 @@ exForce e = evalAndForce ex_env [e]
 exForces :: [Exp] -> Result [V] V
 exForces es = evalAndForce ex_env es
 
+efc :: Exp -> (State, Result [V] V)
+efc = ex . force . compile
 ---------------------------------------------------------------------
 
 compareEval :: Exp -> Bool
 compareEval e = strict == lazy
-  where (_, strict) = ex $ compile e
+  where (_, strict) = efc e
         lazy        = exForce e
 
 -- Expressions to test
