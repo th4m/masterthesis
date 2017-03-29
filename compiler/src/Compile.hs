@@ -29,10 +29,16 @@ compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) pes
 compile (Let xo e1 e2) =  Let xo (thunkCompile e1) (thunkCompile e2)
 compile (LetRec funs e) = LetRec funs $ thunkCompile e
-compile (TAnnot e t) = thunkCompile e
+compile (TAnnot e t) = TAnnot (thunkCompile e) t
 
 forceCompile = force . compile
 thunkCompile = makeThunk . compile
+
+
+-- Might be used for pattern matching?
+compilePat :: (Pat, Exp) -> (Pat, Exp)
+compilePat (p,e) = (p, compile e)
+compilePats = map compilePat
 
 makeThunk :: Exp -> Exp
 makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
