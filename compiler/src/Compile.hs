@@ -7,7 +7,7 @@ compile :: Exp -> Exp
 compile (Raise e) = makeThunk $ Raise $ compile e
 compile (Handle e pes) = makeThunk $ Handle (forceCompile e) pes
 compile (Con cn es) = Con cn $ map thunkCompile es
-compile (Var n) = makeVal $ Var n
+compile (Var n) = makeThunk $ Var n
 compile (Fun x e) = makeVal $ Fun x e -- compile e?
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case (op, es) of
