@@ -8,7 +8,7 @@ compile (Raise e) = makeThunk $ Raise $ compile e
 compile (Handle e pes) = makeThunk $ Handle (forceCompile e) pes
 compile (Con cn es) = Con cn $ map thunkCompile es
 compile (Var n) = makeThunk $ Var n
-compile (Fun x e) = makeVal $ Fun x e -- compile e?
+compile (Fun x e) = makeVal $ Fun x (compile e) -- compile e?
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case (op, es) of
   (OpApp, [e1, e2])  ->
@@ -28,8 +28,10 @@ compile (App op es) = case (op, es) of
 compile (Log lop e1 e2) = Log lop (forceCompile e1) $ thunkCompile e2
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) pes
-compile (Let xo e1 e2) =  Let xo (thunkCompile e1) (thunkCompile e2)
-compile (LetRec funs e) = LetRec (funsCompile funs) (thunkCompile e)
+compile (Let xo e1 e2) = Let xo (thunkCompile e1) (thunkCompile e2)
+compile (LetRec funs e) = -- makeVal $ LetRec (funsCompile funs) (thunkCompile e)
+  Let (Just "E") (thunkCompile e) $
+  LetRec (funsCompile funs) (Var (Short "E"))
 compile (TAnnot e t) = TAnnot (thunkCompile e) t
 
 forceCompile = force . compile
