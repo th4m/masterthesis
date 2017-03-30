@@ -12,7 +12,8 @@ compile (Fun x e) = makeVal $ Fun x e -- compile e?
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case (op, es) of
   (OpApp, [e1, e2])  ->
-    --makeThunk $ -- App OpApp $ map forceCompile es -- ?
+    -- makeThunk $ App OpApp $ map forceCompile es -- ?
+
     Let (Just "E1") (forceCompile e1) $
     Let (Just "E2") (forceCompile e2) $
     makeThunk $ App op [Var (Short "E1"), Var (Short "E2")]
@@ -28,12 +29,15 @@ compile (Log lop e1 e2) = Log lop (forceCompile e1) $ thunkCompile e2
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) pes
 compile (Let xo e1 e2) =  Let xo (thunkCompile e1) (thunkCompile e2)
-compile (LetRec funs e) = LetRec funs $ thunkCompile e
+compile (LetRec funs e) = LetRec (funsCompile funs) (thunkCompile e)
 compile (TAnnot e t) = TAnnot (thunkCompile e) t
 
 forceCompile = force . compile
 thunkCompile = makeThunk . compile
 
+funsCompile :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
+funsCompile []           = []
+funsCompile ((f,x,e):fs) = ((f,x,compile e): funsCompile fs)
 
 -- Might be used for pattern matching?
 compilePat :: (Pat, Exp) -> (Pat, Exp)
