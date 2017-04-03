@@ -29,28 +29,93 @@ compile (Log lop e1 e2) = Log lop (forceCompile e1) $ thunkCompile e2
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) pes
 compile (Let xo e1 e2) = Let xo (thunkCompile e1) (thunkCompile e2)
-compile (LetRec funs e) = -- makeVal $ LetRec (funsCompile funs) (thunkCompile e)
-  Let (Just "E") (thunkCompile e) $
-  LetRec (funsCompile funs) (Var (Short "E"))
+compile (LetRec funs e) =
+  LetRec (replace funs invalidNames) (reinstance invalidNames names (thunkCompile e))
+  where names = getNames funs
+        getNames [] = []
+        getNames ((f,_,_):funs') = (f:getNames funs')
+        invalidNames = map (++ " ") names
+  -- makeVal $
+  -- LetRec (funsCompile funs) (thunkCompile e)
+  -- Let (Just "E") (thunkCompile e) $
+  -- LetRec (funsCompile funs) (Var (Short "E"))
 compile (TAnnot e t) = TAnnot (thunkCompile e) t
 
 forceCompile = force . compile
 thunkCompile = makeThunk . compile
 
-funsCompile :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
-funsCompile []           = []
-funsCompile ((f,x,e):fs) = ((f,x,compile e): funsCompile fs)
+-- | Replace variable names in funs
+replace :: [(VarN, VarN, Exp)] -> [VarN] -> [(VarN, VarN, Exp)]
+replace [] _ = []
+replace ((f,x,e'):funs') (n:ns) =
+  ((n,x,compile (subst f n e')):replace funs' ns)
+replace fs ns = error $ "replace: xs - " ++ show (length fs) ++ ", ys - " ++ show (length ns)
+
+-- | Reinstance x as y
+reinstance :: [VarN] -> [VarN] -> Exp -> Exp
+reinstance [] [] e = e
+reinstance (x:xs) (y:ys) e = Let (Just y) (makeVal (Var (Short x))) (reinstance xs ys e)
+reinstance xs ys _ = error $ "reinstance: xs - " ++ show (length xs) ++ ", ys - " ++ show (length ys)
+
+mapFun :: (Exp -> Exp) -> [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
+mapFun _ [] = []
+mapFun f ((v1,v2,e):funs) = ((v1,v2,f e):(mapFun f funs))
+
+-- funsCompile :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
+-- funsCompile = mapFun thunkCompile
+-- funsCompile []           = []
+-- funsCompile ((f,x,e):fs) = ((f,x,thunkCompile e): funsCompile fs)
+
+-- | Changes names of variables
+subst :: VarN -> VarN -> Exp -> Exp
+subst old new (Var n) =
+  case n of
+    Short name ->
+      if name == old then
+        Var (Short new)
+      else
+        Var (Short name)
+    Long m n -> undefined
+subst o n (Raise e) =
+  Raise (subst o n e)
+subst o n (Handle e pes) =
+  Handle (subst o n e) (map (mapPat (subst o n)) pes)
+subst o n (Con cn es) =
+  Con cn (map (subst o n) es)
+subst o n (Fun x e) =
+  Fun x (subst o n e)
+subst _ _ (Literal l) =
+  Literal l
+subst o n (App op es) =
+  App op (map (subst o n) es)
+subst o n (Log lop e1 e2) =
+  Log lop e1' e2'
+  where [e1',e2'] = map (subst o n) [e1,e2]
+subst o n (If e1 e2 e3) =
+  If e1' e2' e3'
+  where [e1',e2',e3'] = map (subst o n) [e1,e2,e3]
+subst o n (Mat e pes) =
+  Mat (subst o n e) (map (mapPat (subst o n)) pes)
+subst o n (Let xo e1 e2) =
+  Let xo e1' e2'
+  where [e1',e2'] = map (subst o n) [e1,e2]
+subst o n (LetRec funs e) =
+  LetRec (mapFun (subst o n) funs) (subst o n e)
+subst o n (TAnnot e t) =
+  TAnnot (subst o n e) t
 
 -- Might be used for pattern matching?
+mapPat :: (Exp -> Exp) -> (Pat, Exp) -> (Pat, Exp)
+mapPat f (p,e) = (p, f e)
+
 compilePat :: (Pat, Exp) -> (Pat, Exp)
-compilePat (p,e) = (p, compile e)
+compilePat  = mapPat compile
 compilePats = map compilePat
 
 makeThunk :: Exp -> Exp
 makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
 makeVal :: Exp -> Exp
 makeVal e = Con (Just (Short "Val")) [e]
-
 
 force :: Exp -> Exp
 force e =
