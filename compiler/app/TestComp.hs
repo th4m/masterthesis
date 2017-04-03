@@ -71,6 +71,8 @@ compareEval e = strict == lazy
 
 -- Expressions to test
 
+opapp e1 e2 = App OpApp [e1, e2]
+
 recEx1 =
   LetRec [("fun", "par", If (Var (Short "par")) appFun false)] (Var (Short "fun"))
   where appFun = (App OpApp [(Var (Short "fun")), true])
@@ -79,8 +81,22 @@ recEx2 =
   where appFun = (App OpApp [Var (Short "fun"), Var (Short "par")])
 -- timesEx1 = App OpApp [recEx2, (Literal (IntLit 0))]
 
+-- Non recursive RecClosures
+
+-- Returns the argument
+recEx3 =
+  LetRec [("fun", "par", Var (Short "par"))] (Var (Short "fun"))
+-- Prints "recEx4"
+recEx4 =
+  LetRec [("fun", "par", Literal (StrLit "recEx4"))] (Var (Short "fun"))
+
 letEx1 = Let (Just "let1") (App (OPN Times) [Literal (IntLit 3), Literal (IntLit 523)]) (Var (Short "let1"))
 letEx2 = Let (Just "let2") (App OpApp [recEx1, true]) (Literal (IntLit 0))
+
+testRecex =
+  ex $ App OpApp [recEx2, (Literal (IntLit 0))]
+testRecefc =
+  ex $ App OpApp [recEx2, (Literal (IntLit 0))]
 
 -- The following examples use undefined to test evaluation steps
 
