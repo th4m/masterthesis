@@ -15,7 +15,7 @@ compile (App op es) = case (op, es) of
     -- makeThunk $ App OpApp $ map forceCompile es -- ?
 
     Let (Just "E1") (forceCompile e1) $
-    Let (Just "E2") (forceCompile e2) $
+    Let (Just "E2") (thunkCompile e2) $
     makeThunk $ App op [Var (Short "E1"), Var (Short "E2")]
   (OPN op, [_, _]) ->
     compOnOpn op es
