@@ -96,12 +96,14 @@ letEx2 = Let (Just "let2") (App OpApp [recEx1, true]) (Literal (IntLit 0))
 testRecex =
   ex $ App OpApp [recEx2, (Literal (IntLit 0))]
 testRecefc =
-  ex $ App OpApp [recEx2, (Literal (IntLit 0))]
+  efc $ App OpApp [recEx2, (Literal (IntLit 0))]
+
+mulEx1 = App (OPN Times) [Literal (IntLit 0), App OpApp [recEx2, (Literal (IntLit 0))]]
 
 -- The following examples use undefined to test evaluation steps
 
 -- If the second argument is evaluated, an error should be returned
-mulEx1 = App (OPN Times) [Literal (IntLit 0), undefined]
+mulEx2 = App (OPN Times) [Literal (IntLit 0), undefined]
 
 -- Force needed after compile
 letEx3 = Let (Just "let3") undefined (Literal (IntLit 0))
