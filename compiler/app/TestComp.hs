@@ -83,8 +83,29 @@ testAll =
   , ordExp 'a'
   , chrExp 97
   , chopbExp LEq 'a' 'b'
+  , chopbExp GEq 'b' 'a'
   , strsubExp strForTest intA
   , strlenExp strForTest
+  , andExp true true
+  , andExp false true
+  , andExp true false
+  , andExp false false
+  , orExp true true
+  , orExp false true
+  , orExp true false
+  , orExp false false
+  , ifExp1
+  , ifExp2
+  , Mat (Literal (IntLit 1))
+    [(PLit (IntLit 1), (Literal (StrLit "first"))), (PLit (IntLit 2), (Literal (StrLit "second")))]
+  , Mat (Literal (IntLit 2))
+    [(PLit (IntLit 1), (Literal (StrLit "first"))), (PLit (IntLit 2), (Literal (StrLit "second")))]
+  , Raise (Literal (IntLit 0))
+  , Handle (Raise (Literal (IntLit 1)))
+    [(PLit (IntLit 1), (Literal (StrLit "first"))), (PLit (IntLit 2), (Literal (StrLit "second")))]
+  , Handle (Raise (Literal (IntLit 2)))
+    [(PLit (IntLit 1), (Literal (StrLit "first"))), (PLit (IntLit 2), (Literal (StrLit "second")))]
+  , Let (Just "x") (Literal (StrLit "letTest")) (Var (Short "x"))
   ]
 
 -- Expressions to test
