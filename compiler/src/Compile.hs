@@ -19,12 +19,12 @@ compile (App op es) = case (op, es) of
     makeThunk $ App op [Var (Short "E1"), Var (Short "E2")]
   (OPN op, [_, _]) ->
     compOnOpn op es
-  (_, [e1, e2]) ->
-    -- makeVal $ -- App op $ map forceCompile es -- ?
-    Let (Just "E1") (forceCompile e1) $
-    Let (Just "E2") (forceCompile e2) $
-    makeVal $ App op [Var (Short "E1"), Var (Short "E2")]
-  _ -> undefined
+  _ ->
+    makeVal $ App op $ map forceCompile es -- ?
+    -- Let (Just "E1") (forceCompile e1) $
+    -- Let (Just "E2") (forceCompile e2) $
+    -- makeVal $ App op [Var (Short "E1"), Var (Short "E2")]
+
 compile (Log lop e1 e2) = Log lop (forceCompile e1) $ thunkCompile e2
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) pes
