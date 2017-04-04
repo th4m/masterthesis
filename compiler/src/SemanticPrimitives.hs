@@ -76,7 +76,7 @@ data Store_V a
   = RefV a
   | W8Array [Word8]
   | VArray [a]
-  deriving Show
+  deriving (Eq, Ord, Show)
 
 store_v_same_type :: Store_V a -> Store_V a -> Bool
 store_v_same_type v1 v2 =
@@ -206,7 +206,7 @@ data State = St {
   defined_types :: S.Set TId_or_Exn,
   defined_mods  :: S.Set ModN
  }
-  deriving Show
+  deriving (Eq, Ord, Show)
 
 build_rec_env :: [(VarN, VarN, Exp)] -> Environment V -> Env_Val -> Env_Val
 build_rec_env funs cl_env add_to_env =
