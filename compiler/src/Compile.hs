@@ -4,8 +4,8 @@ import AbsCakeML
 
 
 compile :: Exp -> Exp
-compile (Raise e) = makeThunk $ Raise $ compile e
-compile (Handle e pes) = makeThunk $ Handle (forceCompile e) pes
+compile (Raise e) = makeThunk $ Raise $ forceCompile e
+compile (Handle e pes) = makeThunk $ Handle (forceCompile e) (compilePats pes)
 compile (Con cn es) = Con cn $ map thunkCompile es
 compile (Var n) = makeThunk $ Var n
 compile (Fun x e) = makeVal $ Fun x (compile e) -- compile e?
@@ -25,9 +25,12 @@ compile (App op es) = case (op, es) of
     -- Let (Just "E2") (forceCompile e2) $
     -- makeVal $ App op [Var (Short "E1"), Var (Short "E2")]
 
-compile (Log lop e1 e2) = Log lop (forceCompile e1) $ thunkCompile e2
+compile (Log lop e1 e2) = -- Log lop (forceCompile e1) $ thunkCompile e2
+  Let (Just "E1") (forceCompile e1) $
+  Let (Just "E2") (forceCompile e2) $
+  makeVal $ Log lop (Var (Short "E1")) (Var (Short "E2"))
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
-compile (Mat e pes) = Mat (forceCompile e) pes
+compile (Mat e pes) = Mat (forceCompile e) (compilePats pes)
 compile (Let xo e1 e2) = Let xo (thunkCompile e1) (thunkCompile e2)
 compile (LetRec funs e) =
   LetRec (replace funs invalidNames) (reinstance invalidNames names (thunkCompile e))
