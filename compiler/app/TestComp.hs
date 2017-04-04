@@ -62,14 +62,67 @@ exForces es = evalAndForce ex_env es
 
 efc :: Exp -> (State, Result [V] V)
 efc = ex . force . compile
----------------------------------------------------------------------
+-------------------------------------
+-- Compare strict and lazy results --
+-------------------------------------
 
 compareEval :: Exp -> Bool
 compareEval e = strict == lazy
-  where (_, strict) = efc e
-        lazy        = exForce e
+  where strict = ex e
+        lazy   = efc e
+
+testAll =
+  and $
+  map compareEval
+  [ plusExp intLitA intLitB
+  , minusExp intLitA intLitB
+  , timesExp intLitA intLitB
+  , divExp intLitA intLitB
+  , modExp intLitA intLitB
+  , eqExp [intLitA, intLitB]
+  , ordExp 'a'
+  , chrExp 97
+  , chopbExp LEq 'a' 'b'
+  , strsubExp strForTest intA
+  , strlenExp strForTest
+  ]
 
 -- Expressions to test
+
+intLitA = Literal $ IntLit intA
+intLitB = Literal $ IntLit intB
+
+intA = 3
+intB = 9
+
+strForTest = "testString"
+
+plusExp  e1 e2 = App (OPN Plus)   [e1, e2]
+minusExp e1 e2 = App (OPN Minus)  [e1, e2]
+timesExp e1 e2 = App (OPN Times)  [e1, e2]
+divExp   e1 e2 = App (OPN Divide) [e1, e2]
+modExp   e1 e2 = App (OPN Modulo) [e1, e2]
+
+eqExp es = App Equality es
+ordExp c = App Ord [Literal (Char c)]
+chrExp i = App Chr [Literal (IntLit i)]
+chopbExp op c1 c2 = App (ChOpb op) [Literal (Char c1), Literal (Char c2)]
+implExp es = App Implode es
+strsubExp str i = App StrSub [Literal (StrLit str), Literal (IntLit i)]
+strlenExp str = App StrLen [Literal (StrLit str)]
+vlistExp es = App VFromList es
+vsubExp es i = App VSub [(App VFromList es), Literal (IntLit i)]
+vlenExp es = App VLength [App VFromList es]
+
+andExp  e1 e2 = Log And e1 e2
+orExp   e1 e2 = Log Or  e1 e2
+
+ifExp1 = If true true false
+ifExp2 = If false true false
+
+-------------------------
+-- Testing termination --
+-------------------------
 
 opapp e1 e2 = App OpApp [e1, e2]
 
