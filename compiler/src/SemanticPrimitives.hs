@@ -4,6 +4,9 @@ import AbsCakeML
 import Lib
 
 import Numeric.Natural
+import Data.Word
+import Data.Bits
+import qualified Data.Char as C
 import qualified Data.Set as S
 -- import qualified Data.Map as Map
 
@@ -12,7 +15,7 @@ data TId_or_Exn
   | TypeExn (Id ConN)
   deriving (Eq, Ord, Show)
 
-type AList_Mod_Env k v = (AList ModN (AList k v), AList k v) -- Map.Map ModN (Map.Map k v, Map.Map k v)
+type AList_Mod_Env k v = (AList ModN (AList k v), AList k v) -- (Map.Map ModN (Map.Map k v)), (Map.Map k v)
 
 merge_alist_mod_env (menv1, env1) (menv2, env2) =
   (menv1 ++ menv2, env1 ++ env2)
@@ -45,8 +48,8 @@ data V
   | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
   | Loc Natural
   | VectorV [V]
+  | Thunk (Environment V) Exp
   deriving (Eq, Ord, Show)
-  -- More in the future?
 
 bindv = ConV (Just ("Bind", TypeExn (Short "Bind"))) []
 
@@ -71,9 +74,9 @@ data Result a b
 -- | Stores
 data Store_V a
   = RefV a
-  -- W8Array [Word8]
+  | W8Array [Word8]
   | VArray [a]
-  deriving Show
+  deriving (Eq, Ord, Show)
 
 store_v_same_type :: Store_V a -> Store_V a -> Bool
 store_v_same_type v1 v2 =
@@ -126,12 +129,14 @@ lookup_var_id id env =
 lit_same_type :: Lit -> Lit -> Bool
 lit_same_type l1 l2 =
   case (l1, l2) of
-    (IntLit  _, IntLit  _) -> True
-    (CharLit _, CharLit _) -> True
-    (StrLit  _, StrLit  _) -> True
-    _                      -> False
+    (IntLit _, IntLit _) -> True
+    (Char   _, Char   _) -> True
+    (StrLit _, StrLit _) -> True
+    (Word8  _, Word8  _) -> True
+    (Word64 _, Word64 _) -> True
+    _                    -> False
 
-data Match_Result a 
+data Match_Result a
   = No_Match
   | Match_Type_Error
   | Match a
@@ -187,14 +192,21 @@ pmatch envC s (PTAnnot p t) v env =
   pmatch envC s p v env
 pmatch envC _ _ _ env = Match_Type_Error
 
+
 pmatch_list envC s [] [] env = Match env
+pmatch_list envC s (p:ps) (v:vs) env =
+  case pmatch envC s p v env of
+    No_Match -> No_Match
+    Match_Type_Error -> Match_Type_Error
+    Match env' -> pmatch_list envC s ps vs env'
+pmatch_list _envC _s _ _ _env = Match_Type_Error
 
 data State = St {
   refs          :: Store V,
   defined_types :: S.Set TId_or_Exn,
   defined_mods  :: S.Set ModN
  }
-  deriving Show
+  deriving (Eq, Ord, Show)
 
 build_rec_env :: [(VarN, VarN, Exp)] -> Environment V -> Env_Val -> Env_Val
 build_rec_env funs cl_env add_to_env =
@@ -247,6 +259,46 @@ do_app s op vs =
       Just (s, RVal (LitV (IntLit (opn_lookup op n1 n2))))
     (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
       Just (s, RVal (boolv (opb_lookup op n1 n2)))
+    (Equality, [v1, v2]) ->
+      case do_eq v1 v2 of
+        Eq_Type_Error -> Nothing
+        Eq_Val b      -> Just (s, (RVal (boolv b)))
+    (Ord, [LitV (Char c)]) ->
+      Just (s, RVal $ LitV $ IntLit $ C.ord c)
+    (Chr, [LitV (IntLit i)]) ->
+      Just (s, RVal $ LitV $ Char $ C.chr i)
+    (ChOpb op, [LitV (Char c1), LitV (Char c2)]) ->
+      Just (s, RVal $ boolv $ opb_lookup op (C.ord c1) (C.ord c2))
+    (Implode, [v]) ->
+      case v_to_char_list v of
+        Just ls -> Just (s, RVal $ LitV $ StrLit ls)
+        Nothing -> Nothing
+    (StrSub, [LitV (StrLit str), LitV (IntLit i)]) ->
+      if i < 0 then
+        Just (s, RErr $ RRaise $ prim_exn "SubScript")
+      else
+        if i >= length str then
+          Just (s, RErr $ RRaise $ prim_exn "SubScript")
+        else
+          Just (s, RVal $ LitV $ Char $ str !! i)
+    (StrLen, [LitV (StrLit str)]) ->
+      Just (s, RVal $ LitV $ IntLit $ length str)
+    (VFromList, [v]) ->
+      case v_to_list v of
+        Just vs -> Just (s, RVal (VectorV vs))
+        Nothing -> Nothing
+    (VSub, [VectorV vs, LitV (IntLit i)]) ->
+      if i < 0 then
+        Just (s, RErr (RRaise (prim_exn "Subscript")))
+      else
+        if i >= length vs then
+          Just (s, RErr (RRaise (prim_exn "Subscript")))
+        else
+          Just (s, RVal (vs !! i))
+    (VLength, [VectorV vs]) ->
+      Just (s, RVal (LitV (IntLit (length vs))))
+    _ -> Nothing
+
 
 do_log :: LOp -> V -> Exp -> Maybe Exp_or_Val
 do_log l v e =
@@ -266,6 +318,50 @@ do_if v e1 e2 =
   else
     Nothing
 
+data Eq_Result
+  = Eq_Val Bool
+  | Eq_Type_Error
+
+do_eq :: V -> V -> Eq_Result
+do_eq (LitV l1) (LitV l2) =
+  if lit_same_type l1 l2 then
+    Eq_Val (l1 == l2)
+  else
+    Eq_Type_Error
+do_eq (Loc l1)           (Loc l2)           = Eq_Val (l1 == l2)
+do_eq (ConV cn1 vs1)     (ConV cn2 vs2)     =
+  if cn1 == cn2 && (length vs1 == length vs2) then
+    do_eq_list vs1 vs2
+  else if ctor_same_type cn1 cn2 then
+    Eq_Val False
+  else
+    Eq_Type_Error
+do_eq (VectorV vs1)      (VectorV vs2)      =
+  if length vs1 == length vs2 then
+    do_eq_list vs1 vs2
+  else
+    Eq_Val False
+do_eq (Closure _ _ _)    (Closure _ _ _)    = Eq_Val True
+do_eq (Closure _ _ _)    (RecClosure _ _ _) = Eq_Val True
+do_eq (RecClosure _ _ _) (Closure _ _ _)    = Eq_Val True
+do_eq (RecClosure _ _ _) (RecClosure _ _ _) = Eq_Val True
+do_eq _                  _                  = Eq_Type_Error
+
+do_eq_list :: [V] -> [V] -> Eq_Result
+do_eq_list [] [] = Eq_Val True
+do_eq_list (v1:vs1) (v2:vs2) =
+  case do_eq v1 v2 of
+    Eq_Type_Error -> Eq_Type_Error
+    Eq_Val r ->
+      if not r then
+        Eq_Val False
+      else
+        do_eq_list vs1 vs2
+do_eq_list _ _ = Eq_Val False
+
+prim_exn :: ConN -> V
+prim_exn cn = ConV (Just (cn, TypeExn (Short cn))) []
+
 do_opapp :: [V] -> Maybe (Environment V, Exp)
 do_opapp vs =
   case vs of
@@ -279,6 +375,36 @@ do_opapp vs =
       else
         Nothing
     _ -> Nothing
+
+v_to_list :: V -> Maybe [V]
+v_to_list (ConV (Just (cn, TypeId (Short tn))) []) =
+  if cn == "nil" && tn == "list" then
+    Just []
+  else
+    Nothing
+v_to_list (ConV (Just (cn, TypeId (Short tn))) [v1,v2]) =
+  if cn == "::" && tn == "list" then
+    case v_to_list v2 of
+      Just vs -> Just (v1:vs)
+      Nothing -> Nothing
+  else
+    Nothing
+v_to_list _ = Nothing
+
+v_to_char_list :: V -> Maybe [Char]
+v_to_char_list (ConV (Just (cn, TypeId (Short tn))) []) =
+  if cn == "nil" && tn == "list" then
+    Just []
+  else
+    Nothing
+v_to_char_list (ConV (Just (cn, TypeId (Short tn))) [LitV (Char c), v]) =
+  if cn == "::" && tn == "list" then
+    case v_to_char_list v of
+      Just cs -> Just (c:cs)
+      Nothing -> Nothing
+  else
+    Nothing
+v_to_char_list _ = Nothing
 
 opn_lookup :: Opn -> (Int -> Int -> Int)
 opn_lookup n =
@@ -296,3 +422,161 @@ opb_lookup n =
     Gt  -> (>)
     LEq -> (<=)
     GEq -> (>=)
+
+opw8_lookup :: Opw -> Word8 -> Word8 -> Word8
+opw8_lookup op =
+  case op of
+    AndW -> (.&.)
+    OrW  -> (.|.)
+    XOr  -> xor
+    Add  -> (+)
+    Sub  -> (-)
+
+opw64_lookup :: Opw -> Word64 -> Word64 -> Word64
+opw64_lookup op =
+  case op of
+    AndW -> (.&.)
+    OrW  -> (.|.)
+    XOr  -> xor
+    Add  -> (+)
+    Sub  -> (-)
+
+-- Unsure if ASR and LSR are the same. They should be when working with unsigned?
+shift8_lookup :: Shift -> Word8 -> Natural -> Word8
+shift8_lookup sh = case sh of
+  ASR -> undefined -- \w n -> shiftR w (fromIntegral n)
+  LSR -> \w n -> shiftR w (fromIntegral n)
+  LSL -> \w n -> shiftL w (fromIntegral n)
+
+shift64_lookup :: Shift -> Word64 -> Natural -> Word64
+shift64_lookup sh = case sh of
+  ASR -> undefined -- \w n -> shiftR w (fromIntegral n)
+  LSR -> \w n -> shiftR w (fromIntegral n)
+  LSL -> \w n -> shiftL w (fromIntegral n)
+
+------ Lazy Semantics ------
+
+
+doAppLazy :: Op -> [V] -> Maybe (Result V V)
+doAppLazy op vs =
+  case (op, vs) of
+    (OPN op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (RVal (LitV (IntLit (opn_lookup op n1 n2))))
+    (OPB op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+      Just (RVal (boolv (opb_lookup op n1 n2)))
+    (OPW W8 op, [LitV (Word8 w1), LitV (Word8 w2)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ opw8_lookup op w1 w2
+    (OPW W64 op, [LitV (Word64 w1), LitV (Word64 w2)]) -> undefined
+      -- Just $ RVal $ LitV $ Word64 $ opw64_lookup op w1 w2
+    (Shift W8 op n, [LitV (Word8 w)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ shift8_lookup op w n
+    (Shift W64 op n, [LitV (Word64 w)]) -> undefined
+      -- Just $ RVal $ LitV $ Word64 $ shift64_lookup op w n
+    (Equality, [v1, v2]) ->
+      case do_eq v1 v2 of
+        Eq_Type_Error -> Nothing
+        Eq_Val b      -> Just $ RVal $ boolv b
+    (WordFromInt W8, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ toEnum i
+    (WordFromInt W64, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ toEnum i
+    (WordToInt W8, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word8 $ fromIntegral i
+    (WordToInt W64, [LitV (IntLit i)]) -> undefined
+      -- Just $ RVal $ LitV $ Word64 $ fromIntegral i
+    (Ord, [LitV (Char c)]) ->
+      Just $ RVal $ LitV $ IntLit $ C.ord c
+    (Chr, [LitV (IntLit i)]) ->
+      Just $ RVal $ LitV $ Char $ C.chr i
+    (ChOpb op, [LitV (Char c1), LitV (Char c2)]) ->
+      Just $ RVal $ boolv $ opb_lookup op (C.ord c1) (C.ord c2)
+    (Implode, [v]) ->
+      case v_to_char_list v of
+        Just ls -> Just $ RVal $ LitV $ StrLit ls
+        Nothing -> Nothing
+    (StrSub, [LitV (StrLit str), LitV (IntLit i)]) ->
+      if i < 0 then
+        Just $ RErr $ RRaise $ prim_exn "SubScript"
+      else
+        if i >= length str then
+          Just $ RErr $ RRaise $ prim_exn "SubScript"
+        else
+          Just $ RVal $ LitV $ Char $ str !! i
+    (StrLen, [LitV (StrLit str)]) ->
+      Just $ RVal $ LitV $ IntLit $ length str
+    (VFromList, [v]) ->
+      case buildList v of
+        RVal [vs] ->
+          case v_to_list vs of
+            Just vs' -> Just $ RVal $ VectorV vs'
+            Nothing  -> Nothing
+        _ -> Nothing
+    (VSub, [VectorV vs, LitV (IntLit i)]) ->
+      if i < 0 then
+        Just $ RErr $ RRaise $ prim_exn "Subscript"
+      else
+        if i >= length vs then
+          Just $ RErr $ RRaise $ prim_exn "Subscript"
+        else
+          Just $ RVal $ vs !! i
+    (VLength, [VectorV vs]) ->
+      Just $ RVal $ LitV $ IntLit $ length vs
+    _ -> Nothing
+
+pmatchLazy :: Env_CTor -> Pat -> V -> Env_Val -> Match_Result Env_Val
+pmatchLazy envC (PVar x) v' env = Match $ (x, v'):env
+pmatchLazy envC (PLit l) (LitV l') env =
+  if l == l' then
+    Match env
+  else if lit_same_type l l' then
+    No_Match
+  else
+    Match_Type_Error
+pmatchLazy envC (PCon (Just n) ps) (ConV (Just (n', t')) vs) env =
+  case lookup_alist_mod_env n envC of
+    Just (l, t) ->
+      if same_tid t t' && length ps == 1 then
+        if same_ctor (id_to_n n, t) (n', t') then
+          pmatchListLazy envC ps vs env
+        else
+          No_Match
+      else
+        Match_Type_Error
+    _           -> Match_Type_Error
+pmatchLazy envC (PCon Nothing ps) (ConV Nothing vs) env =
+  if length ps == length vs then
+    pmatchListLazy envC ps vs env
+  else
+    Match_Type_Error
+pmatchLazy envC (PRef p) (Loc lnum) env = undefined
+  -- case store_lookup lnum s of
+  --   Just (RefV v) -> pmatch envC s p v env
+  --   Just _        -> Match_Type_Error
+  --   Nothing       -> Match_Type_Error
+pmatchLazy envC (PTAnnot p t) v env =
+  pmatchLazy envC p v env
+pmatchLazy envC _ _ env = Match_Type_Error
+
+pmatchListLazy envC [] [] env = Match env
+pmatchListLazy envC (p:ps) (v:vs) env =
+  case pmatchLazy envC p v env of
+    No_Match -> No_Match
+    Match_Type_Error -> Match_Type_Error
+    Match env' -> pmatchListLazy envC ps vs env'
+pmatchListLazy _envC _ _ _env = Match_Type_Error
+
+-- | Recursively builds a "proper" list from a Con-expression.
+--   Pattern matches for Thunks that contain Con-expressions.
+buildList :: V -> Result [V] V
+buildList (Thunk env (Con cn es)) =
+  case cn of
+    Nothing -> RErr $ RAbort RType_Error
+    Just id ->
+      case lookup_alist_mod_env id (c env) of
+        Nothing       -> RErr $ RAbort RType_Error
+        Just (len, t) -> case len of
+          2 -> RVal [ConV (Just (id_to_n id, t)) [Thunk env (head es), head v2]]
+          0 -> RVal [ConV (Just (id_to_n id, t)) []]
+          _ -> RErr $ RAbort $ RType_Error
+          where RVal v2 = buildList (Thunk env (head (tail es)))
+buildList v = RErr $ RAbort $ RType_Error --RVal [v]

@@ -1,10 +1,13 @@
-module Evaluate where
+module Evaluate (
+  evaluate,
+  evaluateLazy,
+  evalAndForce) where
 
 import AbsCakeML
 import SemanticPrimitives
 import Lib
 
-
+import Numeric.Natural
 
 list_result :: Result a b -> Result [a] b
 list_result (RVal v) = RVal [v]
@@ -49,7 +52,8 @@ evaluate st env  [App op es] =
       if op == OpApp then
         case do_opapp (reverse vs) of
           Just (env', e) ->
-            (st', RErr (RAbort RTimeout_Error))
+            -- (st', RErr (RAbort RTimeout_Error))
+            evaluate st' env' [e]
           Nothing ->
             (st', RErr (RAbort RType_Error))
       else
@@ -90,7 +94,7 @@ evaluate st env [LetRec funs e] =
 evaluate st env [TAnnot e t]    = evaluate st env [e]
 
 evaluate_match :: State -> Environment V -> V -> [(Pat, Exp)] -> V -> (State, Result [V] V)
-evaluate_match st _env v []          err_v = (st, RErr (RRaise err_v))
+evaluate_match st _env _v []          err_v = (st, RErr (RRaise err_v))
 evaluate_match st  env v' ((p,e):pes) err_v =
   if allDistinct (pat_bindings p []) then
     case pmatch (c env) (refs st) p v' (v env) of
@@ -99,3 +103,157 @@ evaluate_match st  env v' ((p,e):pes) err_v =
       Match_Type_Error -> (st, RErr (RAbort RType_Error))
   else
     (st, RErr (RAbort RType_Error))
+
+
+
+------- Lazy Semantics ------
+
+-- | evaluateLazy takes an expression and evaluates as little
+--   as possible. 
+evaluateLazy :: Environment V -> [Exp] -> Result [V] V
+evaluateLazy _env []             = RVal []
+evaluateLazy env (e1:e2:es)      =
+  case evaluateLazy env [e1] of
+    RVal v1 ->
+      case evaluateLazy env (e2:es) of
+        RVal vs -> RVal (head v1:vs)
+        res -> res
+    res -> res
+evaluateLazy env [Raise e]       =
+  case evaluateLazy env [e] of
+    RVal v -> case head v of
+      Thunk env' e' -> RVal [Thunk env' (Raise e')]
+      v' -> RErr (RRaise v')
+    res -> res
+evaluateLazy env [Handle e pes]  =
+  case evalAndForce env [e] of
+    RErr (RRaise v) -> evaluate_match_small env v pes v
+    res             -> res
+evaluateLazy env [Con cn es]     =
+  if do_con_check (c env) cn (fromIntegral (length es)) then
+    case build_conv (c env) cn (reverse (map (Thunk env) es)) of
+      Just v  -> RVal [v]
+      Nothing -> RErr (RAbort RType_Error)
+--res -> res
+  else
+    RErr (RAbort RType_Error)
+evaluateLazy env [Var n]         =
+  case lookup_var_id n env of
+    Just v  -> RVal [v]
+    Nothing -> RErr (RAbort RType_Error)
+evaluateLazy env [Fun x e]       = RVal [Closure env x e]
+evaluateLazy env [Literal l]     = RVal [LitV l]
+evaluateLazy env [App op es]     =
+  if op == OpApp then
+    case evalAndForce env es of
+      RVal vs ->
+        case do_opapp vs of
+          Just (env', e) ->
+            -- evaluateLazy env' [e]
+            RVal [Thunk env' e]
+          Nothing ->
+            RErr $ RAbort RType_Error
+      res -> res
+  else
+    case op of
+      OPN op ->
+        evalOnOpn env op es
+      VFromList ->
+        case es of
+          [e] ->
+            case doAppLazy VFromList [Thunk env e] of
+              Just r  -> list_result r
+              Nothing -> RErr $ RAbort RType_Error
+          _   -> RErr $ RAbort RType_Error -- Wrong amount of arguments
+      _ ->
+        case evalAndForce env es of
+          RVal vs ->
+            case doAppLazy op vs of
+              Just r  -> list_result r
+              Nothing -> RErr $ RAbort RType_Error
+          res -> res
+evaluateLazy env [Log lop e1 e2] =
+  case evalAndForce env [e1] of
+    RVal v1 -> case do_log lop (head v1) e2 of
+      Just (Exp e) -> RVal [Thunk env e]
+      Just (Val v) -> RVal [v]
+      Nothing      -> RErr (RAbort RType_Error)
+    res -> res
+evaluateLazy env [Mat e pes]     =
+  case evalAndForce env [e] of
+    RVal v -> evaluate_match_small env (head v) pes bindv
+    res -> res
+evaluateLazy env [Let xo e1 e2]  =
+  RVal [Thunk env {v = opt_bind xo (Thunk env e1) (v env)} e2]
+  -- case evalAndForce env [e1] of
+  --   RVal v' ->  evaluateLazy env {v = opt_bind xo (head v') (v env)} [e2]
+  --   res -> res
+evaluateLazy env [LetRec funs e] =
+  if allDistinct (map (\(x,y,z) -> x) funs) then
+    RVal [Thunk env {v = build_rec_env funs env (v env)} e]
+    --evaluateLazy (env {v = build_rec_env funs env (v env)}) [e]
+  else
+    RErr (RAbort RType_Error)
+evaluateLazy env [If e1 e2 e3]   =
+  case evalAndForce env [e1] of
+    RVal v ->
+      case do_if (head v) e2 e3 of
+        Just e  -> RVal [Thunk env e]
+        Nothing -> RErr (RAbort RType_Error)
+    res -> res
+evaluateLazy env [TAnnot e t]    = evaluateLazy env [e]
+
+evaluate_match_small :: Environment V -> V -> [(Pat, Exp)] -> V -> Result [V] V
+evaluate_match_small _env _v []          err_v = RErr (RRaise err_v)
+evaluate_match_small  env v' ((p,e):pes) err_v =
+  if allDistinct (pat_bindings p []) then
+    case pmatchLazy (c env) p v' (v env) of
+      Match env_v'     -> evaluateLazy env {v = env_v'} [e]
+      No_Match         -> evaluate_match_small env v' pes err_v
+      Match_Type_Error -> RErr (RAbort RType_Error)
+  else
+    RErr (RAbort RType_Error)
+
+
+
+force :: V -> Result [V] V
+force (Thunk env e) = case evaluateLazy env [e] of
+  RVal [Thunk env' e'] -> force (Thunk env' e')
+  res -> res
+force v = RVal [v]
+
+evalAndForce :: Environment V -> [Exp] -> Result [V] V
+evalAndForce _env []    = RVal []
+evalAndForce env (e:es) =
+  case evaluateLazy env [e] of
+    RVal v' -> case force (head v') of
+      RVal val ->
+        case evalAndForce env es of
+          RVal vs -> RVal ((head val):vs)
+          res -> res
+      res -> res
+    res -> res
+
+evalOnOpn :: Environment V -> Opn -> [Exp] -> Result [V] V
+evalOnOpn _ _ [] = RVal []
+evalOnOpn env op (e:es)
+  | op `elem` [Times, Divide, Modulo] =
+      case evalAndForce env [e] of
+        RVal v ->
+          if (head v) == LitV (IntLit 0) then
+            RVal v
+          else
+            case evalAndForce env es of
+              RVal vs ->
+                case doAppLazy (OPN op) (head v: vs) of
+                  Just r  -> list_result r
+                  Nothing -> RErr $ RAbort RType_Error
+              res     -> res
+        res -> res
+  | otherwise = -- Plus and Minus
+      case evalAndForce env (e:es) of
+        RVal vs ->
+          case doAppLazy (OPN op) vs of
+            Just r  -> list_result r
+            Nothing -> RErr $ RAbort RType_Error
+        res -> res

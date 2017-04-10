@@ -1,12 +1,16 @@
 module AbsCakeML where
 
 import Numeric.Natural
+import Data.Word
+
 
 -- | Literal constants
 data Lit
   = IntLit Int
-  | CharLit Char
+  | Char Char
   | StrLit String
+  | Word8 Word8
+  | Word64 Word64
   deriving (Eq, Show, Ord)
 
 -- | Identifiers
@@ -83,10 +87,34 @@ data Exp
   | TAnnot Exp T
   deriving (Eq, Show, Ord)
 
+data Word_Size = W8 | W64
+  deriving (Eq, Show, Ord)
+
 data Op
+  -- Integer operations
   = OPN Opn
   | OPB Opb
+  -- Word operations
+  | OPW Word_Size Opw
+  | Shift Word_Size Shift Natural
+  | Equality
+  -- Function application
   | OpApp
+  -- Word/Integer conversions
+  | WordFromInt Word_Size
+  | WordToInt Word_Size
+  -- Char operations
+  | Ord
+  | Chr
+  | ChOpb Opb
+  -- String operations
+  | Implode
+  | StrSub
+  | StrLen
+  -- Vector operations
+  | VFromList
+  | VSub
+  | VLength
   deriving (Eq, Show, Ord)
 
 -- | Built-in binary operations
@@ -103,6 +131,20 @@ data Opb
   | Gt
   | LEq
   | GEq
+  deriving (Eq, Show, Ord)
+
+data Opw
+  = AndW
+  | OrW
+  | XOr
+  | Add
+  | Sub
+  deriving (Eq, Show, Ord)
+
+data Shift
+  = LSL
+  | LSR
+  | ASR
   deriving (Eq, Show, Ord)
 
 data LOp
