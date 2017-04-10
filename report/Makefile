@@ -11,3 +11,7 @@ clean:
 			rm -r settings/*.aux
 			# rm -r mainparts/*.log
 			# rm -r mainparts/*.aux
+			rm *.bbl
+			rm *.blg
+			rm *.toc
+			rm *.out
