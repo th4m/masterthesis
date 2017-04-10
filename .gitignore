@@ -1,6 +1,5 @@
 *.pdf
 \#*
 *~
-*.tex
 .#*
 compiler/.stack-work/*
