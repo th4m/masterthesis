@@ -1,0 +1,46 @@
+\section{CakeML}
+
+The subset of CakeML that has been used for this project mainly
+consists of expressions and values.
+The grammar of expressions are as follows:
+\\
+\begin{lstlisting}[language=erlang]
+  e = Raise e
+    | Handle e [(pat,e)]
+    | Lit lit
+    | Var id
+    | Fun string e
+    | App op [e]
+    | If e e e
+    | Mat e [(pat,e)]
+    | Let string e e
+    | Letrec [(string,string,e)]
+    | Tannot e t
+\end{lstlisting}
+
+\begin{lstlisting}[language=erlang]
+  lit = IntLit integer
+    | Char char
+    | StrLit string
+    | Word8 word8
+    | Word64 word64
+\end{lstlisting}
+
+\begin{lstlisting}[language=erlang]
+  pat = Pvar varN
+    | Plit lit
+    | Pref pat
+    | Ptannot pat t
+\end{lstlisting}
+
+\begin{lstlisting}[language=erlang]
+  t = Tvar string
+    | Tvar_db
+    | Tapp [t] tctor
+\end{lstlisting}
+
+\begin{lstlisting}[language=erlang]
+  tctor = TC_int
+    | TC_char
+    | TC_string
+\end{lstlisting}
