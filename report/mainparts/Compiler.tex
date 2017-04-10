@@ -1,0 +1,10 @@
+\section{The Compiler}
+
+Following the writing and testing of the lazy semantics, the compiler was
+created. The compiler takes CakeML expressions and outputs CakeML expressions,
+written with lazy semantics in mind.
+
+The representation of thunks is done using the CakeML expression for
+constructors. Expressions are wrapped in constructors with either the name
+\textit{Thunk} or \textit{Val}, depending on whether they will produce thunks or
+non-thunk values. 

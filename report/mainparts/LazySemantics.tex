@@ -1,4 +1,35 @@
 \section{Lazy Semantics}
-
+\label{LazySem}
 Lazy semantics was defined for this project.
-When an expression /econtains a sub-expression that affects the 
+
+While the strict semantics was defined as big-step semantics, the lazy semantics
+was created with small-step semantics in mind. This is mainly reflected on the
+definition of the evaluate function and the \texttt{Thunk} constructor.
+
+\subsection{Thunks}
+A new constructor for the value (\texttt{V}) type was added for the lazy semantics, representing
+a thunk. A thunk is a type of data-structure that contains an un-evaluated expression
+and an environment\cite{Takano:2015:TRL:2695664.2695693}. This is used for evaluating
+expressions in smaller steps.
+
+\subsection{Evaluate}
+Instead of recursively calling the \texttt{evaluate} function, as
+in the strict semantics, the lazy semantics tries to evaluate as little as possible.
+When the lazy \texttt{evaluate} function is called, it performs the minimum necessary evaluation
+for the given expression and returns either an evaluated value or a thunk as a result.
+In cases where the evaluated value is required, a \texttt{force} function is used.
+This function takes an argument of type \texttt{V} (which includes the thunk constructor),
+and recursively applies \texttt{evaluate} until a non-thunk value is produced.
+
+By making use of thunks and step-wise evaluation, the lazy semantics can avoid unnecessary
+evaluation. An example of this is \texttt{let} expressions:
+\begin{lstlisting}[language=haskell]
+  let x = e1 in e2
+\end{lstlisting}
+In the strict semantics, \texttt{e1} is fully evaluated before being stored in the
+environment under the variable \texttt{x}. If \texttt{e1} happens to be an non-terminating
+expression, \texttt{evaluate} would loop infinitely while trying to get the value of \texttt{e1}.
+This evaluation is rather unnecessary in the case where \texttt{x} is never called in
+\texttt{e2}. In the lazy semantics, \texttt{e1} is instead wrapped in a thunk together with
+the current environment of that step in the evaluation and stored as \texttt{x}. This way,
+\texttt{e1} only needs to be evaluated when called in \texttt{e2}.

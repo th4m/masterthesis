@@ -1,0 +1,14 @@
+\section{Introduction}
+
+The main difference between lazy and strict programming languages is the steps
+of evaluation that their respective compilers take. While a strict language
+always fully evaluates all the expressions given as parameters, a lazy language
+only evaluates expressions when needed \cite{ThunkHas27:online}. For example, it is easy to express
+infinite data structures, such as infinite lists, in a lazy language. Using
+these infinite data structures would not cause non-termination, as long as the
+program is not trying to access all of its elements. In Haskell, a lazy
+functional language, it is possible to write \texttt{take 5 [1..]} and get the
+result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
+an expression of an infinite list. This is because the list is not generated
+until it is needed, and only the necessary number of elements are generated.
+
