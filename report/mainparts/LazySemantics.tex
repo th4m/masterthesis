@@ -13,6 +13,7 @@ and an environment\cite{Takano:2015:TRL:2695664.2695693}. This is used for evalu
 expressions in smaller steps.
 
 \subsection{Evaluate}
+\label{Eval}
 Instead of recursively calling the \texttt{evaluate} function, as
 in the strict semantics, the lazy semantics tries to evaluate as little as possible.
 When the lazy \texttt{evaluate} function is called, it performs the minimum necessary evaluation
@@ -20,6 +21,16 @@ for the given expression and returns either an evaluated value or a thunk as a r
 In cases where the evaluated value is required, a \texttt{force} function is used.
 This function takes an argument of type \texttt{V} (which includes the thunk constructor),
 and recursively applies \texttt{evaluate} until a non-thunk value is produced.
+
+\noindent \begin{minipage}{\linewidth}
+\begin{lstlisting}[caption=\texttt{force} defined in Haskell,language=haskell]
+force :: V -> Result [V] V
+force (Thunk env e) = case evaluateLazy env [e] of
+  RVal [Thunk env' e'] -> force (Thunk env' e')
+  res -> res
+force v = RVal [v]
+\end{lstlisting}
+\end{minipage}
 
 By making use of thunks and step-wise evaluation, the lazy semantics can avoid unnecessary
 evaluation. An example of this is \texttt{let} expressions:

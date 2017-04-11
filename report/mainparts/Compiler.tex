@@ -2,9 +2,61 @@
 
 Following the writing and testing of the lazy semantics, the compiler was
 created. The compiler takes CakeML expressions and outputs CakeML expressions,
-written with lazy semantics in mind.
+written with lazy semantics in mind. This is performed with a function called
+\texttt{compile}.
 
 The representation of thunks is done using the CakeML expression for
 constructors. Expressions are wrapped in constructors with either the name
 \textit{Thunk} or \textit{Val}, depending on whether they will produce thunks or
-non-thunk values. 
+non-thunk values. In order for expressions to be saved as thunks, it is also
+necessary to wrap them together with the current environment. This is done by
+inserting the expression into a \texttt{Fun} expression. A thunk-expression is
+thus expressed as \texttt{Con (Just "Thunk") [Fun "" e]} and a value-expression
+is expressed as \texttt{Con (Just "Val") [e]}.
+
+Similarly to the lazy semantics, a \texttt{force} function is used when a
+non-thunk value is required. While the \texttt{force} function in the lazy
+semantics was written in Haskell, this one is written using the CakeML
+expressions specified in the abstract syntax tree in Haskell.
+
+\noindent \begin{minipage}{\linewidth}
+\begin{lstlisting}[caption=\texttt{force} in CakeML defined in Haskell, language=haskell]
+force :: Exp -> Exp
+force e =
+App OpApp
+  [LetRec [("force", "exp"
+          , Mat (Var (Short "exp"))
+            [(PCon (Just (Short "Thunk")) [PVar "Thunk"]
+             , App OpApp [Var (Short "force")
+                         , App OpApp [Var (Short "Thunk")
+                                     , Literal (IntLit 0)]])
+            ,(PCon (Just (Short "Val")) [PVar "Val"]
+             , Var (Short "Val"))]
+          )] (Var (Short "force"))
+  , e]
+\end{lstlisting}
+\end{minipage}
+The semantics behind this \texttt{force} is the same as \texttt{force} defined
+in the lazy semantics. Pattern matching checks if the given expression is either
+a \textit{Thunk} or \textit{Val} constructor. In the case where it is a thunk,
+the inner expression is stored as the variable \textit{``Thunk''} and evaluated
+by calling and applying it to a dummy argument, followed by another
+\texttt{force} on the yielded result. This recursive application of
+\texttt{force} occurs until a \textit{Val} constructor is encountered. In this
+case, the inner expression is stored as the variable \textit{``Val''} and called
+in order to simply return the expression.
+
+With this definition of thunks and values, as well as \texttt{force}, the
+compiler emulates the behavior of the lazy semantics. An example is the
+\texttt{let} expression that was described in Section \ref{Eval}.
+
+\begin{lstlisting}[language=haskell]
+compile (Let xo e1 e2) =
+  Let xo (thunkCompile e1) (thunkCompile e2)
+\end{lstlisting}
+Here, both \texttt{e1} and \texttt{e2} are compiled and wrapped with the thunk
+constructor. In the case where \texttt{e1} is a non-terminating expression,
+this \texttt{let} expression would loop infinitely trying to evaluate
+\texttt{e1}. By wrapping \texttt{e1} in a thunk constructor, the
+\texttt{evaluate} function will simply create a closure for \texttt{e1} and save
+the thunk expression in the environment.
