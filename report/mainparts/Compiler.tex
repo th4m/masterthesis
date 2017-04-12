@@ -19,8 +19,9 @@ non-thunk value is required. While the \texttt{force} function in the lazy
 semantics was written in Haskell, this one is written using the CakeML
 expressions specified in the abstract syntax tree in Haskell.
 
-\noindent \begin{minipage}{\linewidth}
-\begin{lstlisting}[caption=\texttt{force} in CakeML defined in Haskell, language=haskell]
+\vspace{\fboxsep}
+\begin{minipage}{\linewidth}
+\begin{alltt}
 force :: Exp -> Exp
 force e =
 App OpApp
@@ -34,9 +35,11 @@ App OpApp
              , Var (Short "Val"))]
           )] (Var (Short "force"))
   , e]
-\end{lstlisting}
+\end{alltt}
 \end{minipage}
-The semantics behind this \texttt{force} is the same as \texttt{force} defined
+\vspace{\fboxsep}
+
+\noindent The semantics behind this \texttt{force} is the same as \texttt{force} defined
 in the lazy semantics. Pattern matching checks if the given expression is either
 a \textit{Thunk} or \textit{Val} constructor. In the case where it is a thunk,
 the inner expression is stored as the variable \textit{``Thunk''} and evaluated

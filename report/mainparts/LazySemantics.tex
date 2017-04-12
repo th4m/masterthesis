@@ -3,8 +3,9 @@
 Lazy semantics was defined for this project.
 
 While the strict semantics was defined as big-step semantics, the lazy semantics
-was created with small-step semantics in mind. This is mainly reflected on the
-definition of the evaluate function and the \texttt{Thunk} constructor.
+makes use of thunks to make more steps in the evaluation.
+This is mainly reflected on the definition of the evaluate function
+and the \texttt{Thunk} constructor.
 
 \subsection{Thunks}
 A new constructor for the value (\texttt{V}) type was added for the lazy semantics, representing
@@ -22,21 +23,23 @@ In cases where the evaluated value is required, a \texttt{force} function is use
 This function takes an argument of type \texttt{V} (which includes the thunk constructor),
 and recursively applies \texttt{evaluate} until a non-thunk value is produced.
 
-\noindent \begin{minipage}{\linewidth}
-\begin{lstlisting}[caption=\texttt{force} defined in Haskell,language=haskell]
+\vspace{\fboxsep}
+\begin{minipage}{\linewidth}
+\begin{alltt}
 force :: V -> Result [V] V
 force (Thunk env e) = case evaluateLazy env [e] of
   RVal [Thunk env' e'] -> force (Thunk env' e')
   res -> res
 force v = RVal [v]
-\end{lstlisting}
+\end{alltt}
 \end{minipage}
+\vspace{\fboxsep}
 
 By making use of thunks and step-wise evaluation, the lazy semantics can avoid unnecessary
 evaluation. An example of this is \texttt{let} expressions:
-\begin{lstlisting}[language=haskell]
+\begin{alltt}
   let x = e1 in e2
-\end{lstlisting}
+\end{alltt}
 In the strict semantics, \texttt{e1} is fully evaluated before being stored in the
 environment under the variable \texttt{x}. If \texttt{e1} happens to be an non-terminating
 expression, \texttt{evaluate} would loop infinitely while trying to get the value of \texttt{e1}.

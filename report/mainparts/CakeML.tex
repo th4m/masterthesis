@@ -2,45 +2,49 @@
 
 The subset of CakeML that has been used for this project mainly
 consists of expressions and values.
-The grammar of expressions are as follows:
-\\
-\begin{lstlisting}[language=erlang]
-  e = Raise e
-    | Handle e [(pat,e)]
-    | Lit lit
-    | Var id
-    | Fun string e
-    | App op [e]
-    | If e e e
-    | Mat e [(pat,e)]
-    | Let string e e
-    | Letrec [(string,string,e)]
-    | Tannot e t
-\end{lstlisting}
+The grammar of expressions are shown in figure \ref{CakeAST}.
 
-\begin{lstlisting}[language=erlang]
-  lit = IntLit integer
-    | Char char
-    | StrLit string
-    | Word8 word8
-    | Word64 word64
-\end{lstlisting}
-
-\begin{lstlisting}[language=erlang]
-  pat = Pvar varN
-    | Plit lit
-    | Pref pat
-    | Ptannot pat t
-\end{lstlisting}
-
-\begin{lstlisting}[language=erlang]
-  t = Tvar string
-    | Tvar_db
-    | Tapp [t] tctor
-\end{lstlisting}
-
-\begin{lstlisting}[language=erlang]
-  tctor = TC_int
-    | TC_char
-    | TC_string
-\end{lstlisting}
+\vspace{\fboxsep}
+\begin{figure}
+\begin{alltt}
+  Exp   = Raise Exp
+        | Handle Exp [(Pat, Exp)]
+        | Literal Lit
+        | Con (Maybe (Id ConN)) [Exp]
+        | Var (Id VarN)
+        | Fun VarN Exp
+        | App Op [Exp]
+        | Log LOp Exp Exp
+        | If Exp Exp Exp
+        | Mat Exp [(Pat, Exp)]
+        | Let (Maybe VarN) Exp Exp
+        | LetRec [(VarN, VarN, Exp)] Exp
+        | TAnnot Exp T
+\end{alltt}
+\begin{alltt}
+  Lit   = IntLit Int
+        | Char Char
+        | StrLit String
+\end{alltt}
+\begin{alltt}
+  Pat   = PVar String
+        | PLit Lit
+        | PCon (Maybe (Id String)) [Pat]
+        | PRef Pat
+        | PTAnnot Pat T
+\end{alltt}
+\begin{alltt}
+  T     = TVar TVarN
+        | TVar_DB Natural
+        | TApp [T] TCtor
+\end{alltt}
+\begin{alltt}
+  TCtor = TC_int
+        | TC_char
+        | TC_string
+        | TC_fn
+\end{alltt}
+\caption[CakeAST]{The abstract syntax tree used for expressions in CakeML, defined in Haskell}
+\label{CakeAST}
+\end{figure}
+\vspace{\fboxsep}
