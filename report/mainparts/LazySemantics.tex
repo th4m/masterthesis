@@ -5,13 +5,15 @@ Lazy semantics was defined for this project.
 While the strict semantics was defined as big-step semantics, the lazy semantics
 makes use of thunks to make more steps in the evaluation.
 This is mainly reflected on the definition of the evaluate function
-and the \texttt{Thunk} constructor.
+and the addition of the \texttt{Thunk} constructor to the value (\texttt{V})
+type.
 
 \subsection{Thunks}
-A new constructor for the value (\texttt{V}) type was added for the lazy semantics, representing
+A new constructor for the value type was added for the lazy semantics, representing
 a thunk. A thunk is a type of data-structure that contains an un-evaluated expression
-and an environment\cite{Takano:2015:TRL:2695664.2695693}. This is used for evaluating
-expressions in smaller steps.
+and an environment~\cite{Takano:2015:TRL:2695664.2695693}. This is used for saving
+partially evaluated expressions, avoiding the big-step semantics approach that
+the strict semantics uses.
 
 \subsection{Evaluate}
 \label{Eval}
@@ -23,8 +25,9 @@ In cases where the evaluated value is required, a \texttt{force} function is use
 This function takes an argument of type \texttt{V} (which includes the thunk constructor),
 and recursively applies \texttt{evaluate} until a non-thunk value is produced.
 
-\vspace{\fboxsep}
-\begin{minipage}{\linewidth}
+%% \vspace{\fboxsep}
+%% \begin{minipage}{\linewidth}
+\begin{figure}[!ht]
 \begin{alltt}
 force :: V -> Result [V] V
 force (Thunk env e) = case evaluateLazy env [e] of
@@ -32,8 +35,9 @@ force (Thunk env e) = case evaluateLazy env [e] of
   res -> res
 force v = RVal [v]
 \end{alltt}
-\end{minipage}
-\vspace{\fboxsep}
+\end{figure}
+%% \end{minipage}
+%% \vspace{\fboxsep}
 
 By making use of thunks and step-wise evaluation, the lazy semantics can avoid unnecessary
 evaluation. An example of this is \texttt{let} expressions:
