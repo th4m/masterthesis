@@ -139,74 +139,85 @@ intB = 9
 testPlus :: Bool
 testPlus =
   exForce (plusExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA + intB))]
-  && RVal [LitV (IntLit (intA + intB))]
-  == exForce (plusExp intLitB intLitA)
+  == snd (ex (plusExp intLitA intLitB))
+  -- == RVal [LitV (IntLit (intA + intB))]
+  -- && RVal [LitV (IntLit (intA + intB))]
+  -- == exForce (plusExp intLitB intLitA)
 
 testMinus :: Bool
 testMinus =
   exForce (minusExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA - intB))]
-  && RVal [LitV (IntLit (intB - intA))]
-  == exForce (minusExp intLitB intLitA)
+  == snd (ex (minusExp intLitA intLitB))
+  -- == RVal [LitV (IntLit (intA - intB))]
+  -- && RVal [LitV (IntLit (intB - intA))]
+  -- == exForce (minusExp intLitB intLitA)
 
 testTimes :: Bool
 testTimes =
   exForce (timesExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA * intB))]
-  && RVal [LitV (IntLit (intB * intA))]
-  == exForce (timesExp intLitB intLitA)
+  == snd (ex (timesExp intLitA intLitB))
+  -- == RVal [LitV (IntLit (intA * intB))]
+  -- && RVal [LitV (IntLit (intB * intA))]
+  -- == exForce (timesExp intLitB intLitA)
 
 testDiv :: Bool
 testDiv =
   exForce (divExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA `div` intB))]
-  && RVal [LitV (IntLit (intB `div` intA))]
-  == exForce (divExp intLitB intLitA)
+  == snd (ex (divExp intLitA intLitB))
+  -- == RVal [LitV (IntLit (intA `div` intB))]
+  -- && RVal [LitV (IntLit (intB `div` intA))]
+  -- == exForce (divExp intLitB intLitA)
 
 testMod :: Bool
 testMod =
   exForce (modExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA `mod` intB))]
-  && RVal [LitV (IntLit (intB `mod` intA))]
-  == exForce (modExp intLitB intLitA)
+  == snd (ex (modExp intLitA intLitB))
+  -- == RVal [LitV (IntLit (intA `mod` intB))]
+  -- && RVal [LitV (IntLit (intB `mod` intA))]
+  -- == exForce (modExp intLitB intLitA)
 
 testEq1 :: Bool
 testEq1 =
   exForce (eqExp [intLitA, intLitA])
-  == RVal [boolv True]
-  && RVal [boolv True]
-  == exForce (eqExp [intLitB, intLitB])
+  == snd (ex (eqExp [intLitA, intLitA]))
+  -- == RVal [boolv True]
+  -- && RVal [boolv True]
+  -- == exForce (eqExp [intLitB, intLitB])
 
 testOrd :: Bool
 testOrd =
   exForce (ordExp 'a')
-  == RVal [LitV (IntLit (C.ord 'a'))]
-  && RVal [LitV (IntLit (C.ord 'b'))]
-  == exForce (ordExp 'b')
+  == snd (ex (ordExp 'a'))
+  -- == RVal [LitV (IntLit (C.ord 'a'))]
+  -- && RVal [LitV (IntLit (C.ord 'b'))]
+  -- == exForce (ordExp 'b')
 
 testChr :: Bool
 testChr =
   exForce (chrExp 97)
-  == RVal [LitV (Char (C.chr 97))]
-  && RVal [LitV (Char (C.chr 98))]
-  == exForce (chrExp 98)
+  == snd (ex (chrExp 97))
+  -- == RVal [LitV (Char (C.chr 97))]
+  -- && RVal [LitV (Char (C.chr 98))]
+  -- == exForce (chrExp 98)
 
 testChOpb :: Bool
 testChOpb =
   exForce (chopbExp LEq 'a' 'b')
-  == RVal [boolv True]
-  && RVal [boolv False]
-  == exForce (chopbExp LEq 'b' 'a')
+  == snd (ex (chopbExp LEq 'a' 'b'))
+  -- == RVal [boolv True]
+  -- && RVal [boolv False]
+  -- == exForce (chopbExp LEq 'b' 'a')
 
 strForTest = "testString"
 testStrsub :: Bool
 testStrsub =
   exForce (strsubExp strForTest intA)
-  == RVal [LitV (Char (strForTest !! intA))]
+  == snd (ex (strsubExp strForTest intA))
+  -- == RVal [LitV (Char (strForTest !! intA))]
 
 testLength :: Bool
-testLength = exForce (strlenExp "1234567") == RVal [LitV (IntLit 7)]
+testLength = exForce (strlenExp "1234567") == snd (ex (strlenExp "1234567"))
+  --RVal [LitV (IntLit 7)]
 
 allTests :: Bool
 allTests = and
