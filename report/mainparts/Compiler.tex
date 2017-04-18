@@ -85,7 +85,9 @@ semantics.
 
 \subsubsection{Comparison}
 
-The compiler was tested by comparing the output of \texttt{evaluate} between
+The compiler was tested in a very similar manner as in
+section~\ref{LazySemTest.}. In this case, the output of \texttt{evaluate}
+was compared between
 before and after compiling the input code. Both runs were given the same
 dummy environment and empty state. The non-compiled code is run as is, while
 the compiled code is forced before being executed.
@@ -98,29 +100,27 @@ The test code is as follows:
 compareEval :: Exp -> Bool
 compareEval e = strict == lazy
   where strict = ex e
-        lazy   = efc e
+        lazy   = (ex . force . compile) e
         ex e'  = evaluate empty_st ex_env [e']
-        efc    = ex . force . compile
 \end{alltt}
 \end{figure}
 %% \end{minipage}
 %% \vspace{\fboxsep}
 
-\noindent Here, \texttt{empty\_st} is, as the name implies, an empty state, and
-\texttt{ex\_env} is an environment containing some variables and predefined
-constructors. Normal expressions were tested with this \texttt{compareEval}
+\noindent By reusing some functions from the testing of the lazy semantics,
+normal expressions were tested with this \texttt{compareEval}
 function to confirm that the result of evaluate would not differ between the
-non-compiled and compiled code. 
+non-compiled and compiled code.
 
 
 \subsubsection{Laziness}
 
 To confirm that the compiler actually does produce code that can be evaluated
-lazily using strict semantics, non-terminating expressions were used as input.
-While the tested expressions cannot be proven to be non-terminating, because of
-the \textit{Halting problem}~\cite{haltingproblem}, they are believed to be so,
-as they are constructed to make use of recursion to infinitely loop into
-themselves.
+lazily using strict semantics, non-terminating expressions were used as part
+of the input. These tests were performed similarly to the tests in
+section~\ref{lazinessSem}. In this case, however, the strict \texttt{evaluate}
+function was used, showing that it is possible to achieve lazy evaluation
+using the strict semantics.
 
 Taking the example of the non-terminating expression from section~\ref{Eval}:
 \begin{alltt}
