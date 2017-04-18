@@ -136,104 +136,53 @@ intLitB = Literal (IntLit intB)
 intA = 3
 intB = 9
 
-testPlus :: Bool
 testPlus =
-  exForce (plusExp intLitA intLitB)
-  == snd (ex (plusExp intLitA intLitB))
-  -- == RVal [LitV (IntLit (intA + intB))]
-  -- && RVal [LitV (IntLit (intA + intB))]
-  -- == exForce (plusExp intLitB intLitA)
+  plusExp intLitA intLitB
 
-testMinus :: Bool
 testMinus =
-  exForce (minusExp intLitA intLitB)
-  == snd (ex (minusExp intLitA intLitB))
-  -- == RVal [LitV (IntLit (intA - intB))]
-  -- && RVal [LitV (IntLit (intB - intA))]
-  -- == exForce (minusExp intLitB intLitA)
+  minusExp intLitA intLitB
 
-testTimes :: Bool
 testTimes =
-  exForce (timesExp intLitA intLitB)
-  == snd (ex (timesExp intLitA intLitB))
-  -- == RVal [LitV (IntLit (intA * intB))]
-  -- && RVal [LitV (IntLit (intB * intA))]
-  -- == exForce (timesExp intLitB intLitA)
-
-testDiv :: Bool
+  timesExp intLitA intLitB
 testDiv =
-  exForce (divExp intLitA intLitB)
-  == snd (ex (divExp intLitA intLitB))
-  -- == RVal [LitV (IntLit (intA `div` intB))]
-  -- && RVal [LitV (IntLit (intB `div` intA))]
-  -- == exForce (divExp intLitB intLitA)
+  divExp intLitA intLitB
 
-testMod :: Bool
 testMod =
-  exForce (modExp intLitA intLitB)
-  == snd (ex (modExp intLitA intLitB))
-  -- == RVal [LitV (IntLit (intA `mod` intB))]
-  -- && RVal [LitV (IntLit (intB `mod` intA))]
-  -- == exForce (modExp intLitB intLitA)
+  modExp intLitA intLitB
 
-testEq1 :: Bool
 testEq1 =
-  exForce (eqExp [intLitA, intLitA])
-  == snd (ex (eqExp [intLitA, intLitA]))
-  -- == RVal [boolv True]
-  -- && RVal [boolv True]
-  -- == exForce (eqExp [intLitB, intLitB])
-
-testOrd :: Bool
+  eqExp [intLitA, intLitA]
 testOrd =
-  exForce (ordExp 'a')
-  == snd (ex (ordExp 'a'))
-  -- == RVal [LitV (IntLit (C.ord 'a'))]
-  -- && RVal [LitV (IntLit (C.ord 'b'))]
-  -- == exForce (ordExp 'b')
+  ordExp 'a'
 
-testChr :: Bool
 testChr =
-  exForce (chrExp 97)
-  == snd (ex (chrExp 97))
-  -- == RVal [LitV (Char (C.chr 97))]
-  -- && RVal [LitV (Char (C.chr 98))]
-  -- == exForce (chrExp 98)
+  chrExp 97
 
-testChOpb :: Bool
 testChOpb =
-  exForce (chopbExp LEq 'a' 'b')
-  == snd (ex (chopbExp LEq 'a' 'b'))
-  -- == RVal [boolv True]
-  -- && RVal [boolv False]
-  -- == exForce (chopbExp LEq 'b' 'a')
+  chopbExp LEq 'a' 'b'
 
 strForTest = "testString"
-testStrsub :: Bool
-testStrsub =
-  exForce (strsubExp strForTest intA)
-  == snd (ex (strsubExp strForTest intA))
+testStrsub = strsubExp strForTest intA
   -- == RVal [LitV (Char (strForTest !! intA))]
 
-testLength :: Bool
-testLength = exForce (strlenExp "1234567") == snd (ex (strlenExp "1234567"))
+testLength = strlenExp "1234567"
   --RVal [LitV (IntLit 7)]
 
-allTests :: Bool
-allTests = and
-  [ testPlus
-  , testMinus
-  , testTimes
-  , testDiv
-  , testMod
-  , testEq1
-  , testOrd
-  , testChr
-  , testChOpb
-  -- , testImplode
-  , testStrsub
-  , testLength
-  ]
+compareEval = map exForce allExps == map (snd . ex) allExps
+  where allExps = 
+          [ testPlus
+          , testMinus
+          , testTimes
+          , testDiv
+          , testMod
+          , testEq1
+          , testOrd
+          , testChr
+          , testChOpb
+          -- , testImplode
+          , testStrsub
+          , testLength
+          ]
 
 
 -- Testing termination (no formal proof, just try to run the functions)
