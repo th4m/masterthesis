@@ -144,6 +144,40 @@ expression will loop infinitely on the evaluation of \texttt{e1}, never reaching
 \noindent When evaluated, \texttt{Con (Just (Short "Thunk")) [Fun "" e1]} will
 become a value of the \texttt{ConV} constructor with the \texttt{Fun "" e1}
 expression becoming a \texttt{Closure} containing the environment and
-\texttt{e1}. As such, the actual evaluation of \texttt{e1} has been avoided
+\texttt{e1}:
+\begin{figure}[!ht]
+\begin{alltt}
+  Let (Just "x")
+    (ConV (Just ("Thunk",TypeId "lazy")) [Closure env "" e1])
+    (ConV (Just ("Thunk",TypeId "lazy")) [Closure env "" e2])
+\end{alltt}
+\end{figure}
+
+\noindent As such, the actual evaluation of \texttt{e1} has been avoided
 until it is called in \texttt{e2} as the variable \texttt{x}, followed by a
 \texttt{force}.
+
+Haskell's \texttt{undefined} was also utilized to test laziness. By definition,
+\texttt{undefined} throws an exception when evaluated~\cite{Undefine63:online}.
+This means that as long as it is not evaluated, the program will run without
+any issues. This was tested in e.g. a \texttt{let} expression:
+\begin{alltt}
+  Let (Just "x") undefined e2
+\end{alltt}
+Here, \texttt{undefined} will be wrapped in a thunk constructor and a
+\texttt{Fun} expression, just like in the example above:
+\begin{alltt}
+  Con (Just (Short "Thunk")) [Fun "" undefined]
+\end{alltt}
+When evaluated, the
+\texttt{Fun} expression will simply be turned into a \texttt{Closure} with the
+environment and the accompanying expression (in this case \texttt{undefined}):
+\begin{figure}[!ht]
+\begin{alltt}
+  ConV (Just ("Thunk",TypeId (Short "lazy")))
+    [Closure env "" undefined]
+\end{alltt}
+\end{figure}
+
+\noindent This will be saved as the variable \texttt{x}. \texttt{undefined} will
+only be evaluated when \texttt{x} is called and forced.
