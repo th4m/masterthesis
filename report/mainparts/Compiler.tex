@@ -41,8 +41,8 @@ App OpApp
 %% \end{minipage}
 %% \vspace{\fboxsep}
 
-\noindent The semantics behind this \texttt{force} is the same as \texttt{force} defined
-in the lazy semantics. Pattern matching checks if the given expression is either
+\noindent The idea behind this \texttt{force} is the same as \texttt{force} described
+in section~\ref{Eval}. Pattern matching checks if the given expression is either
 a \textit{Thunk} or \textit{Val} constructor. In the case where it is a thunk,
 the inner expression is stored as the variable \textit{``Thunk''} and evaluated
 by calling and applying it to a dummy argument, followed by another
@@ -86,7 +86,7 @@ semantics.
 \subsubsection{Comparison}
 
 The compiler was tested in a very similar manner as in
-section~\ref{LazySemTest.}. In this case, the output of \texttt{evaluate}
+section~\ref{LazySemTest}. In this case, the output of \texttt{evaluate}
 was compared between
 before and after compiling the input code. Both runs were given the same
 dummy environment and empty state. The non-compiled code is run as is, while

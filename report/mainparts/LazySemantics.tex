@@ -50,7 +50,7 @@ evaluation. An example of this is \texttt{let} expressions:
 \end{alltt}
 In the strict semantics, \texttt{e1} is fully evaluated before being stored in the
 environment under the variable \texttt{x}. 
-This evaluation is rather unnecessary in the case where \texttt{x} is never called in
+This evaluation is rather unnecessary in the case where \texttt{x} is never used in
 \texttt{e2}. In the lazy semantics, \texttt{e1} is instead wrapped in a thunk together with
 the current environment of that step in the evaluation and stored as \texttt{x}. This way,
 \texttt{e1} only needs to be evaluated when called in \texttt{e2}.
@@ -69,8 +69,8 @@ in the strict semantics.
 \subsubsection{Comparison}
 
 \texttt{evaluateLazy} should yield the same results as the strict
-\texttt{evaluate}. In order to make sure that this was the case, a list of
-simple and common expressions was unit tested:
+\texttt{evaluate}. In order to make sure that this was the case, a number of
+simple and common expressions were unit tested:
 
 \begin{figure}[!ht]
 \begin{alltt}
