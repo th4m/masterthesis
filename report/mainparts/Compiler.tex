@@ -1,4 +1,4 @@
-\section{The Compiler}
+\chapter{The Compiler}
 
 While the defined lazy semantics indeed do allow for lazy evaluation of CakeML
 expressions, the goal of this project is not to change the core evaluation
@@ -9,6 +9,7 @@ created. The compiler takes CakeML expressions and outputs CakeML expressions,
 written with lazy semantics in mind. This is performed with a function called
 \texttt{compile}.
 
+\section{Thunks}
 The representation of thunks is done using the CakeML expression for
 constructors. Expressions are wrapped in constructors by using the
 \texttt{Con} expression with either the name
@@ -23,25 +24,28 @@ a value-expression is expressed as \texttt{Con (Just "Val") [e]}.
 Similarly to the lazy semantics, a \texttt{force} function is used when a
 non-thunk value is required. While the \texttt{force} function in the lazy
 semantics was written in Haskell, this one is written using the CakeML
-expressions specified in the abstract syntax tree in Haskell.
+expressions specified in the abstract syntax tree in Haskell. It makes use of
+recursion with the \texttt{LetRec} expression in order to loop into itself for
+further forcing of inner expressions, and pattern matching between the
+\textit{Thunk} and \textit{Val} constructors using the \texttt{Mat} expression.
 
 %% \vspace{\fboxsep}
 %% \begin{minipage}{\linewidth}
-\begin{figure}[!ht]
+\begin{figure}[H]
 \begin{alltt}
 force :: Exp -> Exp
 force e =
-App OpApp
-  [LetRec [("force", "exp"
-          , Mat (Var (Short "exp"))
-            [(PCon (Just (Short "Thunk")) [PVar "Thunk"]
-             , App OpApp [Var (Short "force")
-                         , App OpApp [Var (Short "Thunk")
-                                     , Literal (IntLit 0)]])
-            ,(PCon (Just (Short "Val")) [PVar "Val"]
-             , Var (Short "Val"))]
-          )] (Var (Short "force"))
-  , e]
+  App OpApp
+    [LetRec [("force", "exp"
+            , Mat (Var (Short "exp"))
+              [(PCon (Just (Short "Thunk")) [PVar "Thunk"]
+               , App OpApp [Var (Short "force")
+                           , App OpApp [Var (Short "Thunk")
+                                       , Literal (IntLit 0)]])
+              ,(PCon (Just (Short "Val")) [PVar "Val"]
+               , Var (Short "Val"))]
+            )] (Var (Short "force"))
+    , e]
 \end{alltt}
 \end{figure}
 %% \end{minipage}
@@ -57,9 +61,13 @@ by calling and applying it to a dummy argument, followed by another
 case, the inner expression is stored as the variable \textit{``Val''} and called
 in order to simply return the expression.
 
-With this definition of thunks and values, as well as \texttt{force}, the
-compiler emulates the behavior of the lazy semantics. An example is the
-\texttt{let} expression that was described in Section \ref{Eval}.
+
+\section{Compiling Expressions}
+With the above definition of thunks and values, as well as \texttt{force}, the
+compiler emulates the behavior of the lazy semantics. The \texttt{compile}
+function pattern matches on expressions and returns altered expressions.
+An example is the\texttt{let} expression that was described in
+Section~\ref{Eval}.
 When compiling a \texttt{let} expression, both \texttt{e1} and \texttt{e2} are
 compiled and wrapped with the thunk constructor.
 
@@ -80,7 +88,7 @@ the \texttt{let} expression would loop infinitely trying to evaluate
 \texttt{evaluate} function will simply create a closure for \texttt{e1} and save
 the thunk expression in the environment.
 
-\subsection{Testing the Compiler}
+\section{Testing the Compiler}
 
 Testing of the compiler was done in two approaches. The first approach was to
 control that evaluating the compiled code would not yield a different result
@@ -90,7 +98,7 @@ not terminate when using strict semantics, but do terminate when using lazy
 semantics.
 
 
-\subsubsection{Comparison}
+\subsection{Comparison}
 
 The compiler was tested in a very similar manner as in
 section~\ref{LazySemTest}. In this case, the output of \texttt{evaluate}
@@ -120,7 +128,7 @@ function to confirm that the result of evaluate would not differ between the
 non-compiled and compiled code.
 
 
-\subsubsection{Laziness}
+\subsection{Laziness}
 
 To confirm that the compiler actually does produce code that can be evaluated
 lazily using strict semantics, non-terminating expressions were used as part

@@ -1,13 +1,19 @@
-\section{Introduction}
-
+\chapter{Introduction}
 The main difference between lazy and strict programming languages is the steps
-of evaluation that their respective semantics take. While a strict language
-always fully evaluates all the expressions given as parameters, a lazy language
-only evaluates expressions when needed~\cite{ThunkHas27:online}.
+of evaluation that their respective semantics take.
+It has been argued that lazy programming (and functional programming in general)
+brings improvement to software development in the form of
+modularity~\cite{Hu1989}~\cite{Hu2015}.
+One example of how laziness can add modularity can be seen when compared to
+a strict language: while a strict language always fully evaluates all the
+expressions given as parameters, a lazy language only evaluates expressions
+when needed~\cite{ThunkHas27:online}.
 
-An example of something useful in lazy programming languages is
+
+\section{An Example of Lazy vs Strict Evaluation}
+A useful feature in lazy programming languages is
 infinite data structures, such as infinite lists. Using
-these infinite data structures would not cause non-termination, as long as the
+these infinite data structures will not cause non-termination, as long as the
 program is not trying to access all of its elements. In Haskell, a lazy
 functional language, it is possible to write \texttt{take 5 [1..]} and get the
 result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
@@ -16,14 +22,14 @@ until it is needed, and only the necessary number of elements are generated.
 
 Below is an example of how \texttt{take} could be implemented. The function
 takes an integer (for the number of elements to take) and a list as arguments.
-This assumes that there is a data type definition for lists with two
+This assumes that there is a data type definition for \texttt{List} with two
 constructors:
 \begin{itemize}
-  \item \texttt{Cons (a, as)} for when there is an element \texttt{a} and the rest of the list \texttt{as}
+  \item \texttt{Cons (a, List as)} for when there is an element \texttt{a} and the rest of the list \texttt{as}
   \item \texttt{Nil} for the empty list
 \end{itemize}
 
-\begin{figure}[!ht]
+\begin{figure}[H]
 \begin{alltt}
 take n list =
   if n == 0 then
@@ -31,17 +37,17 @@ take n list =
   else
     case list of
       Cons (a, as) -> Cons (a, (takeHs n-1 as))
-      Nil -> Nil
+      Nil          -> Nil
   \end{alltt}
 \end{figure}
 
-The function can be written like this for any language, but the semantics
+\noindent The function can be written like this for any language, but the semantics
 changes the strategy of evaluation. E.g. a strict language is likely to evaluate
-the whole list when pattern matching, while a lazy language is likely to
+all of \texttt{list} when pattern matching, while a lazy language is likely to
 evaluate only part of the list as much as needed. 
 
 
-\subsection{Project Description}
+\section{Project Description}
 
 This project will create a compiler that takes code from a lazy programming
 language and compiles it into a strict programming language. The resulting
@@ -58,7 +64,7 @@ Internally, the compiler will take a
 CakeML function with lazy semantics and translate it to one
 or more strict CakeML functions in order to get a semantically equivalent
 evaluation. When it comes to handling laziness, lazy functions will be
-translated to explicit thunk values ~\cite{Ingerman:1961:TWC:366062.366084} in
+translated to explicit thunk values~\cite{Ingerman:1961:TWC:366062.366084} in
 CakeML. Thunks are expressions that have yet to be evaluated. Thunk values are
 not primitive in CakeML. Our compiler will create code that
 implements the thunk values in CakeML. The compiler will target the stateful

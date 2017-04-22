@@ -1,4 +1,4 @@
-\section{Lazy Semantics}
+\chapter{Lazy Semantics}
 \label{LazySem}
 Lazy semantics was defined for this project.
 
@@ -8,14 +8,31 @@ This is mainly reflected on the definition of the evaluate function
 and the addition of the \texttt{Thunk} constructor to the value (\texttt{V})
 type.
 
-\subsection{Thunks}
-A new constructor for the value type was added for the lazy semantics, representing
-a thunk. A thunk is a type of data-structure that contains an un-evaluated expression
-and an environment~\cite{Takano:2015:TRL:2695664.2695693}. This is used for saving
+\section{Thunks}
+
+A thunk is a type of data-structure that contains an un-evaluated expression
+and an environment~\cite{Takano:2015:TRL:2695664.2695693}.
+For the lazy semantics, a new constructor for the value type was added,
+representing a thunk, containing an environment and an expression:
+\begin{alltt}
+Thunk Environment Exp
+\end{alltt}
+This is used for saving
 partially evaluated expressions, allowing for an evaluation strategy with e.g.
 call-by-name or call-by-need.
 
-\subsection{Evaluate}
+With the strict semantics of CakeML, when an expression is to be stored as a
+variable, it always needs to evaluated to a value before stored.
+As expressions and values are of different types, it is not possible to mix
+them. This also means that it is not possible to partially evaluate an
+expression to another expression, with the type definition of the
+\texttt{evaluate} function. A thunk can thus not be of the expression type.
+By expressing thunks as values, the implemented lazy semantics does not require
+any significant change in structure from the original strict semantics. The main
+difference is that evaluating an expression may or may not return a thunk
+instead of a pure value.
+
+\section{Evaluate}
 \label{Eval}
 Instead of recursively calling the \texttt{evaluate} function, as
 in the strict semantics, the lazy semantics tries to evaluate as little as possible.
@@ -55,7 +72,7 @@ This evaluation is rather unnecessary in the case where \texttt{x} is never used
 the current environment of that step in the evaluation and stored as \texttt{x}. This way,
 \texttt{e1} only needs to be evaluated when called in \texttt{e2}.
 
-\subsection{Testing the Lazy Semantics}
+\section{Testing the Lazy Semantics}
 \label{LazySemTest}
 
 The lazy semantics was tested in two different methods.
@@ -66,7 +83,7 @@ was tested to be able to evaluate some expressions that cannot be evaluated
 in the strict semantics.
 
 
-\subsubsection{Comparison}
+\subsection{Comparison}
 
 \texttt{evaluateLazy} should yield the same results as the strict
 \texttt{evaluate}. In order to make sure that this was the case, a number of
@@ -87,7 +104,7 @@ is applied to the result of the strict \texttt{evaluate}.
 \end{figure}
 
 
-\subsubsection{Laziness}
+\subsection{Laziness}
 \label{lazinessSem}
 In order to test that \texttt{evaluateLazy} actually does evaluate expressions
 in a lazy manner, certain non-terminating expressions were used as part of the

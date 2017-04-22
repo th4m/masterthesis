@@ -1,14 +1,28 @@
-\include{settings/settings}
+\documentclass[11pt,a4paper]{report}
+\input{settings/packagescommands}
+\input{settings/settings}
 
 \begin{document}
+
+%REPLACE TITLE WITH PROPER
 
 \title{A Lazy to Strict Language Compiler}
 \author{Philip Tham}
 
+%ToC
 \maketitle
 \newpage
+\pagenumbering{roman}
+\setcounter{page}{1}
+\pagestyle{fancy}
+\setspecialhdr
 \tableofcontents
+
+%Main area
 \newpage
+\setdefaulthdr
+\pagenumbering{arabic}	
+\setcounter{page}{1}
 \input{mainparts/Introduction}
 \newpage
 \input{mainparts/CakeML}
@@ -18,7 +32,6 @@
 \input{mainparts/Compiler}
 
 \newpage
-\bibliographystyle{backmatter/unsrt}
 \bibliography{backmatter/ref}
 
 \end{document}
