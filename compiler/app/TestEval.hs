@@ -168,21 +168,22 @@ testStrsub = strsubExp strForTest intA
 testLength = strlenExp "1234567"
   --RVal [LitV (IntLit 7)]
 
-compareEval = map exForce allExps == map (snd . ex) allExps
-  where allExps = 
-          [ testPlus
-          , testMinus
-          , testTimes
-          , testDiv
-          , testMod
-          , testEq1
-          , testOrd
-          , testChr
-          , testChOpb
-          -- , testImplode
-          , testStrsub
-          , testLength
-          ]
+compareEval expList = map exForce expList == map (snd . ex) expList
+
+allExps =
+  [ testPlus
+  , testMinus
+  , testTimes
+  , testDiv
+  , testMod
+  , testEq1
+  , testOrd
+  , testChr
+  , testChOpb
+    -- , testImplode
+  , testStrsub
+  , testLength
+  ]
 
 
 -- Testing termination (no formal proof, just try to run the functions)
