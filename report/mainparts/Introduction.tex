@@ -3,14 +3,43 @@
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective semantics take. While a strict language
 always fully evaluates all the expressions given as parameters, a lazy language
-only evaluates expressions when needed~\cite{ThunkHas27:online}. For example, it is easy to express
-infinite data structures, such as infinite lists, in a lazy language. Using
+only evaluates expressions when needed~\cite{ThunkHas27:online}.
+
+An example of something useful in lazy programming languages is
+infinite data structures, such as infinite lists. Using
 these infinite data structures would not cause non-termination, as long as the
 program is not trying to access all of its elements. In Haskell, a lazy
 functional language, it is possible to write \texttt{take 5 [1..]} and get the
 result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
 an expression of an infinite list. This is because the list is not generated
 until it is needed, and only the necessary number of elements are generated.
+
+Below is an example of how \texttt{take} could be implemented. The function
+takes an integer (for the number of elements to take) and a list as arguments.
+This assumes that there is a data type definition for lists with two
+constructors:
+\begin{itemize}
+  \item \texttt{Cons (a, as)} for when there is an element \texttt{a} and the rest of the list \texttt{as}
+  \item \texttt{Nil} for the empty list
+\end{itemize}
+
+\begin{figure}[!ht]
+\begin{alltt}
+take n list =
+  if n == 0 then
+    Nil
+  else
+    case list of
+      Cons (a, as) -> Cons (a, (takeHs n-1 as))
+      Nil -> Nil
+  \end{alltt}
+\end{figure}
+
+The function can be written like this for any language, but the semantics
+changes the strategy of evaluation. E.g. a strict language is likely to evaluate
+the whole list when pattern matching, while a lazy language is likely to
+evaluate only part of the list as much as needed. 
+
 
 \subsection{Project Description}
 

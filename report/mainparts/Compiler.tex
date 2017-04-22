@@ -1,18 +1,24 @@
 \section{The Compiler}
 
-Following the writing and testing of the lazy semantics, the compiler was
+While the defined lazy semantics indeed do allow for lazy evaluation of CakeML
+expressions, the goal of this project is not to change the core evaluation
+strategy of the language, but instead add the possibility of evaluating
+expressions in a lazy manner to the existing strict semantics.
+Thus, the compiler described in this section was
 created. The compiler takes CakeML expressions and outputs CakeML expressions,
 written with lazy semantics in mind. This is performed with a function called
 \texttt{compile}.
 
 The representation of thunks is done using the CakeML expression for
-constructors. Expressions are wrapped in constructors with either the name
+constructors. Expressions are wrapped in constructors by using the
+\texttt{Con} expression with either the name
 \textit{Thunk} or \textit{Val}, depending on whether they will produce thunks or
 non-thunk values. In order for expressions to be saved as thunks, it is also
 necessary to wrap them together with the current environment. This is done by
-inserting the expression into a \texttt{Fun} expression. A thunk-expression is
-thus expressed as \texttt{Con (Just "Thunk") [Fun "" e]} and a value-expression
-is expressed as \texttt{Con (Just "Val") [e]}.
+inserting the expression into a \texttt{Fun} expression, as it is evaluated to a
+closure containing both the environment and the inner expression. A
+thunk-expression is thus expressed as \texttt{Con (Just "Thunk") [Fun "" e]} and
+a value-expression is expressed as \texttt{Con (Just "Val") [e]}.
 
 Similarly to the lazy semantics, a \texttt{force} function is used when a
 non-thunk value is required. While the \texttt{force} function in the lazy
@@ -54,6 +60,8 @@ in order to simply return the expression.
 With this definition of thunks and values, as well as \texttt{force}, the
 compiler emulates the behavior of the lazy semantics. An example is the
 \texttt{let} expression that was described in Section \ref{Eval}.
+When compiling a \texttt{let} expression, both \texttt{e1} and \texttt{e2} are
+compiled and wrapped with the thunk constructor.
 
 %% \vspace{\fboxsep}
 %% \begin{minipage}{\linewidth}
@@ -66,10 +74,9 @@ compile (Let xo e1 e2) =
 %% \end{minipage}
 %% \vspace{\fboxsep}
 
-\noindent Here, both \texttt{e1} and \texttt{e2} are compiled and wrapped with the thunk
-constructor. In the case where \texttt{e1} is a non-terminating expression,
-this \texttt{let} expression would loop infinitely trying to evaluate
-\texttt{e1}. By wrapping \texttt{e1} in a thunk constructor, the
+\noindent In the case where \texttt{e1} is a non-terminating expression,
+the \texttt{let} expression would loop infinitely trying to evaluate
+\texttt{e1}. However, by wrapping \texttt{e1} in a thunk constructor, the
 \texttt{evaluate} function will simply create a closure for \texttt{e1} and save
 the thunk expression in the environment.
 
