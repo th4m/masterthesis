@@ -11,10 +11,10 @@ formally verified compiler specified in higher-order logic that passes through
 \begin{itemize}
 \item How formally correct/verified?
 \item Short introduction and discussion about the AST?
-\item Strict semantics
-  \begin{itemize}
-  \item Environment and State
-  \end{itemize}
+%% \item Strict semantics
+%%   \begin{itemize}
+%%   \item Environment and State
+%%   \end{itemize}
 \end{itemize}
 
 The subset of CakeML that has been used for this project mainly
@@ -23,4 +23,89 @@ lack of time. Certain operations were also cut. One of these was bitstring
 operators, mostly because of difference in implementation between CakeML
 and Haskell, as well as it not being necessary for the proof of concept of
 the compiler.
-The grammar of expressions is shown in appendix~\ref{app:ASTExp}.
+The basic grammar of expressions is shown in figure~\ref{CakeExp}. The
+complementary grammar for expressions can be found in appendix~\ref{app:ASTExp}.
+
+\begin{figure}
+\begin{alltt}
+Exp
+  = Raise Exp
+  | Handle Exp [(Pat, Exp)]
+  | Literal Lit
+  | Con (Maybe (Id ConN)) [Exp]
+  | Var (Id VarN)
+  | Fun VarN Exp
+  | App Op [Exp]
+  | Log LOp Exp Exp
+  | If Exp Exp Exp
+  | Mat Exp [(Pat, Exp)]
+  | Let (Maybe VarN) Exp Exp
+  | LetRec [(VarN, VarN, Exp)] Exp
+  | TAnnot Exp T
+\end{alltt}
+\caption{Expressions of CakeML}
+\label{CakeExp}
+\end{figure}
+
+\noindent Using this grammar, we can create expressions such as \texttt{take} from
+section~\ref{intro:Example}:
+
+[INSERT EXAMPLE]
+
+%% \begin{figure}[H]
+%% \begin{alltt}
+%% LetRec [((Just "take"),(Just "n")
+%%         ,If (App Equality [(Var (Short "n")),Literal (IntLit 0)])
+%%           Con (Just "nil") []
+%%           App OpApp )
+%%        ,((Just "pats"),(Just "e")
+%%          ,Mat (Var (Short "e"))
+%%            [(PCon (Just "::")  [(PVar "l"), (PVar "ls")]
+%%              ,Con (Just "::") [Var (Short "l")
+%%                                , App OpApp [Var (Short "take")
+%%                                            , Var (Short "ls")]])
+%%            ,(PCon (Just "nil") []
+%%              ,Con (Just "nil") [])])])
+%% ]
+%% \end{alltt}
+%% \end{figure}
+
+\section{Strict Semantics}
+The first part of the project was to implement the existing strict semantics
+of CakeML in Haskell. Besides writing the AST as described in
+figure~\ref{CakeExp}, the \texttt{evaluate} function was implemented. This also
+required the implementation of the underlying primitive operations, such as
+arithmetics. \texttt{evaluate} has the following arguments: a list of
+expressions, already described above, a \textit{state}, and an
+\textit{environment}. A state is a record type of data structure that contains
+references, types, and module names. An environment is also a record type of
+data structure, that contains variables, constructor definitions, and modules.
+
+\texttt{evaluate} returns a value of type \texttt{V}, which includes literals,
+constructors, closures, and more. The grammar of \texttt{V}
+is shown in figure~\ref{CakeV}.
+\begin{figure}
+\begin{alltt}
+V
+  = LitV Lit
+  | ConV (Maybe (ConN, TId_or_Exn)) [V]
+  | Closure (Environment V) VarN Exp
+  | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
+  | Loc Natural
+  | VectorV [V]
+\end{alltt}
+\caption{Values of CakeML}
+\label{CakeV}
+\end{figure}
+Thus, \texttt{evaluate} takes a list of expressions and applies a number of
+semantic rules to yield a value. For example, a simple
+\texttt{Literal (IntLit 1)} is evaluated to \texttt{LitV (IntLit 1)}.
+More complex expressions require more evaluation, e.g. a \texttt{Let xo e1 e2}
+expression requires that the first expression \texttt{e1} is evaluated to a
+value and (potentially) stored in the variable \texttt{xo} before evaluating
+the second expression \texttt{e2}.
+
+The implemented semantics was unit tested. Simple and common Expressions were
+given as input to \texttt{evaluate} and checked to yield the correct result.
+A predefined (empty) state and environment was created in order to have a number
+of variables and constructors to use in the tests. 

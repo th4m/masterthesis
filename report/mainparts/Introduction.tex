@@ -11,6 +11,7 @@ when needed~\cite{ThunkHas27:online}.
 
 
 \section{An Example of Lazy vs Strict Evaluation}
+\label{intro:Example}
 A useful feature in lazy programming languages is
 infinite data structures, such as infinite lists. Using
 these infinite data structures will not cause non-termination, as long as the
@@ -38,7 +39,7 @@ take n list =
     case list of
       Cons (a, as) -> Cons (a, (takeHs n-1 as))
       Nil          -> Nil
-  \end{alltt}
+\end{alltt}
 \end{figure}
 
 \noindent The function can be written like this for any language, but the semantics

@@ -3,19 +3,20 @@
 
 \begin{figure}
 \begin{alltt}
-Exp   = Raise Exp
-      | Handle Exp [(Pat, Exp)]
-      | Literal Lit
-      | Con (Maybe (Id ConN)) [Exp]
-      | Var (Id VarN)
-      | Fun VarN Exp
-      | App Op [Exp]
-      | Log LOp Exp Exp
-      | If Exp Exp Exp
-      | Mat Exp [(Pat, Exp)]
-      | Let (Maybe VarN) Exp Exp
-      | LetRec [(VarN, VarN, Exp)] Exp
-      | TAnnot Exp T
+data Exp
+  = Raise Exp
+  | Handle Exp [(Pat, Exp)]
+  | Literal Lit
+  | Con (Maybe (Id ConN)) [Exp]
+  | Var (Id VarN)
+  | Fun VarN Exp
+  | App Op [Exp]
+  | Log LOp Exp Exp
+  | If Exp Exp Exp
+  | Mat Exp [(Pat, Exp)]
+  | Let (Maybe VarN) Exp Exp
+  | LetRec [(VarN, VarN, Exp)] Exp
+  | TAnnot Exp T
 \end{alltt}
 \caption{Expressions of CakeML}
 \end{figure}
