@@ -61,6 +61,10 @@ by calling and applying it to a dummy argument, followed by another
 case, the inner expression is stored as the variable \textit{``Val''} and called
 in order to simply return the expression.
 
+Something to keep in mind is that this \texttt{force} is embedded into the input
+CakeML expressions given to \texttt{compile}. The actual evaluation of
+\texttt{force} is thus done when the compiled expressions are run through
+\texttt{evaluate}.
 
 \section{Compiling Expressions}
 With the above definition of thunks and values, as well as \texttt{force}, the
@@ -97,7 +101,6 @@ of the compiled code. The tests would check rather simple expressions that do
 not terminate when using strict semantics, but do terminate when using lazy
 semantics.
 
-
 \subsection{Comparison}
 
 The compiler was tested in a very similar manner as in
@@ -126,7 +129,6 @@ compareEval e = strict == lazy
 normal expressions were tested with this \texttt{compareEval}
 function to confirm that the result of evaluate would not differ between the
 non-compiled and compiled code.
-
 
 \subsection{Laziness}
 

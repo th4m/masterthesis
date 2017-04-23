@@ -9,7 +9,6 @@ and the addition of the \texttt{Thunk} constructor to the value (\texttt{V})
 type.
 
 \section{Thunks}
-
 A thunk is a type of data-structure that contains an un-evaluated expression
 and an environment~\cite{Takano:2015:TRL:2695664.2695693}.
 For the lazy semantics, a new constructor for the value type was added,
@@ -25,7 +24,7 @@ With the strict semantics of CakeML, when an expression is to be stored as a
 variable, it always needs to evaluated to a value before stored.
 As expressions and values are of different types, it is not possible to mix
 them. This also means that it is not possible to partially evaluate an
-expression to another expression, with the type definition of the
+expression to another expression, considering the type definition of the
 \texttt{evaluate} function. A thunk can thus not be of the expression type.
 By expressing thunks as values, the implemented lazy semantics does not require
 any significant change in structure from the original strict semantics. The main
@@ -74,7 +73,6 @@ the current environment of that step in the evaluation and stored as \texttt{x}.
 
 \section{Testing the Lazy Semantics}
 \label{LazySemTest}
-
 The lazy semantics was tested in two different methods.
 Firstly, lazy evaluation of common
 expressions was checked to yield the same results as when using the strict
@@ -82,15 +80,15 @@ evaluator (after omitting the state). Secondly, \texttt{evaluateLazy}
 was tested to be able to evaluate some expressions that cannot be evaluated
 in the strict semantics.
 
-
 \subsection{Comparison}
-
 \texttt{evaluateLazy} should yield the same results as the strict
 \texttt{evaluate}. In order to make sure that this was the case, a number of
 simple and common expressions were unit tested.
-The test function takes an empty state, called \texttt{empty\_st}, and
-an environment containing some variables and predefined constructors
-, called \texttt{ex\_env}. In order to omit the state, which is not used in
+The test function takes a list of expressions and runs a comparison between the
+strict \texttt{evaluate} and lazy \texttt{evaluateLazy} functions.
+Both functions use the same empty state, called \texttt{empty\_st}, and
+an environment containing some variables and predefined constructors,
+called \texttt{ex\_env}. In order to omit the state, which is not used in
 the lazy semantics, \texttt{snd}, which takes the second element of a tuple,
 is applied to the result of the strict \texttt{evaluate}.
 
@@ -102,7 +100,6 @@ is applied to the result of the strict \texttt{evaluate}.
             exLazy e' = evaluateLazy ex_env [e']
 \end{alltt}
 \end{figure}
-
 
 \subsection{Laziness}
 \label{lazinessSem}

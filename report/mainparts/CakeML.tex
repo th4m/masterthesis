@@ -17,52 +17,10 @@ formally verified compiler specified in higher-order logic that passes through
   \end{itemize}
 \end{itemize}
 
-
 The subset of CakeML that has been used for this project mainly
-consists of expressions and values.
-The grammar of expressions is shown in figure~\ref{CakeAST}.
-
-\vspace{\fboxsep}
-\begin{figure}
-\begin{alltt}
-  Exp   = Raise Exp
-        | Handle Exp [(Pat, Exp)]
-        | Literal Lit
-        | Con (Maybe (Id ConN)) [Exp]
-        | Var (Id VarN)
-        | Fun VarN Exp
-        | App Op [Exp]
-        | Log LOp Exp Exp
-        | If Exp Exp Exp
-        | Mat Exp [(Pat, Exp)]
-        | Let (Maybe VarN) Exp Exp
-        | LetRec [(VarN, VarN, Exp)] Exp
-        | TAnnot Exp T
-\end{alltt}
-\begin{alltt}
-  Lit   = IntLit Int
-        | Char Char
-        | StrLit String
-\end{alltt}
-\begin{alltt}
-  Pat   = PVar String
-        | PLit Lit
-        | PCon (Maybe (Id String)) [Pat]
-        | PRef Pat
-        | PTAnnot Pat T
-\end{alltt}
-\begin{alltt}
-  T     = TVar TVarN
-        | TVar_DB Natural
-        | TApp [T] TCtor
-\end{alltt}
-\begin{alltt}
-  TCtor = TC_int
-        | TC_char
-        | TC_string
-        | TC_fn
-\end{alltt}
-\caption[CakeAST]{The abstract syntax tree used for expressions in CakeML, defined in Haskell}
-\label{CakeAST}
-\end{figure}
-\vspace{\fboxsep}
+consists of expressions and values. Declarations were excluded as a result of
+lack of time. Certain operations were also cut. One of these was bitstring
+operators, mostly because of difference in implementation between CakeML
+and Haskell, as well as it not being necessary for the proof of concept of
+the compiler.
+The grammar of expressions is shown in appendix~\ref{app:ASTExp}.
