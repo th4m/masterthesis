@@ -1,0 +1,18 @@
+\chapter{Optimisation - Implementing Call by Need}
+\textit{This chapter is a placeholder for future use, when this has actually been implemented}
+This section will present and discuss an optimisation that was implemented in
+order to prevent unnecessary and repetitive evaluation of expressions.
+With the implementation if laziness, when expressions are evaluated and saved as
+variables in the environment, they are in many cases saved as thunks. When the
+variables are then used, they are forced (evaluated) in order to yield a proper
+value. This happens each time a variable is called.
+
+An optimal usage of a thunk would be to force it once and reuse the yielded
+value.
+
+How to achieve this:
+\begin{itemize}
+\item Save thunks as references. Save reference to subroutine that forces it?
+\item When forced, the reference should be changed to point at the value
+\end{itemize}
+

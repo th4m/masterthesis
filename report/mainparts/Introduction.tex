@@ -42,14 +42,33 @@ take n list =
 \end{alltt}
 \end{figure}
 
-\noindent The function can be written like this for any language, but the semantics
+\noindent The function can be written like this (with some syntax changes) for
+any language, but the semantics
 changes the strategy of evaluation. E.g. a strict language is likely to evaluate
 all of \texttt{list} when pattern matching, while a lazy language is likely to
 evaluate only part of the list as much as needed. 
 
 
-\section{Project Description}
+\section{Related Work}
+\label{intro:Related}
+\begin{itemize}
+\item Other strict languages that have implemented laziness
+  \begin{itemize}
+  \item Python?
+  \item .NET - The Lazy<T> class
+  \end{itemize}
+\item Lazy languages that have implemented laziness?
+  \begin{itemize}
+  \item Haskell
+    \begin{itemize}
+    \item \texttt{seq}
+    \item \texttt{\$!}
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
 
+
+\section{Project Description}
 This project will create a compiler that takes code from a lazy programming
 language and compiles it into a strict programming language. The resulting
 strict code should have the same user-observable evaluation as the given lazy
@@ -88,3 +107,14 @@ in parallel:
  \item Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML
  \item Testing the compiler by writing operational semantics in the form of functions and running unit tests.
 \end{itemize}
+
+\section{Motivation for Making a Compiler That Adds Laziness}
+As discussed in section~\ref{intro:Related}, there are a number of cases where
+laziness has been implemented in strict languages and vice versa. 
+Allowing lazy evaluation in a strict language has many advantages.
+
+An advantage of compiling expressions to make them lazy, instead of creating
+a library for lazy functions, allows the programmer to write their programs as
+they always would. By converting the code on expression-level, all programs can
+in practice become fully lazy without having to explicitly use special
+operations that enable laziness.

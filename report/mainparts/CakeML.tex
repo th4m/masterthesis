@@ -76,14 +76,24 @@ of CakeML in Haskell. Besides writing the AST as described in
 figure~\ref{CakeExp}, the \texttt{evaluate} function was implemented. This also
 required the implementation of the underlying primitive operations, such as
 arithmetics. \texttt{evaluate} has the following arguments: a list of
-expressions, already described above, a \textit{state}, and an
-\textit{environment}. A state is a record type of data structure that contains
-references, types, and module names. An environment is also a record type of
-data structure, that contains variables, constructor definitions, and modules.
+expressions, already described above, a \texttt{State}, and an
+\texttt{Environment}. A \texttt{State} is a record type of data structure that
+contains references, types, and module names. An \texttt{Environment} is also a
+record type of data structure, that contains variables, constructor definitions,
+and modules.
 
-\texttt{evaluate} returns a value of type \texttt{V}, which includes literals,
-constructors, closures, and more. The grammar of \texttt{V}
-is shown in figure~\ref{CakeV}.
+\texttt{evaluate} returns a result of type \texttt{Result [V] V}. This is a
+flexible type that is either a list of \texttt{V} or an error. The data type
+of \texttt{Result} is defined as follows:
+\begin{figure}[H]
+\begin{alltt}
+data Result a b
+  = RVal a
+  | RErr (Error_Result b)
+\end{alltt}
+\end{figure}
+\texttt{V} is the type of values, which includes literals, constructors,
+closures, and more. The grammar of \texttt{V} is shown in figure~\ref{CakeV}.
 \begin{figure}
 \begin{alltt}
 V
@@ -98,8 +108,11 @@ V
 \label{CakeV}
 \end{figure}
 Thus, \texttt{evaluate} takes a list of expressions and applies a number of
-semantic rules to yield a value. For example, a simple
+semantic rules to yield a list of values. For example, a simple
 \texttt{Literal (IntLit 1)} is evaluated to \texttt{LitV (IntLit 1)}.
+If something wrong happens, e.g. if a string is given as input to a numeral
+operation, an error is returned instead.
+
 More complex expressions require more evaluation, e.g. a \texttt{Let xo e1 e2}
 expression requires that the first expression \texttt{e1} is evaluated to a
 value and (potentially) stored in the variable \texttt{xo} before evaluating

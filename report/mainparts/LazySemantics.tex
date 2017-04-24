@@ -1,7 +1,6 @@
 \chapter{Lazy Semantics}
 \label{LazySem}
 Lazy semantics was defined for this project.
-
 While the strict semantics was defined as big-step semantics, the lazy semantics
 makes use of thunks to make more steps in the evaluation.
 This is mainly reflected on the definition of the evaluate function
@@ -16,9 +15,11 @@ representing a thunk, containing an environment and an expression:
 \begin{alltt}
 Thunk Environment Exp
 \end{alltt}
-This is used for saving
-partially evaluated expressions, allowing for an evaluation strategy with e.g.
-call-by-name or call-by-need.
+By using thunks, it is possible to take another approach on evaluation of
+expressions. Instead of evaluating an expression to e.g. a literal, the
+result can be a thunk that contains the expression that has been partially
+evaluated, together with information that is required to reach a fully evaluated
+value.
 
 With the strict semantics of CakeML, when an expression is to be stored as a
 variable, it always needs to evaluated to a value before stored.
@@ -27,9 +28,7 @@ them. This also means that it is not possible to partially evaluate an
 expression to another expression, considering the type definition of the
 \texttt{evaluate} function. A thunk can thus not be of the expression type.
 By expressing thunks as values, the implemented lazy semantics does not require
-any significant change in structure from the original strict semantics. The main
-difference is that evaluating an expression may or may not return a thunk
-instead of a pure value.
+any significant change in structure from the original strict semantics. 
 
 \section{Evaluate}
 \label{Eval}
@@ -71,21 +70,39 @@ This evaluation is rather unnecessary in the case where \texttt{x} is never used
 the current environment of that step in the evaluation and stored as \texttt{x}. This way,
 \texttt{e1} only needs to be evaluated when called in \texttt{e2}.
 
+Another type expression that was experimented on to draw profits from laziness
+was arithmetics. Mainly, multiplication, which has a inductive definition
+(Peano's axioms) with a base case stating that
+multiplying a factor with 0 will always return 0, was given extra semantics that
+checked if the first expression argument was indeed evaluated to 0. If this was
+the case, the second argument would simply be thrown away. In the form of an
+AST, multiplication has the form:
+\begin{alltt}
+  App (OPN Times) [e1, e2]
+\end{alltt}
+Evaluation  ofthis expression begins by force evaluating \texttt{e1} to yield a
+pure value \texttt{v1}. If \texttt{v1} is a literal 0, 0 is returned, otherwise
+\texttt{e2} is evaluated and multiplied with \texttt{v1}. With this definition
+of lazy multiplication, it is possible to have an infinite chain of
+multiplication that will terminate if one of the factors is 0.
+
+
 \section{Testing the Lazy Semantics}
 \label{LazySemTest}
-The lazy semantics was tested in two different methods.
+The lazy semantics was tested for correctness in two different methods.
 Firstly, lazy evaluation of common
 expressions was checked to yield the same results as when using the strict
 evaluator (after omitting the state). Secondly, \texttt{evaluateLazy}
-was tested to be able to evaluate some expressions that cannot be evaluated
-in the strict semantics.
+was tested to be able to evaluate some expressions that normally cannot be
+evaluated by using the strict semantics.
 
 \subsection{Comparison}
-\texttt{evaluateLazy} should yield the same results as the strict
-\texttt{evaluate}. In order to make sure that this was the case, a number of
-simple and common expressions were unit tested.
-The test function takes a list of expressions and runs a comparison between the
-strict \texttt{evaluate} and lazy \texttt{evaluateLazy} functions.
+\texttt{evaluateLazy} should naturally yield the same results as the strict
+\texttt{evaluate} when evaluating common types of expressions. In order to
+make sure that this was the case, a test
+function, called \texttt{compareEval}, was created for unit tests.
+\texttt{compareEval} takes a list of expressions and runs a comparison between
+the strict \texttt{evaluate} and lazy \texttt{evaluateLazy} functions.
 Both functions use the same empty state, called \texttt{empty\_st}, and
 an environment containing some variables and predefined constructors,
 called \texttt{ex\_env}. In order to omit the state, which is not used in
@@ -100,6 +117,14 @@ is applied to the result of the strict \texttt{evaluate}.
             exLazy e' = evaluateLazy ex_env [e']
 \end{alltt}
 \end{figure}
+
+Using \texttt{compareEval}, a number of simple and common expressions were
+tested. These included expressions such as arithmetics, conditionals, and
+string operations. In order to make sure that evaluation would stay correct
+throughout the whole development phase, the expressions were collected in a
+list that was given as input to \texttt{compareEval} each time something was
+changed. As long as the result was \texttt{True}, the evaluator was concluded
+to yield correct results.
 
 \subsection{Laziness}
 \label{lazinessSem}
