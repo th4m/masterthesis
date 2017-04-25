@@ -1,0 +1,113 @@
+* Defining CakeML in Haskell
+The project began with investigating CakeML's strict semantics, found on GitHub.
+
+Three files were important:
++ ast.lem: The abstract syntax tree for basic expressions and declarations. Declarations have not been implemented.
++ semanticPrimitives.lem: The semantic rules for all types of operations. Includes:
+  + Types: values, state, environment, etc.
+  + Underlying semantics of e.g. arithmetics, lookups, function application, etc.
++ evaluate.lem: evaluate-function that takes expressions, applies semantics, and returns values (or errors) in the form of results
+LEM: Lightweight Executable Mathematics. Can be intermediate language for 
+generating definitions from domain-specific tools, and for porting definitions
+between interactive theorem proving systems, e.g. HOL4.
+
+Side note: the GitHub repo was updated around February-March with a merge that
+actually changed some of the semantics. E.g. Environment was removed and
+replaced by Namespace. The project kept the old structure from before the merge.
+
+Most of the functions and data types in these three files were defined in Haskell:
++ AbsCakeML.hs - ast.lem
++ SemanticPrimitives.hs - semanticPrimitives.lem
++ Evaluate.hs - evaluate.lem
+
+evaluate uses pattern matching on expressions in order to apply different
+evaluation strategies on different expressions. 
+
+Once the implementation was finished, it was tested for bugs and fixed accordingly.
+
+* Defining lazy semantics
+Once the strict semantics were deemed to work as intended, work on the
+lazy semantics began.
+
++ A new function, called evaluateLazy, was added to Evaluate.hs.
++ A new constructor for the value type, called Thunk, was added to SemanticPrimitives.hs.
+  + It contains an Environment and an Expression. This is what allowed lazy evaluation.
++ Some new versions of semantic operations were added, that didn't use State.
+  + This is because lazy evaluation doesn't use state.
++ A new function, called force, was added to Evaluate.hs.
+  + This function takes a Thunk or any other value and evaluates it until a non-Thunk value is yielded.
+
+The new evaluateLazy now tries to evaluate expressions as little as possible.
+If possible, the expression is evaluated one step and then put into a thunk.
+Expressions that weren't affected by laziness: Handle, Var, Fun, Literal.
+Example of an expression that was affected: If:
+
++ If e1 e2 e3
+  + force evaluate e1
+  + Apply do_if to the yielded value and e2, e3
+  + The expression that is returned from do_if is wrapped in a thunk and returned
+
+Example of expressions that are greatly affected by laziness: Let:
+
++ Let xo e1 e2
+  + Wrap e1 in a Thunk and (maybe) store it as xo
+  + Wrap e2 in a Thunk with the (maybe) stored xo=Thunk(e1) in the environment
+  + Return the Thunk
+
+Let is greatly affected by the lazy semantics, as e1 is now not evaluated at all
+before the evaluation of e2. It is only evaluated if it is called in e2 as xo.
+
+Another type of expression that is affected by lazy semantics, that probably
+isn't in normal lazy languages, is arithmetic operations. Specifically,
+Multiplication, Division, and Modulo were given some extra semantics.
+It can be argued whether this is actually laziness or not, since this doesn't
+actually delay evaluation, but actually discards it.
+
+App (OPN op) [e1, e2]
+
+The extra semantics checks whether or not e1 is evaluated to a literal 0.
+If it is 0, then e2 is simply discarded. The final result of the arithmetic
+operation will be 0. The idea behind this evaluation strategy comes from the
+inductive definition of multiplication which states that if something is
+multiplied with 0, the result is 0.
+
+Some of the implementation of evaluate was at first naive. The strategy was
+to pattern match out some of the arguments to wrap the rest of the evaluation
+in a Thunk. However, as there were too many cases of different types and lengths
+of arguments, a more general case was created. Some pattern matching was used
+to find what type of operation was being used. This would lead to a more
+adaptive evaluation strategy, e.g. multiplication would lead to checking for 0, etc.
+
+Once the lazy semantics was implemented, it was tested and fixed accordingly.
+
+* Creating the compiler
+After the lazy semantics was defined, the next task was to create the compiler.
+The compiler is a function takes an expression and returns an expression that
+has been changed to make use of lazy semantics.
+
+This proved to be a more challenging task than expected at first.
+The successful implementation uses Thunks created with CakeML expressions, using
+the same idea behind the previously defined lazy semantics. With the use of
+the Con and Fun expressions, the representation of Thunks is created as
+Con (Just "Thunk") [Fun "" e], where e is the expression to be wrapped in the
+Thunk. Other types of values are represented as Con (Just "Val") [e].
+
+For Thunks, the Fun expression is used in order to save the Environment together
+with the expression. Fun is not used for the Val constructor, as it is not
+necessary to get the value.
+The compile function uses these two constructors and wraps the input expressions
+in the same way as the lazy semantics did. Expressions that are known to produce
+values are wrapped with the Val constructor, while expressions that should only
+be partially evaluated are wrapped with the Thunk constructor.
+
+A force function was also defined for the compiler. In this case, it was also
+defined using CakeML expressions, just as Thunks were. By using LetRec and Mat
+expressions, the force function from Evaluate.hs was emulated. When
+constructors with the "Thunk" name is encountered, their inner argument (Fun)
+is extracted and applied with a dummy argument. The result is recursively
+forced until a Val constructor is found. In such case, the inner expression is
+simply returned. 
+
+The compiler was tested to see if the produced expressions yielded the same
+result as the original expressions. Also tested some expressions to see if
+laziness was working properly.
