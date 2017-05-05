@@ -1,0 +1,29 @@
+\chapter{Introduction}
+Lazy programming is a style of programming that makes use of lazy evaluation.
+Evaluating a program lazily means that expressions that are bound by variables
+are not evaluated until their results are needed in another part of the
+program~\cite{Lazyeval6:online}. This is often put in contrast with another
+evaluation style called strict evaluation, which always evaluates expressions
+as they are to be bound by variables. 
+
+The main difference between lazy and strict programming languages is the steps
+of evaluation that their respective semantics take. With strict semantics,
+expressions are evaluated when they are created, while with lazy semantics,
+expressions are evaluated when they are needed~\cite{ThunkHas27:online}.
+This means that in lazy semantics
+you can give a function an argument that cannot be terminated, and as long as
+that argument is never used, the function itself can still terminate normally.
+
+It has been argued that lazy programming (and functional programming in general)
+brings improvement to software development in the form of
+modularity~\cite{Hu1989}~\cite{Hu2015}. Laziness allows the creation of certain
+types of programs that cannot be executed by using strict semantics.
+For example, the \textit{Fibonacci numbers} is an infinite sequence of numbers
+where each number is equal to the sum of the two previous numbers. [CITE?]
+Defining the Fibonacci numbers as a function with strict semantics would cause
+the execution to never terminate, as it is required for the function to be
+fully evaluated when assigning it to a variable. In a lazy context, however,
+the function that defines the Fibonacci numbers would simply not be evaluted
+until it is actually needed, meaning that simply assigning it to a variable
+would not cause the program to not terminate.
+
