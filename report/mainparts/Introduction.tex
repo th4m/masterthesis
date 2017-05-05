@@ -1,14 +1,28 @@
 \chapter{Introduction}
-The main difference between lazy and strict programming languages is the steps
-of evaluation that their respective semantics take.
 It has been argued that lazy programming (and functional programming in general)
 brings improvement to software development in the form of
 modularity~\cite{Hu1989}~\cite{Hu2015}.
-One example of how laziness can add modularity can be seen when compared to
-a strict language: while a strict language always fully evaluates all the
-expressions given as parameters, a lazy language only evaluates expressions
-when needed~\cite{ThunkHas27:online}.
 
+The main difference between lazy and strict programming languages is the steps
+of evaluation that their respective semantics take. With strict semantics,
+expressions are evaluated when they are created, while with lazy semantics,
+expressions are evaluated when they are needed~\cite{ThunkHas27:online}.
+This means that in lazy semantics
+you can give a function an argument that cannot be terminated, and as long as
+that argument is never used, the function itself can still terminate normally.
+
+This is not to say that lazy evaluation is always the optimal strategy when
+programming. In order to delay the evalution of an expression, lazy semantics
+makes use of a data structure called \textit{thunk}. Expressions that are to be
+evaluated are suspended in thunks and passed on correspondingly. When needed,
+the thunks are \textit{forced} in order to yield a usable value. Using this
+mechanic requires more memory usage than when evaluating with strict semantics.
+In cases where there are no superfluous expressions in the code, using lazy
+semantics can actually cause slower evaluation time when compared to
+strict semantics.
+
+Despite this potential drawback, laziness can be a desirable feature in many
+use cases. 
 
 \section{An Example of Lazy vs Strict Evaluation}
 \label{intro:Example}
@@ -57,7 +71,7 @@ evaluate only part of the list as much as needed.
   \item Python?
   \item .NET - The Lazy<T> class
   \end{itemize}
-\item Lazy languages that have implemented laziness?
+\item Lazy languages that have implemented strictness?
   \begin{itemize}
   \item Haskell
     \begin{itemize}
@@ -65,6 +79,7 @@ evaluate only part of the list as much as needed.
     \item \texttt{\$!}
     \end{itemize}
   \end{itemize}
+\item Optimistic Evaluation~\cite{Ennals:2003:OEA:944746.944731}
 \end{itemize}
 
 
@@ -108,12 +123,11 @@ in parallel:
  \item Testing the compiler by writing operational semantics in the form of functions and running unit tests.
 \end{itemize}
 
-\section{Motivation for Making a Compiler That Adds Laziness}
+\section{Motivation for the Compiler}
 As discussed in section~\ref{intro:Related}, there are a number of cases where
 laziness has been implemented in strict languages and vice versa. 
 Allowing lazy evaluation in a strict language has many advantages.
-
-An advantage of compiling expressions to make them lazy, instead of creating
+One such advantage of compiling expressions to make them lazy, instead of creating
 a library for lazy functions, allows the programmer to write their programs as
 they always would. By converting the code on expression-level, all programs can
 in practice become fully lazy without having to explicitly use special

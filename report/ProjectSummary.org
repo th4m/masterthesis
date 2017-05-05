@@ -24,6 +24,8 @@ evaluate uses pattern matching on expressions in order to apply different
 evaluation strategies on different expressions. 
 
 Once the implementation was finished, it was tested for bugs and fixed accordingly.
+Testing consisted of inputting expressions and checking that the result was
+consistent with what was expected.
 
 * Defining lazy semantics
 Once the strict semantics were deemed to work as intended, work on the
@@ -79,6 +81,8 @@ to find what type of operation was being used. This would lead to a more
 adaptive evaluation strategy, e.g. multiplication would lead to checking for 0, etc.
 
 Once the lazy semantics was implemented, it was tested and fixed accordingly.
+Testing consisted of inputting expressions and comparing the results with
+the results that the strict evaluator outputted.
 
 * Creating the compiler
 After the lazy semantics was defined, the next task was to create the compiler.
