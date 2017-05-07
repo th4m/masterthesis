@@ -1,0 +1,56 @@
+\chapter{Background}
+Chapter~\ref{chapter:intro} shortly introduced the basics of lazy and strict
+semantics. This chapter will present a more in-depth description of how the
+mechanics work, as well as present some previous similar work on the subject.
+
+\section{Strictness}
+Most of the commonly used programming languages are strict.
+
+Strict programming indicates that expressions are always fully evaluated when
+they appear in the chain of evaluation. E.g. when an arithmetic expression is
+bound to a variable, the expression is fully evaluated to become a numerical
+value before being assigned to the variable. The value is then accessible
+by simply calling the variable.
+
+\subsection{Why Program Strictly?}
+One reason to why applications are programmed strictly is because it can be
+necessary to have all values fully evaluated. If the evaluation of an expression
+that is erroneous is delayed, it's impendent error will also be delayed.
+An example would be to consider a stateful system; if an operation is dependent
+on a reference, the value assigned to that reference needs to have been
+evaluated. If the evaluation of that value is delayed until after it is used,
+an error is prone to occur, as that value will not be there.
+By using strict evaluation, the evaluation is not delayed, avoiding any
+ambiguity of knowing whether or not references will have valid values.
+
+\subsection{Why Avoid Strict Evaluation?}
+It is not always certain that all expressions that are contained in a program
+will be used every time that it is executed. The more complex a program is, the
+higher the chance is for branching. For example, a number of expressions may
+be evaluated and bound to variables before a chain of
+\texttt{if}/\texttt{else if} expressions. Certain branches of this program may
+only use a select few, or even none, of the previously assigned variables.
+In such cases, it would not be optimal to actually evaluate them.
+
+\section{Laziness}
+The main characteristics of laziness is delaying evaluation of expressions
+until they are needed. This is often done when binding the expressions to
+variables. In order to delay the evalution of an expression, lazy semantics
+makes use of a data structure called
+\textit{thunk}~\cite{Ennals:2003:OEA:944746.944731}. A thunk contains a
+suspended expression together with information that is required to finish the
+evaluation of said expression. Expressions that are to be
+evaluated are suspended in thunks and passed on correspondingly. When needed,
+the thunks are \textit{forced} in order to yield a usable value. Using this
+mechanic requires more memory usage than when evaluating with strict semantics.
+
+\subsection{Why Program Lazily?}
+\begin{itemize}
+  \item Branching
+  \item Infinite data structures
+\end{itemize}
+
+
+
+
+% Maybe restructure to keep the why's together after intros
