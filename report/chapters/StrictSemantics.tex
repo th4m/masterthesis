@@ -1,0 +1,20 @@
+\chapter{Strict Semantics}
+\label{chapter:strict}
+As stated in section~\ref{intro:project}, the first major step of this project
+was to write lazy semantics for CakeML in Haskell. However, before this could be
+done, the existing strict semantics would have to be defined. The definition
+would include the basic abstract syntax tree and semantic primitives of the
+language.
+
+\section{Implementation}
+As CakeML is an already defined language, its underlying semantics already
+exists. The compiler for this project is to be written in Haskell, meaning that
+the semantics must be defined in Haskell in order for it to be usable. This is
+what this section will describe: defining the strict semantics of CakeML in
+Haskell.
+
+The semantics of CakeML is defined in LEM, as described in
+section~\ref{back:cakeml}. At the beginning of this thesis, a link to CakeML's
+GitHub repository was provided, in which the semantics was contained in the form
+of \textit{.lem} files. The goal of this part of the thesis was thus to manually
+translate the semantics from LEM to Haskell. 
