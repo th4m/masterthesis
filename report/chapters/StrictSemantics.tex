@@ -13,8 +13,55 @@ the semantics must be defined in Haskell in order for it to be usable. This is
 what this section will describe: defining the strict semantics of CakeML in
 Haskell.
 
-The semantics of CakeML is defined in LEM, as described in
+The semantics of CakeML is defined in Lem, as described in
 section~\ref{back:cakeml}. At the beginning of this thesis, a link to CakeML's
 GitHub repository was provided, in which the semantics was contained in the form
 of \textit{.lem} files. The goal of this part of the thesis was thus to manually
-translate the semantics from LEM to Haskell. 
+translate the semantics from Lem to Haskell. 
+
+In order to translate the semantics of CakeML, three items needed to be
+investigated and manually transcribed from Lem to Haskell:
+\begin{itemize}
+\item The abstract syntax of CakeML
+\item The primitive semantics of CakeML
+\item The evaluate function
+\end{itemize}
+
+\noindent The implementation of these three items will be described in the
+following sections.
+
+\subsection{Abstract Syntax}
+The abstract syntax is the basic syntactical representation of the grammar of a
+language~\cite{pltbook}. This includes the representation of literals,
+operations, and expressions. Translating the abstract syntax from Lem to Haskell
+proved to not be all too difficult, as Lem and Haskell are fairly similar in
+structure. With the use of algebraic datatypes, each category in the grammar is
+defined as its own type. For example, some of the expressions of CakeML
+are represented in Lem as such:
+
+\begin{alltt}
+type exp =
+  | Lit of lit
+  | Var of id varN
+  | Fun of varN * exp
+  | App of op * list exp
+\end{alltt}
+
+\noindent In order from top to bottom, these expressions represent literals,
+variables, functions, and applications. The constructors are complemented with
+data from other data types, e.g. \texttt{lit} and \texttt{id}, that are defined
+as a part of the language.
+The above expressions were translated to Haskell as such:
+
+\begin{alltt}
+data Exp
+  = Literal Lit
+  | Var (Id VarN)
+  | Fun VarN Exp
+  | App Op [Exp]
+\end{alltt}
+
+\noindent Similarly, complementing data types, such as \texttt{Lit} and \texttt{id},
+as well as other categories in the grammar, were also translated as needed.
+
+\subsection{Primitive Semantics}
