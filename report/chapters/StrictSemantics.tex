@@ -23,14 +23,15 @@ In order to translate the semantics of CakeML, three items needed to be
 investigated and manually transcribed from Lem to Haskell:
 \begin{itemize}
 \item The abstract syntax of CakeML
-\item The primitive semantics of CakeML
+\item The semantic primitives of CakeML
 \item The evaluate function
 \end{itemize}
 
-\noindent The implementation of these three items will be described in the
-following sections.
+\noindent Details about the contents and implementation of these three items
+will be described in the following sections.
 
 \subsection{Abstract Syntax}
+\label{strict:abs}
 The abstract syntax is the basic syntactical representation of the grammar of a
 language~\cite{pltbook}. This includes the representation of literals,
 operations, and expressions. Translating the abstract syntax from Lem to Haskell
@@ -39,29 +40,97 @@ structure. With the use of algebraic datatypes, each category in the grammar is
 defined as its own type. For example, some of the expressions of CakeML
 are represented in Lem as such:
 
+\begin{figure}[H]
 \begin{alltt}
-type exp =
-  | Lit of lit
-  | Var of id varN
-  | Fun of varN * exp
-  | App of op * list exp
+  type exp =
+    | Lit of lit
+    | Var of id varN
+    | Fun of varN * exp
+    | App of op * list exp
 \end{alltt}
+\end{figure}
 
 \noindent In order from top to bottom, these expressions represent literals,
 variables, functions, and applications. The constructors are complemented with
-data from other data types, e.g. \texttt{lit} and \texttt{id}, that are defined
+data from other datatypes, e.g. \texttt{lit} and \texttt{id}, that are defined
 as a part of the language.
 The above expressions were translated to Haskell as such:
 
+\begin{figure}[H]
 \begin{alltt}
-data Exp
-  = Literal Lit
-  | Var (Id VarN)
-  | Fun VarN Exp
-  | App Op [Exp]
+  data Exp
+    = Literal Lit
+    | Var (Id VarN)
+    | Fun VarN Exp
+    | App Op [Exp]
+\end{alltt}
+\end{figure}
+
+\noindent Similarly, complementing datatypes, such as \texttt{Lit} and
+\texttt{id}, as well as other categories in the grammar, were also translated
+as needed.
+
+These expressions are the basic building blocks that a programmer uses to create
+their program. For example, a simple integer such as 5 is represented as
+\begin{alltt}
+  Literal (IntLit 5)
+\end{alltt}
+when using this abstract syntax. Building more
+complex expressions is as simple as combining multiple expressions. For example
+the arithmetic expression $1 + (7 - 8)$ can be represented as
+
+\begin{figure}[H]
+\begin{alltt}
+  App (OPN Plus) [Literal (IntLit 1),
+                  App (OPN Minus) [Literal (IntLit 7)
+                                  ,Literal (IntLit 8)
+                                  ]
+                 ]
+\end{alltt}
+\end{figure}
+
+\subsection{Semantic Primitives}
+The semantic primitives of a language is how its calculations are performed.
+This includes operations such as basic arithmetic, logical operations,
+lookups, and pattern matching. Also included in the semantic primitives are
+the inner representations of \textit{values}, \textit{results},
+\textit{state}, and \textit{environment}.
+
+Values are represented by the datatype \texttt{V} and are what expressions
+ususally are evaluated to. Some of the values of CakeML are represented in
+Lem as such:
+
+\begin{alltt}
+  type v =
+    | Litv of lit
+    | Closure of environment v * varN * exp
+    | Vectorv of list v
 \end{alltt}
 
-\noindent Similarly, complementing data types, such as \texttt{Lit} and \texttt{id},
-as well as other categories in the grammar, were also translated as needed.
+\noindent In order, these values represent literals, closures, and vectors.
+Just as with the expressions described above, other datatypes that represent
+other parts of the grammar are needed. However, these mostly already exist from
+the definition of the abstract syntax and are therefore reused.
 
-\subsection{Primitive Semantics}
+The translation of these values to Haskell was performed analogously to the
+abstract syntax described in~\ref{strict:abs}:
+
+\begin{figure}[H]
+\begin{alltt}
+  data V
+    = LitV Lit
+    | Closure (Environment V) VarN Exp
+    | VectorV [V]
+\end{alltt}
+\end{figure}
+
+An example of an expression and its value counterpart is the expression $1 + 2$,
+whose result is the value 3. The expression is represented as
+\begin{alltt}
+  App (OPN Plus) [Literal (IntLit 1), Literal (IntLit 2)]
+\end{alltt}
+which is evaluated to the value
+\begin{alltt}
+  LitV (IntLit 3)
+\end{alltt}
+
