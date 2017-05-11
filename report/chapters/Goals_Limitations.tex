@@ -48,12 +48,20 @@ to keep the workload within a reasonable size. These limitations are:
 
 \begin{itemize}
 \item Expressions will be the highest level of the grammar that will be implemented
+\item No parser will be written to take actual CakeML code in string format
 \item Only the version of CakeML at the start of this thesis will be used as base for the implementation of the compiler
 \end{itemize}
 
 As expressions make up of the majority of the language, they will be the highest
 category of the grammar that will be implemented. This means that declarations
 will not be a part of this thesis.
+
+No actual parser that takes written CakeML code will be created for this thesis.
+Instead, an internal representation of CakeML expressions will be created in
+Haskell and be used to create the semantics and compiler. A parser that
+takes CakeML code in string format and converts it to the internal
+representation can be created at any time. It should not prove to be a
+challenging task to link said parser together with the compiler.
 
 At the time of writing, the programming language CakeML is still evolving at a
 high pace, meaning that the semantics of the language is prone to change at
