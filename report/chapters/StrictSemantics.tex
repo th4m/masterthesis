@@ -24,7 +24,7 @@ investigated and manually transcribed from Lem to Haskell:
 \begin{itemize}
 \item The abstract syntax of CakeML
 \item The semantic primitives of CakeML
-\item The evaluate function
+\item The \texttt{evaluate} function
 \end{itemize}
 
 \noindent Details about the contents and implementation of these three items
@@ -93,8 +93,8 @@ the arithmetic expression $1 + (7 - 8)$ can be represented as
 The semantic primitives of a language is how its calculations are performed.
 This includes operations such as basic arithmetic, logical operations,
 lookups, and pattern matching. Also included in the semantic primitives are
-the inner representations of \textit{values}, \textit{results},
-\textit{state}, and \textit{environment}.
+the inner representations of \textit{values}, \textit{state}, and
+\textit{environment}.
 
 Values are represented by the datatype \texttt{V} and are what expressions
 ususally are evaluated to. Some of the values of CakeML are represented in
@@ -134,3 +134,100 @@ which is evaluated to the value
   LitV (IntLit 3)
 \end{alltt}
 
+% Should state and environment be described? Too much info?
+% Just refer to appendix for more info?
+
+\subsection{The \texttt{evaluate} function}
+Linking the abstract syntax together with the semantics of CakeML is the
+\texttt{evaluate} function. The job of \texttt{evaluate} is to take a list of
+expressions as input and return a state together with a result. A result can
+consist of a list of values or an error. Also contributing to the evaluation
+of expressions are a state and an environment, which are given as input to
+\texttt{evaluate}. The type of \texttt{evaluate} (in Lem annotation) is thus:
+
+\begin{alltt}
+evaluate:state -> environment v -> list exp -> state * result (list v) v
+\end{alltt}
+
+\noindent Expressions are taken either as a sequence in \texttt{evaluate},
+in which case they are evaluated sequentially, or as singletons, in which case
+they are pattern matched to be evaluated with unique strategies:
+
+\begin{figure}[H]
+\begin{alltt}
+  let rec
+  evaluate st env []      = ...
+  and
+  evaluate (e1::e2::es)   = ...
+  and
+  evaluate st env [Lit l] = ...
+  and
+  ...
+\end{alltt}
+\end{figure}
+
+\noindent The logic of each case mostly consists of applying appropriate
+operations from the semantic primitives. For example, when evaluating
+the \texttt{Var n} expression, the \texttt{lookup\_var\_id} function defined
+in the semantic primitives is applied to \texttt{n} in order to check if
+the variable exists in the environment.
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env [Var n] =
+    match lookup_var_id n env with
+    | Just v -> (st, Rval [v])
+    | Nothing -> (st, Rerr (Rabort Rtype_error))
+    end
+\end{alltt}
+\end{figure}
+
+\noindent Expressions that contain subexpressions (e.g. binary arithmetic
+operations) often require that one or more of these subexpressions are
+evaluated to values in order to use them as input for the primitive semantics
+functions. For example, the expression \texttt{If e1 e2 e3} requires that
+\texttt{e1}, which is the condition, is evaluated first in order to use the
+semantic function \texttt{do\_if} to decide whether \texttt{e2} or
+\texttt{e3} should be evaluated.
+
+%This function has been modified to omit fix_clock, which isn't used for this project
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env [If e1 e2 e3] =
+    match st (evaluate st env [e1]) with
+    | (st', Rval v) ->
+        match do_if (head v) e2 e3 with
+        | Just e -> evaluate st' env [e]
+        | Nothing -> (st', Rerr (Rabort Rtype_error))
+        end
+    | res -> res
+    end
+\end{alltt}
+\end{figure}
+
+The translation to Haskell maintained the same structure of \texttt{evaluate}
+with similar usage of lists and pattern matching.
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env (e1:e2:es)   = ...
+  evaluate st env [Var n]      = ...
+  evaluate st env [Literal l]  = ...
+\end{alltt}
+\end{figure}
+
+\noindent The logic of \texttt{evaluate} was also maintained in the translation
+to Haskell. For example, the \texttt{Var n} expression is defined in Haskell as
+follows:
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env [Var n] =
+    case lookup_var_id n env of
+      Just v  -> (st, RVal [v])
+      Nothing -> (st, RErr (RAbort RType_Error))
+\end{alltt}
+\end{figure}
+
+
+\section{Discussion/Conclusion}
