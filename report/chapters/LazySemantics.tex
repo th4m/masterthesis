@@ -1,0 +1,62 @@
+\chapter{Lazy Semantics}
+The second step of this thesis, after translating the strict semantics of CakeML
+to Haskell, was to define lazy semantics that the compiler will be based on.
+The lazy semantics defined in Haskell was designed to delay evaluation by
+storing partially evaluated expressions in thunks. This chapter will describe
+the implementation of the lazy semantics.
+
+\section{Implementation}
+%% Modified two modules: semantic primitives and evaluate (mainly) 
+%% SemPrim was modified to remove state from certain functions
+%% SemPrim was modified to add Thunk to V
+%% This definition of lazy evaluation is pure
+%% evaluate is redefined in evaluateLazy
+%% Doesn't take state
+%% Tries to evaluate as little as possible
+%% When possible, evaluate takes one (or more) steps in evaluation,
+%% by e.g. applying a function from semantic primitives, and then
+%% wrapping the resulting expression in a thunk and returning it
+%% Implemented force to fully evaluate expressions
+%% Attempt 1 was faulty. Could return wrong environment
+%% Attempt 2 was successful. Forced certain subexpressions instead.
+
+The task of defining the lazy semantics for CakeML consisted of defining a new
+\texttt{evaluate} function (called \texttt{evaluateLazy from now} and
+appropriate functions in the semantic primitives.
+In order to implement laziness, it was also necessary to incorporate the idea of
+thunks, as described in section~\ref{back:lazySem}. As such, thunks were added
+as the \texttt{Thunk} constructor in the \texttt{V} datatype. This would
+effectively make it a value that could be returned as a result by
+\texttt{evaluateLazy}. The main purpose of using thunks was to suspend partially
+evaluated expressions within. To further evaluate said expressions, additional
+information, contained in the environment, is required.
+The \texttt{Thunk} constructor was thus defined as such:
+
+\begin{figure}[H]
+\begin{alltt}
+  Thunk (Environment V) Exp
+\end{alltt}
+\end{figure}
+
+\texttt{evaluateLazy}, the lazy version of \texttt{evaluate}, was implemented
+with the goal of evaluating expressions as little as possible. While the type
+of \texttt{evaluateLazy} needed to stay similar to
+\texttt{evaluate}, minor changes were made; mainly, the state was omitted
+altogether in order to keep the evaluation pure. The type of
+\texttt{evaluateLazy} was thus declared as:
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluateLazy :: Environment V -> [Exp] -> Result [V] V
+\end{alltt}
+\end{figure}
+
+With the addition of the \texttt{Thunk} constructor, \texttt{evaluateLazy}
+returns either a thunk or any other value. 
+The implementation of \texttt{evaluateLazy} was performed in two attempts, which
+will be described in the following sections.
+
+\subsection{Attempt 1}
+
+
+\subsection{Attempt 2}
