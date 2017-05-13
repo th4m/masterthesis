@@ -27,7 +27,9 @@ investigated and manually transcribed from Lem to Haskell:
 \item The \texttt{evaluate} function
 \end{itemize}
 
-\noindent Details about the contents and implementation of these three items
+\noindent All three items were defined as Lem modules in the provided GitHub
+repository and needed to be defined as Haskell modules.
+Details about the contents and implementation of these three items
 will be described in the following sections.
 
 \subsection{Abstract Syntax}
@@ -143,7 +145,7 @@ Linking the abstract syntax together with the semantics of CakeML is the
 expressions as input and return a state together with a result. A result can
 consist of a list of values or an error. Also contributing to the evaluation
 of expressions are a state and an environment, which are given as input to
-\texttt{evaluate}. The type of \texttt{evaluate} (in Lem annotation) is thus:
+\texttt{evaluate}. The type of \texttt{evaluate} (in Lem notation) is thus:
 
 \begin{alltt}
 evaluate:state -> environment v -> list exp -> state * result (list v) v
@@ -156,11 +158,11 @@ they are pattern matched to be evaluated with unique strategies:
 \begin{figure}[H]
 \begin{alltt}
   let rec
-  evaluate st env []      = ...
+  evaluate st env []           = ...
   and
-  evaluate (e1::e2::es)   = ...
+  evaluate st env (e1::e2::es) = ...
   and
-  evaluate st env [Lit l] = ...
+  evaluate st env [Lit l]      = ...
   and
   ...
 \end{alltt}
@@ -170,7 +172,8 @@ they are pattern matched to be evaluated with unique strategies:
 operations from the semantic primitives. For example, when evaluating
 the \texttt{Var n} expression, the \texttt{lookup\_var\_id} function defined
 in the semantic primitives is applied to \texttt{n} in order to check if
-the variable exists in the environment.
+a value is assigned to the variable in the environment. In the case it does
+exist, the value is returned:
 
 \begin{figure}[H]
 \begin{alltt}
@@ -210,9 +213,9 @@ with similar usage of lists and pattern matching.
 
 \begin{figure}[H]
 \begin{alltt}
-  evaluate st env (e1:e2:es)   = ...
-  evaluate st env [Var n]      = ...
-  evaluate st env [Literal l]  = ...
+  evaluate st env (e1:e2:es)  = ...
+  evaluate st env [Var n]     = ...
+  evaluate st env [Literal l] = ...
 \end{alltt}
 \end{figure}
 
@@ -228,6 +231,16 @@ follows:
       Nothing -> (st, RErr (RAbort RType_Error))
 \end{alltt}
 \end{figure}
+
+\section{Testing the Implementation}
+%% Tested the implementation
+%% Created a Haskell module to run tests
+%% Imported all three above mentioned modules
+%% Created dummy state and environment
+%% Created a function that uses the state and environment, and takes expressions as input
+%%   The function runs evaluate with the dummy state/environment and returns state + result
+%% Created a number of test expressions to run through evaluate
+%% Compared the result of evaluate with expected values
 
 
 \section{Discussion/Conclusion}
