@@ -1,4 +1,5 @@
 \chapter{Lazy Semantics}
+\label{lazySem}
 The second step of this thesis, after translating the strict semantics of CakeML
 to Haskell, was to define lazy semantics that the compiler will be based on.
 The lazy semantics defined in Haskell was designed to delay evaluation by
@@ -6,6 +7,7 @@ storing partially evaluated expressions in thunks. This chapter will describe
 the implementation of the lazy semantics.
 
 \section{Implementation}
+\label{lazySem:impl}
 %% Modified two modules: semantic primitives and evaluate (mainly) 
 %% SemPrim was modified to remove state from certain functions
 %% SemPrim was modified to add Thunk to V
@@ -110,6 +112,7 @@ intended to be temporary for the evaluation of \texttt{e1}. The strict
 evaluation of \texttt{e1} in its own scope.
 
 \subsection{Attempt 2}
+\label{lazySem:att2}
 The second attempt of implementing \texttt{evaluateLazy} was more successful
 in creating delayed evaluation without altering more data than wanted. This
 was achieved by forcing certain sub-expressions instead of leaving them

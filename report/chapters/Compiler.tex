@@ -1,0 +1,157 @@
+\chapter{Compiler}
+The third major step of this thesis was to implement the compiler that takes
+regular strict CakeML expressions and produces CakeML expressions that allows
+lazy evaluation. The compiler has been defined in Haskell by using the ideas
+behind the definition of the lazy semantics. However, as it both takes and
+produces CakeML expressions, the compiler is run with the premise of using the
+original strict semantics. This chapter will describe the implementation of the
+compiler that makes CakeML expressions lazy.
+
+\section{Implementation}
+%% Created Compiler.hs
+%% Defined compile-function
+%% The compile-function takes an expression and returns an expression
+%% Defined thunks by using the Con-expression and Fun-expression
+%% Defined force-function by using a combination of CakeML expressions
+%% The compile-function makes use of thunks and force to delay evaluation
+%% A problem with the LetRec expression was that it was not enough to simply compile the inner expressions
+%% The force-function expects that variables saved in the environment are wrapped in thunks or vals
+%% The function build_rec_env in the strict semantics saves the recursive functions as RecClosures without wrapping
+%%   This is an issue, as it's the internal semantics that does this, and it cannot be changed
+%%   A workaround was implemented by pulling the RecClosures out of the environment and saving them again, this time wrapped in Val
+
+For the task of creating the compiler, a \texttt{compile} function was defined.
+\texttt{compile} was designed to take an expression and alter it to another
+expression that incorporates the logic of thunks and \texttt{force} defined in
+section~\ref{lazySem:impl}. In order to further explain how this was done,
+more information about how thunks and \texttt{force} were implemented needs to
+be detailed.
+
+\section{Thunks in the Compiler}
+\label{comp:thunk}
+In the lazy semantics, thunks were defined as values. As the compiler only makes
+use of expressions, values are not available as resources.
+The idea is to simulate the behavior of storing
+partially evaluated expressions wrapped inside thunks in the environment as
+done in the lazy semantics. To do that it is necessary to store an expression
+together with the environment that is in use when the expression is originally
+supposed to be evaluated.
+
+Thunks were defined with the use of the \texttt{Fun} expression combined
+with the \texttt{Con} expression. When evaluated, \texttt{Fun} expressions
+become closures that contain the input expression together with the environment
+in use at the time of evaluation. This fulfills the requirements of keeping
+the expression together with an environment.
+
+\texttt{Con} expressions are constructors that allow separation between thunks
+and values. Thunks and values were separated with constructor names that
+uniquely identified them. For an expression \texttt{e}, thunks were defined as:
+
+\begin{figure}[H]
+\begin{alltt}
+  Con (Just (Short "Thunk")) [Fun "" e]
+\end{alltt}
+\end{figure}
+
+\noindent As \texttt{e} is put in a the \texttt{Fun} expression, it is not
+actually evaluated. Instead, it is put inside the resulting closure, awaiting
+evaluation when called as an argument to an \texttt{App Op} expression.
+
+A value in the case of the compiler is an expression that does not require
+a delayed evaluation. This mainly applies to expressions such as \texttt{Lit}
+and \texttt{Fun}. When wrapping a value around a \texttt{Con} expression, there
+is no need to keep the environment with it, as the evaluation is not to be
+delayed. Thus, for an expression \texttt{e}, values were defined as:
+
+\begin{figure}[H]
+\begin{alltt}
+  Con (Just (Short "Val")) [e]
+\end{alltt}
+\end{figure}
+
+In order for the constructors "\textit{Thunk}" and "\textit{Val}" to be usable,
+they need to be defined under a type identifier in the environment. Thus,
+when the compiler was tested, the constructors were defined under the type
+identifier "\textit{lazy}".
+
+\section{\texttt{force} in the Compiler}
+With the definition of thunks and values finished, the task of defining
+\texttt{force} remained. In the lazy semantics, \texttt{force} pattern
+matched on values to recursively evaluate expressions inside of the thunks until
+they stopped producing thunks. As the compiler does not perform any evaluation
+itself, it needs to somehow make the actual semantics make this pattern matching
+and recursive evaluation. Thus, \texttt{force} was defined by combining a number
+of CakeML expressions: \texttt{LetRec} for recursion, \texttt{Mat} for pattern
+matching, and \texttt{App OpApp} both for applying \texttt{force} recursively
+and forcing an evaluation.
+
+\begin{figure}[H]
+\begin{alltt}
+force :: Exp -> Exp
+force e =
+  App OpApp [LetRec [("force", "exp"
+                     , Mat (Var (Short "exp"))
+                       [(thunkPat [PVar "Thunk"]
+                        , App OpApp [Var (Short "force")
+                                    , App OpApp [Var (Short "Thunk")
+                                                , Literal (IntLit 0)]])
+                       ,(valPat [PVar "Val"]
+                        , Var (Short "Val"))]
+                     )] (Var (Short "force"))
+            , e]
+\end{alltt}
+\end{figure}
+
+
+\section{The \texttt{compile} function}
+With the important elements of thunks and \texttt{force} implemented, the next
+step was to utilise them in the \texttt{compile} function. 
+\texttt{compile} takes an expression and returns an expression. Thus the type of
+the function is
+
+\begin{figure}[H]
+\begin{alltt}
+  compile :: Exp -> Exp
+\end{alltt}
+\end{figure}
+
+\noindent Pattern matching for all expressions in Haskell allows the function to
+handle each expression uniquely. With the lazy semantics defined in
+chapter~\ref{lazySem} in mind, \texttt{compile} was implemented with a similar
+approach. Expressions were wrapped in either "\textit{Thunk}" of
+"\textit{Value}" constructors. When an expression needs to be fully evaluated,
+\texttt{force} is applied.
+
+An example of compiling an expression can be described with the expression
+\texttt{If e1 e2 e3}. As seen in section~\ref{lazySem:att2}, \texttt{e1} needs
+to be forced, while \texttt{e2} or \texttt{e3} should be returned as a thunk.
+This is handled by applying \texttt{force} on \texttt{e1} after compiling it,
+as well as wrapping \texttt{e2} and \texttt{e3} after compiling them.
+The code was simplified by creating helper functions \texttt{forceCompile},
+which is a function composition of \texttt{force} and \texttt{compile}, and
+\texttt{thunkCompile}, which is a function composition of thunk wrapping and
+\texttt{compile}.
+
+\begin{figure}[H]
+\begin{alltt}
+  If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
+\end{alltt}
+\end{figure}
+
+\noindent When evaluated, this expression takes the following steps:
+
+\begin{enumerate}
+\item e1 is forced and evaluated to the value \texttt{v}
+\item \texttt{v} is used as argument to \texttt{do\_if} together with \texttt{e2} and \texttt{e3}, both compiled and wrapped in thunks.
+\item The resulting expression \texttt{e} is evaluated.
+  \begin{itemize}
+    \item As \texttt{e} is in practice \texttt{Con (Just "Thunk") [Fun "" e]}, the evaluation will return \texttt{ConV (Just ("Thunk",TypeId (Short "lazy"))) [Closure env "" e]}.
+  \end{itemize}
+\end{enumerate}
+
+This logic of wrapping expressions in "\textit{Thunk}" and "\textit{Val}"
+constructors was applied to all cases of \texttt{compile}. When tested, all
+expressions were evaluated correctly, except for one case: the \texttt{LetRec}
+expression. This issue will be explained in the following subsection.
+
+\subsection{\texttt{LetRec}}
