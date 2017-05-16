@@ -144,10 +144,14 @@ which is a function composition of \texttt{force} and \texttt{compile}, and
 \item e1 is forced and evaluated to the value \texttt{v}
 \item \texttt{v} is used as argument to \texttt{do\_if} together with \texttt{e2} and \texttt{e3}, both compiled and wrapped in thunks.
 \item The resulting expression \texttt{e} is evaluated.
-  \begin{itemize}
-    \item As \texttt{e} is in practice \texttt{Con (Just "Thunk") [Fun "" e]}, the evaluation will return \texttt{ConV (Just ("Thunk",TypeId (Short "lazy"))) [Closure env "" e]}.
-  \end{itemize}
+  %% \begin{itemize}
+  %%   \item As \texttt{e} is in practice \texttt{Con (Just "Thunk") [Fun "" e]}, the evaluation will return \texttt{ConV (Just ("Thunk",TypeId (Short "lazy"))) [Closure env "" e]}.
+  %% \end{itemize}
 \end{enumerate}
+
+\noindent In order for the evaluation of the compiled \texttt{If} expression to
+yield the same value that the uncompiled version would yield, it would simply
+need to be forced before being evaluated.
 
 This logic of wrapping expressions in "\textit{Thunk}" and "\textit{Val}"
 constructors was applied to all cases of \texttt{compile}. When tested, all
@@ -157,10 +161,10 @@ subsection.
 
 \subsection{Compiling \texttt{LetRec}}
 \texttt{LetRec} is the expression that makes recursive definitions possible.
-The expression consists of a list of function definitions that each have a
+The expression consists of a list of local function definitions that each have a
 function name, argument name, and a function body. This list is followed by
 another expression to be evaluated. When evaluated, these function definitions
-are stored in the environment as \texttt{RecClosure}s, each containing
+are stored in the environment as \texttt{RecClosure} values, each containing
 environments that contain all of the function definitions.
 
 \texttt{evaluate} for \texttt{LetRec} is defined as such:
@@ -168,7 +172,7 @@ environments that contain all of the function definitions.
 \begin{figure}[H]
 \begin{alltt}
   evaluate st env [LetRec funs e] =
-    if allDistinct (map (\(x,y,z) -> x) funs) then
+    if allDistinct (map (\\(x,y,z) -> x) funs) then
       evaluate st (env {v = build_rec_env funs env (v env)}) [e]
     else
       (st, RErr (RAbort RType_Error))
@@ -176,4 +180,35 @@ environments that contain all of the function definitions.
 \end{figure}
 
 \noindent The problem with the compiler and this evaluation strategy is that it
-is the function \texttt{build\_rec\_env} that creates the \texttt{RecClosure}s.
+is the function \texttt{build\_rec\_env} from the semantic primitives that
+creates the \texttt{RecClosure}s and stores them in the environment. This means
+that the compiler cannot wrap the \texttt{RecClosure} values in the
+"\textit{Val}" constructor, as the semantics is not a part of the compiler.
+\texttt{RecClosure}s are thus naked in the environment, causing \texttt{force}
+to result in a type error when called, as it pattern matches on the constructors
+"\textit{Thunk}" and "\textit{Val}".
+
+As the evaluation of \texttt{LetRec} expressions will cause calls to the locally
+defined functions to always result in type errors, a workaround was created to
+make valid\texttt{RecClosure} values in the environment. This workaround
+consisted of allowing the \texttt{evaluate} function to create the
+\texttt{RecClosure} values that were incompatible with \texttt{force} and
+reassigning them as valid values. In order to not create possible conflicts
+with variable names, the first time that the \texttt{RecClosure} values are
+stored in the environment, they are given invalid names (by appending a space
+to them). When they are reassigned as properly wrapped in constructors, they
+are given their true names. All this was done in the definition of
+\texttt{compile} for \texttt{LetRec}:
+
+\begin{figure}[H]
+\begin{alltt}
+compile (LetRec funs e) =
+  LetRec (replace funs invN) (reinstance invN names (thunkCompile e))
+  where names = getNames funs
+        getNames [] = []
+        getNames ((f,_,_):funs') = (f:getNames funs')
+        invN = map (++ " ") names
+\end{alltt}
+\end{figure}
+
+\section{Testing the Implementation}
