@@ -152,6 +152,28 @@ which is a function composition of \texttt{force} and \texttt{compile}, and
 This logic of wrapping expressions in "\textit{Thunk}" and "\textit{Val}"
 constructors was applied to all cases of \texttt{compile}. When tested, all
 expressions were evaluated correctly, except for one case: the \texttt{LetRec}
-expression. This issue will be explained in the following subsection.
+expression. This issue (and its solution) will be explained in the following
+subsection.
 
-\subsection{\texttt{LetRec}}
+\subsection{Compiling \texttt{LetRec}}
+\texttt{LetRec} is the expression that makes recursive definitions possible.
+The expression consists of a list of function definitions that each have a
+function name, argument name, and a function body. This list is followed by
+another expression to be evaluated. When evaluated, these function definitions
+are stored in the environment as \texttt{RecClosure}s, each containing
+environments that contain all of the function definitions.
+
+\texttt{evaluate} for \texttt{LetRec} is defined as such:
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env [LetRec funs e] =
+    if allDistinct (map (\(x,y,z) -> x) funs) then
+      evaluate st (env {v = build_rec_env funs env (v env)}) [e]
+    else
+      (st, RErr (RAbort RType_Error))
+\end{alltt}
+\end{figure}
+
+\noindent The problem with the compiler and this evaluation strategy is that it
+is the function \texttt{build\_rec\_env} that creates the \texttt{RecClosure}s.
