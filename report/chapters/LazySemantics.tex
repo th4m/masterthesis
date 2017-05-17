@@ -166,3 +166,88 @@ pattern matching in \texttt{evaluateLazy}.
 %% strict and lazy semantics and checked if the results were identical
 %% Also tested certain expressions that would end up in bottoms (non-terminating loops)
 %% Both test cases were successful
+
+Similarly to the strict semantics, unit testing was performed on the lazy
+semantics, using the same dummy environment and expressions. 
+The result from the lazy evaluation was compared to what the strict evaluation
+would yield to make sure that they were equal. An additional test method was
+applied for lazy evaluation as well. This testing consisted of checking for
+termination in expressions that would normally not terminate with the strict
+semantics. These two test methods will be described in this section.
+
+\subsection{Comparing Results}
+For comparing results between lazy and strict evaluation, a function, called
+\texttt{compareEval} was defined. \texttt{compareEval} takes a list of
+expressions and applies \texttt{evaluate} and \texttt{evaluateLazy}
+in separate passes. Both evaluation processes use the same dummy environment.
+Evaluation with the an empty state (called \texttt{empty\_st}) and
+a dummy environment (called \texttt{ex\_env}) was simplified by defining a
+function for strict evaluation:
+
+\begin{figure}[H]
+\begin{alltt}
+  ex e = evaluate empty_st ex_env [e]
+\end{alltt}
+\end{figure}
+
+\noindent Similarly, evaluation for lazy evaluation with \texttt{ex\_env} was
+simplified by defining a function for lazy evaluation:
+
+\begin{figure}[H]
+\begin{alltt}
+  exForce e = evalAndForce ex_env [e]
+\end{alltt}
+\end{figure}
+
+\noindent \texttt{evalAndForce} was naturally used, as a pure value is expected
+to be compared with the strict evaluation. With the definition of \texttt{ex}
+and \texttt{exForce}, \texttt{compareEval} could be defined:
+
+\begin{figure}[H]
+\begin{alltt}
+  compareEval expList = map exForce expList == map (snd . ex) expList
+\end{alltt}
+\end{figure}
+
+By collecting a list of expressions, testing was performed by simply running
+\texttt{compareEval} on said list. This was done whenever the semantics was
+changed and needed to be tested to control that the results would not change.
+
+
+\subsection{Testing Termination}
+As laziness brings the feature of delaying evaluation of expressions, certain
+expressions that would lead to non-termination when using the strict semantics
+should terminate when using the lazy semantics. For example, when the expression
+\texttt{Let x e1 e2} has a non-terminating expression for \texttt{e1}, the
+strict semantics will not terminate on the evaluation of \texttt{e1}. However,
+the lazy semantics will simply wrap \texttt{e1} in a thunk and bind it to the
+variable \texttt{x}, allowing the evaluation to continue to evaluating
+\texttt{e2}.
+
+This test method consisted of creating CakeML expressions that would exhibit the
+behavior explained above. One such expression was defined and called
+\texttt{termExp}. A non-terminating expression \texttt{inf} was also defined to
+be used together with \texttt{termExp}.
+\texttt{inf} was defined to create a recursive function \texttt{fun}
+that simply calls itself to create an infinite loop. \texttt{recExp} used
+\texttt{inf} by binding it to a variable \texttt{var} in a \texttt{Let}
+expression before returning a string literal "OK".
+
+\begin{figure}[H]
+\begin{alltt}
+  termExp =
+    Let (Just "var") (inf) (Literal (StrLit "OK"))
+    where inf =
+      LetRec [("fun", "par", App OpApp [Var (Short "fun")
+                                       ,Literal (IntLit 0)])]
+      (App OpApp [Var (Short "fun"), Literal (IntLit 0)])
+\end{alltt}
+\end{figure}
+
+\noindent Running \texttt{termExp} with the strict semantics naturally caused a
+non-termininating loop, while running \texttt{termExp} with the lazy semantics
+resulted with the literal value "OK", as expected.
+
+With the test results showing positive results, the lazy semantics were deemed
+to work as intended. This would signal that the groundwork for the compiler
+had been completed.

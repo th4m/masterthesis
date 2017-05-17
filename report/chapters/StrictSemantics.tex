@@ -242,3 +242,12 @@ follows:
 %% Created a number of test expressions to run through evaluate
 %% Compared the result of evaluate with expected values
 
+After the implementation was finished, the strict semantics was tested.
+The testing was performed by running \texttt{evaluate} on a number of predefined
+expressions together with dummy instances of state and environment.
+The results of the evaluations were compared with values that were expected
+in the form of unit testing to see if there were any deviations. 
+
+Faulty results indicated erroneous implementation of the semantics.
+Thus, through troubleshooting and amending code, the semantics eventually
+reached a satisfactory state that could evaluated expressions correctly.
