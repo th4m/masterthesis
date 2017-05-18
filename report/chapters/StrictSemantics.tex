@@ -1,0 +1,253 @@
+\chapter{Strict Semantics}
+\label{chapter:strict}
+As stated in section~\ref{intro:project}, the first major step of this project
+was to write lazy semantics for CakeML in Haskell. However, before this could be
+done, the existing strict semantics would have to be defined. The definition
+would include the basic abstract syntax tree and semantic primitives of the
+language.
+
+\section{Implementation}
+As CakeML is an already defined language, its underlying semantics already
+exists. The compiler for this project is to be written in Haskell, meaning that
+the semantics must be defined in Haskell in order for it to be usable. This is
+what this section will describe: defining the strict semantics of CakeML in
+Haskell.
+
+The semantics of CakeML is defined in Lem, as described in
+section~\ref{back:cakeml}. At the beginning of this thesis, a link to CakeML's
+GitHub repository was provided, in which the semantics was contained in the form
+of \textit{.lem} files. The goal of this part of the thesis was thus to manually
+translate the semantics from Lem to Haskell. 
+
+In order to translate the semantics of CakeML, three items needed to be
+investigated and manually transcribed from Lem to Haskell:
+\begin{itemize}
+\item The abstract syntax of CakeML
+\item The semantic primitives of CakeML
+\item The \texttt{evaluate} function
+\end{itemize}
+
+\noindent All three items were defined as Lem modules in the provided GitHub
+repository and needed to be defined as Haskell modules.
+Details about the contents and implementation of these three items
+will be described in the following sections.
+
+\subsection{Abstract Syntax}
+\label{strict:abs}
+The abstract syntax is the basic syntactical representation of the grammar of a
+language~\cite{pltbook}. This includes the representation of literals,
+operations, and expressions. Translating the abstract syntax from Lem to Haskell
+proved to not be all too difficult, as Lem and Haskell are fairly similar in
+structure. With the use of algebraic datatypes, each category in the grammar is
+defined as its own type. For example, some of the expressions of CakeML
+are represented in Lem as such:
+
+\begin{figure}[H]
+\begin{alltt}
+  type exp =
+    | Lit of lit
+    | Var of id varN
+    | Fun of varN * exp
+    | App of op * list exp
+\end{alltt}
+\end{figure}
+
+\noindent In order from top to bottom, these expressions represent literals,
+variables, functions, and applications. The constructors are complemented with
+data from other datatypes, e.g. \texttt{lit} and \texttt{id}, that are defined
+as a part of the language.
+The above expressions were translated to Haskell as such:
+
+\begin{figure}[H]
+\begin{alltt}
+  data Exp
+    = Literal Lit
+    | Var (Id VarN)
+    | Fun VarN Exp
+    | App Op [Exp]
+\end{alltt}
+\end{figure}
+
+\noindent Similarly, complementing datatypes, such as \texttt{Lit} and
+\texttt{id}, as well as other categories in the grammar, were also translated
+as needed.
+
+These expressions are the basic building blocks that a programmer uses to create
+their program. For example, a simple integer such as 5 is represented as
+\begin{alltt}
+  Literal (IntLit 5)
+\end{alltt}
+when using this abstract syntax. Building more
+complex expressions is as simple as combining multiple expressions. For example
+the arithmetic expression $1 + (7 - 8)$ can be represented as
+
+\begin{figure}[H]
+\begin{alltt}
+  App (OPN Plus) [Literal (IntLit 1),
+                  App (OPN Minus) [Literal (IntLit 7)
+                                  ,Literal (IntLit 8)
+                                  ]
+                 ]
+\end{alltt}
+\end{figure}
+
+\subsection{Semantic Primitives}
+The semantic primitives of a language is how its calculations are performed.
+This includes operations such as basic arithmetic, logical operations,
+lookups, and pattern matching. Also included in the semantic primitives are
+the inner representations of \textit{values}, \textit{state}, and
+\textit{environment}.
+
+Values are represented by the datatype \texttt{V} and are what expressions
+ususally are evaluated to. Some of the values of CakeML are represented in
+Lem as such:
+
+\begin{alltt}
+  type v =
+    | Litv of lit
+    | Closure of environment v * varN * exp
+    | Vectorv of list v
+\end{alltt}
+
+\noindent In order, these values represent literals, closures, and vectors.
+Just as with the expressions described above, other datatypes that represent
+other parts of the grammar are needed. However, these mostly already exist from
+the definition of the abstract syntax and are therefore reused.
+
+The translation of these values to Haskell was performed analogously to the
+abstract syntax described in~\ref{strict:abs}:
+
+\begin{figure}[H]
+\begin{alltt}
+  data V
+    = LitV Lit
+    | Closure (Environment V) VarN Exp
+    | VectorV [V]
+\end{alltt}
+\end{figure}
+
+An example of an expression and its value counterpart is the expression $1 + 2$,
+whose result is the value 3. The expression is represented as
+\begin{alltt}
+  App (OPN Plus) [Literal (IntLit 1), Literal (IntLit 2)]
+\end{alltt}
+which is evaluated to the value
+\begin{alltt}
+  LitV (IntLit 3)
+\end{alltt}
+
+% Should state and environment be described? Too much info?
+% Just refer to appendix for more info?
+
+\subsection{The \texttt{evaluate} function}
+Linking the abstract syntax together with the semantics of CakeML is the
+\texttt{evaluate} function. The job of \texttt{evaluate} is to take a list of
+expressions as input and return a state together with a result. A result can
+consist of a list of values or an error. Also contributing to the evaluation
+of expressions are a state and an environment, which are given as input to
+\texttt{evaluate}. The type of \texttt{evaluate} (in Lem notation) is thus:
+
+\begin{alltt}
+evaluate:state -> environment v -> list exp -> state * result (list v) v
+\end{alltt}
+
+\noindent Expressions are taken either as a sequence in \texttt{evaluate},
+in which case they are evaluated sequentially, or as singletons, in which case
+they are pattern matched to be evaluated with unique strategies:
+
+\begin{figure}[H]
+\begin{alltt}
+  let rec
+  evaluate st env []           = ...
+  and
+  evaluate st env (e1::e2::es) = ...
+  and
+  evaluate st env [Lit l]      = ...
+  and
+  ...
+\end{alltt}
+\end{figure}
+
+\noindent The logic of each case mostly consists of applying appropriate
+operations from the semantic primitives. For example, when evaluating
+the \texttt{Var n} expression, the \texttt{lookup\_var\_id} function defined
+in the semantic primitives is applied to \texttt{n} in order to check if
+a value is assigned to the variable in the environment. In the case it does
+exist, the value is returned:
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env [Var n] =
+    match lookup_var_id n env with
+    | Just v -> (st, Rval [v])
+    | Nothing -> (st, Rerr (Rabort Rtype_error))
+    end
+\end{alltt}
+\end{figure}
+
+\noindent Expressions that contain subexpressions (e.g. binary arithmetic
+operations) often require that one or more of these subexpressions are
+evaluated to values in order to use them as input for the primitive semantics
+functions. For example, the expression \texttt{If e1 e2 e3} requires that
+\texttt{e1}, which is the condition, is evaluated first in order to use the
+semantic function \texttt{do\_if} to decide whether \texttt{e2} or
+\texttt{e3} should be evaluated.
+
+%This function has been modified to omit fix_clock, which isn't used for this project
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env [If e1 e2 e3] =
+    match st (evaluate st env [e1]) with
+    | (st', Rval v) ->
+        match do_if (head v) e2 e3 with
+        | Just e -> evaluate st' env [e]
+        | Nothing -> (st', Rerr (Rabort Rtype_error))
+        end
+    | res -> res
+    end
+\end{alltt}
+\end{figure}
+
+The translation to Haskell maintained the same structure of \texttt{evaluate}
+with similar usage of lists and pattern matching.
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env (e1:e2:es)  = ...
+  evaluate st env [Var n]     = ...
+  evaluate st env [Literal l] = ...
+\end{alltt}
+\end{figure}
+
+\noindent The logic of \texttt{evaluate} was also maintained in the translation
+to Haskell. For example, the \texttt{Var n} expression is defined in Haskell as
+follows:
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluate st env [Var n] =
+    case lookup_var_id n env of
+      Just v  -> (st, RVal [v])
+      Nothing -> (st, RErr (RAbort RType_Error))
+\end{alltt}
+\end{figure}
+
+\section{Testing the Implementation}
+%% Tested the implementation
+%% Created a Haskell module to run tests
+%% Imported all three above mentioned modules
+%% Created dummy state and environment
+%% Created a function that uses the state and environment, and takes expressions as input
+%%   The function runs evaluate with the dummy state/environment and returns state + result
+%% Created a number of test expressions to run through evaluate
+%% Compared the result of evaluate with expected values
+
+After the implementation was finished, the strict semantics was tested.
+The testing was performed by running \texttt{evaluate} on a number of predefined
+expressions together with dummy instances of state and environment.
+The results of the evaluations were compared with values that were expected
+in the form of unit testing to see if there were any deviations. 
+
+Faulty results indicated erroneous implementation of the semantics.
+Thus, through troubleshooting and amending code, the semantics eventually
+reached a satisfactory state that could evaluated expressions correctly.

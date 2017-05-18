@@ -30,7 +30,8 @@ ex_env = insertVarIntoEnv env1 "apa" (LitV(IntLit 7))
         env2 = empty_env {c =
                           ([], [("::", (2, TypeId (Short "list"))),
                                ("nil", (0, TypeId (Short "list"))),
-                               ("con", (1, TypeId (Short "test")))]
+                               ("con", (1, TypeId (Short "test"))),
+                               ("con2", (0, TypeId (Short "test")))]
                             )
                          }
 
@@ -136,80 +137,41 @@ intLitB = Literal (IntLit intB)
 intA = 3
 intB = 9
 
-testPlus :: Bool
 testPlus =
-  exForce (plusExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA + intB))]
-  && RVal [LitV (IntLit (intA + intB))]
-  == exForce (plusExp intLitB intLitA)
+  plusExp intLitA intLitB
 
-testMinus :: Bool
 testMinus =
-  exForce (minusExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA - intB))]
-  && RVal [LitV (IntLit (intB - intA))]
-  == exForce (minusExp intLitB intLitA)
+  minusExp intLitA intLitB
 
-testTimes :: Bool
 testTimes =
-  exForce (timesExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA * intB))]
-  && RVal [LitV (IntLit (intB * intA))]
-  == exForce (timesExp intLitB intLitA)
-
-testDiv :: Bool
+  timesExp intLitA intLitB
 testDiv =
-  exForce (divExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA `div` intB))]
-  && RVal [LitV (IntLit (intB `div` intA))]
-  == exForce (divExp intLitB intLitA)
+  divExp intLitA intLitB
 
-testMod :: Bool
 testMod =
-  exForce (modExp intLitA intLitB)
-  == RVal [LitV (IntLit (intA `mod` intB))]
-  && RVal [LitV (IntLit (intB `mod` intA))]
-  == exForce (modExp intLitB intLitA)
+  modExp intLitA intLitB
 
-testEq1 :: Bool
 testEq1 =
-  exForce (eqExp [intLitA, intLitA])
-  == RVal [boolv True]
-  && RVal [boolv True]
-  == exForce (eqExp [intLitB, intLitB])
-
-testOrd :: Bool
+  eqExp [intLitA, intLitA]
 testOrd =
-  exForce (ordExp 'a')
-  == RVal [LitV (IntLit (C.ord 'a'))]
-  && RVal [LitV (IntLit (C.ord 'b'))]
-  == exForce (ordExp 'b')
+  ordExp 'a'
 
-testChr :: Bool
 testChr =
-  exForce (chrExp 97)
-  == RVal [LitV (Char (C.chr 97))]
-  && RVal [LitV (Char (C.chr 98))]
-  == exForce (chrExp 98)
+  chrExp 97
 
-testChOpb :: Bool
 testChOpb =
-  exForce (chopbExp LEq 'a' 'b')
-  == RVal [boolv True]
-  && RVal [boolv False]
-  == exForce (chopbExp LEq 'b' 'a')
+  chopbExp LEq 'a' 'b'
 
 strForTest = "testString"
-testStrsub :: Bool
-testStrsub =
-  exForce (strsubExp strForTest intA)
-  == RVal [LitV (Char (strForTest !! intA))]
+testStrsub = strsubExp strForTest intA
+  -- == RVal [LitV (Char (strForTest !! intA))]
 
-testLength :: Bool
-testLength = exForce (strlenExp "1234567") == RVal [LitV (IntLit 7)]
+testLength = strlenExp "1234567"
+  --RVal [LitV (IntLit 7)]
 
-allTests :: Bool
-allTests = and
+compareEval expList = map exForce expList == map (snd . ex) expList
+
+allExps =
   [ testPlus
   , testMinus
   , testTimes
@@ -219,7 +181,7 @@ allTests = and
   , testOrd
   , testChr
   , testChOpb
-  -- , testImplode
+    -- , testImplode
   , testStrsub
   , testLength
   ]
@@ -254,7 +216,10 @@ recEx2 =
   LetRec [("fun", "par", App (OPN Times) [Var (Short "par"), appFun])] (Var (Short "fun"))
   where appFun = (App OpApp [Var (Short "fun"), Var (Short "par")])
 recEx3 =
-  Let (Just "let") (App OpApp [recEx1, true]) (Literal (IntLit 0))
+  Let (Just "let") (recEx4) (Literal (StrLit "OK"))
+
+recEx4 =
+  LetRec [("fun", "par", App OpApp [Var (Short "fun"), true])] (App OpApp [Var (Short "fun"), true])
 
 matEx1 e =
   Mat e [(PVar "apa", Literal (IntLit 0)), (PVar "bepa", Literal (IntLit 1))]
@@ -264,3 +229,98 @@ matEx2 e =
 
 matEx3 e =
   Mat e [(PCon (Just (Short "con")) [PLit (IntLit 1)], Literal (IntLit 213))]
+
+
+-- take' =
+--   Let (Just "retNil") (Con (Just (Short "nil")) [])
+--   $ Let (Just "ls") (ls)
+--   $ LetRec[("if","n"
+--          ,If ((App Equality) [Var (Short "n"), Literal (IntLit 0)])
+--          (Var (Short "retNil"))
+--           false)]
+--   (App OpApp [Var (Short "if"), Literal (IntLit 0)])
+
+-- take' =
+--   Let (Just "retNil") (Con (Just (Short "nil")) [])
+--   $ Let (Just "n") n
+--   $ Let (Just "ls") ls
+--   $ Mat ls
+--   [(PCon (Just (Short "::")) [PVar "elem", (PVar "rest")]
+--    , Con (Just (Short "::")) [Var (Short "elem")
+--                              ,Let (Just "n") (App (OPN Minus) [Var (Short "n")
+--                                                               ,Literal (IntLit 1)])
+--                              $App OpApp [Var (Short "take")
+--                                         ,Var (Short "rest")]])
+--   ,(PCon (Just (Short "nil")) []
+--    , Con (Just (Short "nil")) [])]
+
+take' =
+  Let (Just "retNil") (Con (Just (Short "nil")) [])
+  $ Let (Just "n") n
+  $ LetRec [("take","ls",
+  Mat ls
+  [(PCon (Just (Short "::")) [PVar "elem", (PVar "rest")]
+   , Con (Just (Short "::")) [Var (Short "elem")
+                             ,Let (Just "n") (App (OPN Minus) [Var (Short "n")
+                                                              ,Literal (IntLit 1)])
+                             $App OpApp [Var (Short "take")
+                                        ,Var (Short "rest")]])
+  ,(PCon (Just (Short "nil")) []
+   , Con (Just (Short "nil")) [])]
+            )] $ App OpApp [Var (Short "take"),ls]
+
+ls = Con (Just (Short "::")) [(Literal (IntLit 0))
+                             , Con (Just (Short "nil")) []]
+n = Literal (IntLit 4)
+
+test1 =
+  LetRec [("dec1","n"
+          ,App (OPN Minus) [Var (Short "n"), Literal (IntLit 1)])
+         ,("appDec1","x"
+          ,App OpApp [Var (Short "dec1"), Var (Short "x")])]
+  $ App OpApp [Var (Short "appDec1"), Literal (IntLit 5)]
+
+test2 =
+  Let (Just "x") (Literal (IntLit 5))
+  $ Let (Just "decr") (App (OPN Minus) [Var (Short "x"), Literal (IntLit 1)])
+  $ Var (Short "decr")
+
+test3 =
+  LetRec [("loopZero","n"
+          ,If (App Equality [Var (Short "n"), Literal (IntLit 0)]) true
+          (Let (Just "n") (App (OPN Minus) [Var (Short "n"),Literal (IntLit 1)])
+           (App OpApp [Var (Short "loopZero"), Var (Short "n")])))]
+  $ App OpApp [Var (Short "loopZero"), Literal (IntLit 0)]
+
+test4 =
+  Let (Just "n") (Literal (IntLit 3))
+  $ LetRec [("take","list"
+           ,If (App Equality [Var (Short "n"), Literal (IntLit 0)]) nil
+            (decrIn (Mat (Var (Short "list"))
+                    [(PCon (Just (Short "::"))  [PVar "elem", PVar "rest"],true)
+                    ,(PCon (Just (Short "nil")) []                        ,false)]))
+           )]
+  $ App OpApp [Var (Short "take"), nil]
+
+testListPat e =
+  Mat e
+  [-- (PCon (Just (Short "::"))  [PVar "elem", PVar "rest"], true)
+  -- (PCon (Just (Short "nil")) []                        , false)
+  (PVar "empty", false)
+  ]
+
+testConPat e =
+  Mat e
+  [(PCon (Just (Short "con")) [PVar "var"], true)
+  ,(PVar "e", false)]
+
+nil = Con (Just (Short "nil")) []
+lst = Con (Just (Short "::")) [true, true]
+
+
+decrIn = Let (Just "n") (App (OPN Minus) [Var (Short "n"),Literal (IntLit 1)])
+
+lazyPat i = --let ls = undefined in
+  case (i,[1..]) of
+    (0,[1,2,3]) -> false
+    (1,xs) -> true

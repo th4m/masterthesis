@@ -1,0 +1,69 @@
+\chapter{Goals and Limitations}
+This chapter will describe the goals and limitations of this thesis.
+
+\section{Project Description}
+\label{intro:project}
+The goal of this project is to create a compiler that takes code from a strict
+programming language and compiles it to allow for a lazy evaluation style. The
+resulting code should have the same user-observable evaluation as the given
+strict code. The purpose of creating such a compiler is to explore the formal
+connection between lazy and strict evaluation. The compiler will be written in
+the programming language Haskell. The source language for the compiler will be
+CakeML (which has strict semantics ) and the target language to which the
+compiler will output will be CakeML, but with support for lazy evaluation. This
+means that the semantics to express laziness will be defined as part of this
+project and used as a base to implement the compiler.
+
+Internally, the compiler will take a
+CakeML function with lazy semantics and translate it to one
+or more strict CakeML functions in order to get a semantically equivalent
+evaluation. When it comes to handling laziness, lazy functions will be
+translated to explicit thunk values~\cite{Ingerman:1961:TWC:366062.366084} in
+CakeML. Thunks are expressions that have yet to be evaluated. Thunk values are
+not primitive in CakeML. Our compiler will create code that
+implements the thunk values in CakeML. The compiler will target the stateful
+features of CakeML to avoid repeated evaluation of the same thunk values.
+
+The operational semantics of lazy CakeML will be written as a part of the
+project. As the semantics of CakeML is specified in higher-order logic
+(HOL)~\cite{HOLInter57:online},
+the operational semantics for CakeML will be translated from HOL to Haskell
+functions. The compiler will then connect the lazy and strict semantics.
+
+Tests will be written to show that the compiler generates semantically
+equivalent code. This project will employ manual unit testing to test
+expressions and steps of evaluation.
+
+In summary, the project will consist of three major parts that will be developed
+in parallel:
+\begin{itemize}
+ \item Writing lazy semantics for the programming language CakeML
+ \item Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML
+ \item Testing the compiler by writing operational semantics in the form of functions and running unit tests.
+\end{itemize}
+
+\section{Limitations}
+Due to the time constraints of this thesis, certain limitations will be enforced
+to keep the workload within a reasonable size. These limitations are:
+
+\begin{itemize}
+\item Expressions will be the highest level of the grammar that will be implemented
+\item No parser will be written to take actual CakeML code in string format
+\item Only the version of CakeML at the start of this thesis will be used as base for the implementation of the compiler
+\end{itemize}
+
+As expressions make up of the majority of the language, they will be the highest
+category of the grammar that will be implemented. This means that declarations
+will not be a part of this thesis.
+
+No actual parser that takes written CakeML code will be created for this thesis.
+Instead, an internal representation of CakeML expressions will be created in
+Haskell and be used to create the semantics and compiler. A parser that
+takes CakeML code in string format and converts it to the internal
+representation can be created at any time. It should not prove to be a
+challenging task to link said parser together with the compiler.
+
+At the time of writing, the programming language CakeML is still evolving at a
+high pace, meaning that the semantics of the language is prone to change at
+any time. In order to keep a steady workflow, any updates to the semantics after
+the start of this thesis will not be considered.

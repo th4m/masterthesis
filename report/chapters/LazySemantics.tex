@@ -1,0 +1,253 @@
+\chapter{Lazy Semantics}
+\label{lazySem}
+The second step of this thesis, after translating the strict semantics of CakeML
+to Haskell, was to define lazy semantics that the compiler will be based on.
+The lazy semantics defined in Haskell was designed to delay evaluation by
+storing partially evaluated expressions in thunks. This chapter will describe
+the implementation of the lazy semantics.
+
+\section{Implementation}
+\label{lazySem:impl}
+%% Modified two modules: semantic primitives and evaluate (mainly) 
+%% SemPrim was modified to remove state from certain functions
+%% SemPrim was modified to add Thunk to V
+%% This definition of lazy evaluation is pure
+%% evaluate is redefined in evaluateLazy
+%% Doesn't take state
+%% Tries to evaluate as little as possible
+%% When possible, evaluate takes one (or more) steps in evaluation,
+%% by e.g. applying a function from semantic primitives, and then
+%% wrapping the resulting expression in a thunk and returning it
+%% Implemented force to fully evaluate expressions
+%% Attempt 1 was faulty. Could return wrong environment
+%% Attempt 2 was successful. Forced certain subexpressions instead.
+
+The task of defining the lazy semantics for CakeML consisted of defining a new
+\texttt{evaluate} function (called \texttt{evaluateLazy from now} and
+appropriate functions in the semantic primitives.
+In order to implement laziness, it was also necessary to incorporate the idea of
+thunks, as described in section~\ref{back:lazySem}. As such, thunks were added
+as the \texttt{Thunk} constructor in the \texttt{V} datatype. This would
+effectively make it a value that could be returned as a result by
+\texttt{evaluateLazy}. The main purpose of using thunks was to suspend partially
+evaluated expressions within. To further evaluate said expressions, additional
+information, contained in the environment, is required.
+The \texttt{Thunk} constructor was thus defined as such:
+
+\begin{figure}[H]
+\begin{alltt}
+  Thunk (Environment V) Exp
+\end{alltt}
+\end{figure}
+
+\texttt{evaluateLazy}, the lazy version of \texttt{evaluate}, was implemented
+with the goal of evaluating expressions as little as possible. While the type
+of \texttt{evaluateLazy} needed to stay similar to
+\texttt{evaluate}, minor changes were made; mainly, the state was omitted
+altogether in order to keep the evaluation pure. The type of
+\texttt{evaluateLazy} was thus declared as:
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluateLazy :: Environment V -> [Exp] -> Result [V] V
+\end{alltt}
+\end{figure}
+
+With the addition of the \texttt{Thunk} constructor, \texttt{evaluateLazy}
+returns either a thunk or any other value.
+
+Another vital function that needed to be implemented was \texttt{force}.
+\texttt{force} is designed to take a value and pattern match for the
+\texttt{Thunk} constructor. When the \texttt{Thunk} case has been entered,
+the expression wrapped inside the thunk is extracted and lazily evaluated until
+a pure value is yielded. When any other value is caught in the pattern matching,
+the value is simply returned as a result. \texttt{force} is defined as such:
+
+\begin{figure}[H]
+\begin{alltt}
+  force :: V -> Result [V] V
+  force (Thunk env e) = case evaluateLazy env [e] of
+    RVal [Thunk env' e'] -> force (Thunk env' e')
+    res -> res
+  force v = RVal [v]
+\end{alltt}
+\end{figure}
+
+The implementation of \texttt{evaluateLazy} was performed in two attempts, which
+will be described in the following sections.
+
+\subsection{Attempt 1}
+The first (erroneous) attempt of implementing \texttt{evaluateLazy} used a naive
+idea of evaluating expressions as little as possible. This was mainly seen in
+expressions that contained sub-expressions, e.g. \texttt{If e1 e2 e3}. The first
+version of \texttt{evaluateLazy} on \texttt{If} would apply
+\texttt{evaluateLazy} on \texttt{e1} and check if it returned a thunk or a
+value. If it was a thunk, wrapped together with a partially evaluated expresion
+\texttt{e1'} and a potentially different environment \texttt{env'}, it would
+create and return a new thunk \texttt{Thunk env' (If e1' e2 e3)}. If it was
+another type of value \texttt{v}, it would apply \texttt{do\_if} to yield either
+\texttt{e2} or \texttt{e3} as the expression \texttt{e}. This would in turn
+, assuming that \texttt{v} was valid, create and return a new thunk containing
+\texttt{e} and the environment that was given as input to \texttt{evaluateLazy}.
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluateLazy st env [If e1 e2 e3]   =
+    case evaluateLazy st env [e1] of
+      (st', RVal vs)   -> case head vs of
+        Thunk env' e1' -> (st', RVal [Thunk env' (If e1' e2 e3)])
+        v              -> case do_if v e2 e3 of
+          Just e  -> (st', RVal [Thunk env e])
+          Nothing -> (st', RErr (RAbort RType_Error))
+      res -> res
+\end{alltt}
+\end{figure}
+
+The problem with this implementation is that the environment is passed along
+in each iteration. The strict \texttt{evaluate} evaluates \texttt{e} with
+the input environment. This act of passing on an altered environment is an
+unwanted process, as \texttt{e1} may assign some variables that were only
+intended to be temporary for the evaluation of \texttt{e1}. The strict
+\texttt{evaluate} does not exhibit this behavior, but instead keeps the
+evaluation of \texttt{e1} in its own scope.
+
+\subsection{Attempt 2}
+\label{lazySem:att2}
+The second attempt of implementing \texttt{evaluateLazy} was more successful
+in creating delayed evaluation without altering more data than wanted. This
+was achieved by forcing certain sub-expressions instead of leaving them
+suspended. Forcing these sub-expressions produced the value that was needed
+to continue the evaluation process. The forcing process was made easier by
+creating a function called \texttt{evalAndForce} that applied
+\texttt{evaluateLazy} on the head of the given list of expressions and
+environment, and forced the resulting value.
+
+\begin{figure}[H]
+\begin{alltt}
+  evalAndForce :: Environment V -> [Exp] -> Result [V] V
+  evalAndForce _env []    = RVal []
+  evalAndForce env (e:es) =
+    case evaluateLazy env [e] of
+      RVal v -> case force (head v) of
+        RVal val ->
+          case evalAndForce env es of
+            RVal vs -> RVal ((head val):vs)
+            res -> res
+        res -> res
+      res -> res
+\end{alltt}
+\end{figure}
+
+Taking the \texttt{If e1 e2 e3} case as an example again, the condition
+\texttt{e1} is forced to produce a (hopefully boolean) value, which is run
+through \texttt{do\_if}. The resulting expression, which is the branch that is
+to be evaluated in the next step, is wrapped in a thunk and returned as a
+result.
+
+\begin{figure}[H]
+\begin{alltt}
+  evaluateLazy env [If e1 e2 e3]   =
+    case evalAndForce env [e1] of
+      RVal v ->
+        case do_if (head v) e2 e3 of
+          Just e  -> RVal [Thunk env e]
+          Nothing -> RErr (RAbort RType_Error)
+      res -> res
+\end{alltt}
+\end{figure}
+
+This new idea of forcing sub-expressions was applied to all cases of the
+pattern matching in \texttt{evaluateLazy}.
+
+\section{Testing the Implementation}
+%% Tested the implementation
+%% Used the list of expressions that was tested for the strict semantics
+%% Created a comparison function that evaluated each expression with both
+%% strict and lazy semantics and checked if the results were identical
+%% Also tested certain expressions that would end up in bottoms (non-terminating loops)
+%% Both test cases were successful
+
+Similarly to the strict semantics, unit testing was performed on the lazy
+semantics, using the same dummy environment and expressions. 
+The result from the lazy evaluation was compared to what the strict evaluation
+would yield to make sure that they were equal. An additional test method was
+applied for lazy evaluation as well. This testing consisted of checking for
+termination in expressions that would normally not terminate with the strict
+semantics. These two test methods will be described in this section.
+
+\subsection{Comparing Results}
+For comparing results between lazy and strict evaluation, a function, called
+\texttt{compareEval} was defined. \texttt{compareEval} takes a list of
+expressions and applies \texttt{evaluate} and \texttt{evaluateLazy}
+in separate passes. Both evaluation processes use the same dummy environment.
+Evaluation with the an empty state (called \texttt{empty\_st}) and
+a dummy environment (called \texttt{ex\_env}) was simplified by defining a
+function for strict evaluation:
+
+\begin{figure}[H]
+\begin{alltt}
+  ex e = evaluate empty_st ex_env [e]
+\end{alltt}
+\end{figure}
+
+\noindent Similarly, evaluation for lazy evaluation with \texttt{ex\_env} was
+simplified by defining a function for lazy evaluation:
+
+\begin{figure}[H]
+\begin{alltt}
+  exForce e = evalAndForce ex_env [e]
+\end{alltt}
+\end{figure}
+
+\noindent \texttt{evalAndForce} was naturally used, as a pure value is expected
+to be compared with the strict evaluation. With the definition of \texttt{ex}
+and \texttt{exForce}, \texttt{compareEval} could be defined:
+
+\begin{figure}[H]
+\begin{alltt}
+  compareEval expList = map exForce expList == map (snd . ex) expList
+\end{alltt}
+\end{figure}
+
+By collecting a list of expressions, testing was performed by simply running
+\texttt{compareEval} on said list. This was done whenever the semantics was
+changed and needed to be tested to control that the results would not change.
+
+
+\subsection{Testing Termination}
+As laziness brings the feature of delaying evaluation of expressions, certain
+expressions that would lead to non-termination when using the strict semantics
+should terminate when using the lazy semantics. For example, when the expression
+\texttt{Let x e1 e2} has a non-terminating expression for \texttt{e1}, the
+strict semantics will not terminate on the evaluation of \texttt{e1}. However,
+the lazy semantics will simply wrap \texttt{e1} in a thunk and bind it to the
+variable \texttt{x}, allowing the evaluation to continue to evaluating
+\texttt{e2}.
+
+This test method consisted of creating CakeML expressions that would exhibit the
+behavior explained above. One such expression was defined and called
+\texttt{termExp}. A non-terminating expression \texttt{inf} was also defined to
+be used together with \texttt{termExp}.
+\texttt{inf} was defined to create a recursive function \texttt{fun}
+that simply calls itself to create an infinite loop. \texttt{recExp} used
+\texttt{inf} by binding it to a variable \texttt{var} in a \texttt{Let}
+expression before returning a string literal "OK".
+
+\begin{figure}[H]
+\begin{alltt}
+  termExp =
+    Let (Just "var") (inf) (Literal (StrLit "OK"))
+    where inf =
+      LetRec [("fun", "par", App OpApp [Var (Short "fun")
+                                       ,Literal (IntLit 0)])]
+      (App OpApp [Var (Short "fun"), Literal (IntLit 0)])
+\end{alltt}
+\end{figure}
+
+\noindent Running \texttt{termExp} with the strict semantics naturally caused a
+non-termininating loop, while running \texttt{termExp} with the lazy semantics
+resulted with the literal value "OK", as expected.
+
+With the test results showing positive results, the lazy semantics were deemed
+to work as intended. This would signal that the groundwork for the compiler
+had been completed.

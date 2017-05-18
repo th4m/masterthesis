@@ -1,0 +1,134 @@
+\chapter{Introduction}
+It has been argued that lazy programming (and functional programming in general)
+brings improvement to software development in the form of
+modularity~\cite{Hu1989}~\cite{Hu2015}.
+
+The main difference between lazy and strict programming languages is the steps
+of evaluation that their respective semantics take. With strict semantics,
+expressions are evaluated when they are created, while with lazy semantics,
+expressions are evaluated when they are needed~\cite{ThunkHas27:online}.
+This means that in lazy semantics
+you can give a function an argument that cannot be terminated, and as long as
+that argument is never used, the function itself can still terminate normally.
+
+This is not to say that lazy evaluation is always the optimal strategy when
+programming. In order to delay the evalution of an expression, lazy semantics
+makes use of a data structure called \textit{thunk}. Expressions that are to be
+evaluated are suspended in thunks and passed on correspondingly. When needed,
+the thunks are \textit{forced} in order to yield a usable value. Using this
+mechanic requires more memory usage than when evaluating with strict semantics.
+In cases where there are no superfluous expressions in the code, using lazy
+semantics can actually cause slower evaluation time when compared to
+strict semantics.
+
+Despite this potential drawback, laziness can be a desirable feature in many
+use cases. 
+
+\section{An Example of Lazy vs Strict Evaluation}
+\label{intro:Example}
+A useful feature in lazy programming languages is
+infinite data structures, such as infinite lists. Using
+these infinite data structures will not cause non-termination, as long as the
+program is not trying to access all of its elements. In Haskell, a lazy
+functional language, it is possible to write \texttt{take 5 [1..]} and get the
+result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
+an expression of an infinite list. This is because the list is not generated
+until it is needed, and only the necessary number of elements are generated.
+
+Below is an example of how \texttt{take} could be implemented. The function
+takes an integer (for the number of elements to take) and a list as arguments.
+This assumes that there is a data type definition for \texttt{List} with two
+constructors:
+\begin{itemize}
+  \item \texttt{Cons (a, List as)} for when there is an element \texttt{a} and the rest of the list \texttt{as}
+  \item \texttt{Nil} for the empty list
+\end{itemize}
+
+\begin{figure}[H]
+\begin{alltt}
+take n list =
+  if n == 0 then
+    Nil
+  else
+    case list of
+      Cons (a, as) -> Cons (a, (takeHs n-1 as))
+      Nil          -> Nil
+\end{alltt}
+\end{figure}
+
+\noindent The function can be written like this (with some syntax changes) for
+any language, but the semantics
+changes the strategy of evaluation. E.g. a strict language is likely to evaluate
+all of \texttt{list} when pattern matching, while a lazy language is likely to
+evaluate only part of the list as much as needed. 
+
+
+\section{Related Work}
+\label{intro:Related}
+\begin{itemize}
+\item Other strict languages that have implemented laziness
+  \begin{itemize}
+  \item Python?
+  \item .NET - The Lazy<T> class
+  \end{itemize}
+\item Lazy languages that have implemented strictness?
+  \begin{itemize}
+  \item Haskell
+    \begin{itemize}
+    \item \texttt{seq}
+    \item \texttt{\$!}
+    \end{itemize}
+  \end{itemize}
+\item Optimistic Evaluation~\cite{Ennals:2003:OEA:944746.944731}
+\end{itemize}
+
+
+\section{Project Description}
+This project will create a compiler that takes code from a lazy programming
+language and compiles it into a strict programming language. The resulting
+strict code should have the same user-observable evaluation as the given lazy
+code. The purpose of creating such a compiler is to explore the formal
+connection between lazy and strict evaluation. The compiler will be written in
+the programming language Haskell. The source language for the compiler will be
+CakeML with custom semantics for laziness and the target language to which
+the compiler will output will be CakeML with its standard strict semantics. This
+means that the semantics to express laziness will be defined as part of this
+project and translated to the original semantics of CakeML.
+
+Internally, the compiler will take a
+CakeML function with lazy semantics and translate it to one
+or more strict CakeML functions in order to get a semantically equivalent
+evaluation. When it comes to handling laziness, lazy functions will be
+translated to explicit thunk values~\cite{Ingerman:1961:TWC:366062.366084} in
+CakeML. Thunks are expressions that have yet to be evaluated. Thunk values are
+not primitive in CakeML. Our compiler will create code that
+implements the thunk values in CakeML. The compiler will target the stateful
+features of CakeML to avoid repeated evaluation of the same thunk values.
+
+The operational semantics of lazy CakeML will be written as a part of the
+project. As the semantics of CakeML is specified in higher-order logic
+(HOL)~\cite{HOLInter57:online},
+the operational semantics for CakeML will be translated from HOL to Haskell
+functions. The compiler will then connect the lazy and strict semantics.
+
+Tests will be written to show that the compiler generates semantically
+equivalent code. This project will employ manual unit testing to test
+expressions and steps of evaluation.
+
+In summary, the project will consist of three major parts that will be developed
+in parallel:
+\begin{itemize}
+ \item Writing lazy semantics for the programming language CakeML
+ \item Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML
+ \item Testing the compiler by writing operational semantics in the form of functions and running unit tests.
+\end{itemize}
+
+\section{Motivation for the Compiler}
+As discussed in section~\ref{intro:Related}, there are a number of cases where
+laziness has been implemented in strict languages and vice versa. 
+Allowing lazy evaluation in a strict language has many advantages.
+One such advantage of compiling expressions to make them lazy, instead of creating
+a library for lazy functions, allows the programmer to write their programs as
+they always would. By converting the code on expression-level, all programs can
+in practice become fully lazy without having to explicitly use special
+operations that enable laziness.

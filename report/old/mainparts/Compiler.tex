@@ -1,0 +1,204 @@
+\chapter{The Compiler}
+
+While the defined lazy semantics indeed do allow for lazy evaluation of CakeML
+expressions, the goal of this project is not to change the core evaluation
+strategy of the language, but instead add the possibility of evaluating
+expressions in a lazy manner to the existing strict semantics.
+Thus, the compiler described in this section was
+created. The compiler takes CakeML expressions and outputs CakeML expressions,
+written with lazy semantics in mind. This is performed with a function called
+\texttt{compile}.
+
+\section{Thunks}
+The idea of thunks was reused when creating the compiler. However, as the
+compiler both takes and returns expressions, it does not make use of the
+\texttt{V} type. Instead, thunks are embedded into expressions.
+The representation of thunks is done using the CakeML expression for
+constructors. Expressions are wrapped in constructors by using the
+\texttt{Con} expression with either the name
+\textit{Thunk} or \textit{Val}, depending on whether they will produce thunks or
+non-thunk values. In order for expressions to be saved as thunks, it is also
+necessary to wrap them together with the current environment. This is done by
+inserting the expression into a \texttt{Fun} expression, as it is evaluated to a
+closure containing both the environment and the inner expression. A
+thunk-expression is thus expressed as \texttt{Con (Just "Thunk") [Fun "" e]} and
+a value-expression is expressed as \texttt{Con (Just "Val") [e]}.
+
+Similarly to the lazy semantics, a \texttt{force} function is used, albeit on
+expression-level, when a non-thunk value is required.
+While the \texttt{force} function in the lazy
+semantics was written in Haskell, this one is written using the CakeML
+expressions specified in the abstract syntax tree in Haskell. It makes use of
+recursion with the \texttt{LetRec} expression in order to loop into itself for
+further forcing of inner expressions, and pattern matching between the
+\textit{Thunk} and \textit{Val} constructors using the \texttt{Mat} expression.
+
+%% \vspace{\fboxsep}
+%% \begin{minipage}{\linewidth}
+\begin{figure}[H]
+\begin{alltt}
+force :: Exp -> Exp
+force e =
+  App OpApp
+    [LetRec [("force", "exp"
+            , Mat (Var (Short "exp"))
+              [(PCon (Just (Short "Thunk")) [PVar "Thunk"]
+               , App OpApp [Var (Short "force")
+                           , App OpApp [Var (Short "Thunk")
+                                       , Literal (IntLit 0)]])
+              ,(PCon (Just (Short "Val")) [PVar "Val"]
+               , Var (Short "Val"))]
+            )] (Var (Short "force"))
+    , e]
+\end{alltt}
+\end{figure}
+%% \end{minipage}
+%% \vspace{\fboxsep}
+
+\noindent The idea behind this \texttt{force} is the same as \texttt{force} described
+in section~\ref{Eval}. Pattern matching checks if the given expression is either
+a \textit{Thunk} or \textit{Val} constructor. In the case where it is a thunk,
+the inner expression is stored as the variable \textit{``Thunk''} and evaluated
+by calling and applying it to a dummy argument, followed by another
+\texttt{force} on the yielded result. This recursive application of
+\texttt{force} occurs until a \textit{Val} constructor is encountered. In this
+case, the inner expression is stored as the variable \textit{``Val''} and called
+in order to simply return the expression.
+
+Something to keep in mind is that this \texttt{force} is embedded into the input
+CakeML expressions given to \texttt{compile}. The actual evaluation of
+\texttt{force} is thus done when the compiled expressions are run through
+\texttt{evaluate}.
+
+\section{Compiling Expressions}
+With the above definition of thunks and values, as well as \texttt{force}, the
+compiler emulates the behavior of the lazy semantics. The \texttt{compile}
+function pattern matches on expressions and returns altered expressions.
+An example is the\texttt{let} expression that was described in
+Section~\ref{Eval}.
+When compiling a \texttt{let} expression, both \texttt{e1} and \texttt{e2} are
+compiled and wrapped with the thunk constructor.
+
+%% \vspace{\fboxsep}
+%% \begin{minipage}{\linewidth}
+\begin{figure}[!ht]
+\begin{alltt}
+compile (Let xo e1 e2) =
+  Let xo (thunkCompile e1) (thunkCompile e2)
+\end{alltt}
+\end{figure}
+%% \end{minipage}
+%% \vspace{\fboxsep}
+
+\noindent In the case where \texttt{e1} is a non-terminating expression,
+the \texttt{let} expression would loop infinitely trying to evaluate
+\texttt{e1}. However, by wrapping \texttt{e1} in a thunk constructor, the
+\texttt{evaluate} function will simply create a closure for \texttt{e1} and save
+the thunk expression in the environment.
+
+\section{Testing the Compiler}
+
+Testing of the compiler was done in two approaches. The first approach was to
+control that evaluating the compiled code would not yield a different result
+from evaluating the original code. The second approach was to test the laziness
+of the compiled code. The tests would check rather simple expressions that do
+not terminate when using strict semantics, but do terminate when using lazy
+semantics.
+
+\subsection{Comparison}
+
+The compiler was tested in a very similar manner as in
+section~\ref{LazySemTest}. In this case, the output of \texttt{evaluate}
+was compared between
+before and after compiling the input code. Both runs were given the same
+dummy environment and empty state. The non-compiled code is run as is, while
+the compiled code is forced before being executed.
+The test code is as follows:
+
+%% \vspace{\fboxsep}
+%% \begin{minipage}{\linewidth}
+\begin{figure}[!ht]
+\begin{alltt}
+compareEval :: Exp -> Bool
+compareEval e = strict == lazy
+  where strict = ex e
+        lazy   = (ex . force . compile) e
+        ex e'  = evaluate empty_st ex_env [e']
+\end{alltt}
+\end{figure}
+%% \end{minipage}
+%% \vspace{\fboxsep}
+
+\noindent By reusing some functions from the testing of the lazy semantics,
+normal expressions were tested with this \texttt{compareEval}
+function to confirm that the result of evaluate would not differ between the
+non-compiled and compiled code.
+
+\subsection{Laziness}
+
+To confirm that the compiler actually does produce code that can be evaluated
+lazily using strict semantics, non-terminating expressions were used as part
+of the input. These tests were performed similarly to the tests in
+section~\ref{lazinessSem}. In this case, however, the strict \texttt{evaluate}
+function was used, showing that it is possible to achieve lazy evaluation
+using the strict semantics.
+
+Taking the example of the non-terminating expression from section~\ref{Eval}:
+\begin{alltt}
+  let x = e1 in e2
+\end{alltt}
+In terms of the AST in Haskell, this expression looks like:
+\begin{alltt}
+  Let (Just "x") e1 e2
+\end{alltt}
+Assuming that \texttt{e1} is a non-terminating expression, this \texttt{let}
+expression will loop infinitely on the evaluation of \texttt{e1}, never reaching
+\texttt{e2}. When used as input to the \texttt{compile} function, the
+\texttt{let} expression will be changed to:
+\begin{figure}[!ht]
+\begin{alltt}
+  Let (Just "x") (Con (Just (Short "Thunk")) [Fun "" e1])
+                 (Con (Just (Short "Thunk")) [Fun "" e2])
+\end{alltt}
+\end{figure}
+
+\noindent When evaluated, \texttt{Con (Just (Short "Thunk")) [Fun "" e1]} will
+become a value of the \texttt{ConV} constructor with the \texttt{Fun "" e1}
+expression becoming a \texttt{Closure} containing the environment and
+\texttt{e1}:
+\begin{figure}[!ht]
+\begin{alltt}
+  Let (Just "x")
+    (ConV (Just ("Thunk",TypeId "lazy")) [Closure env "" e1])
+    (ConV (Just ("Thunk",TypeId "lazy")) [Closure env "" e2])
+\end{alltt}
+\end{figure}
+
+\noindent As such, the actual evaluation of \texttt{e1} has been avoided
+until it is called in \texttt{e2} as the variable \texttt{x}, followed by a
+\texttt{force}.
+
+Haskell's \texttt{undefined} was also utilized to test laziness. By definition,
+\texttt{undefined} throws an exception when evaluated~\cite{Undefine63:online}.
+This means that as long as it is not evaluated, the program will run without
+any issues. This was tested in e.g. a \texttt{let} expression:
+\begin{alltt}
+  Let (Just "x") undefined e2
+\end{alltt}
+Here, \texttt{undefined} will be wrapped in a thunk constructor and a
+\texttt{Fun} expression, just like in the example above:
+\begin{alltt}
+  Con (Just (Short "Thunk")) [Fun "" undefined]
+\end{alltt}
+When evaluated, the
+\texttt{Fun} expression will simply be turned into a \texttt{Closure} with the
+environment and the accompanying expression (in this case \texttt{undefined}):
+\begin{figure}[!ht]
+\begin{alltt}
+  ConV (Just ("Thunk",TypeId (Short "lazy")))
+    [Closure env "" undefined]
+\end{alltt}
+\end{figure}
+
+\noindent This will be saved as the variable \texttt{x}. \texttt{undefined} will
+only be evaluated when \texttt{x} is called and forced.

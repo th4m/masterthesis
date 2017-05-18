@@ -1,0 +1,80 @@
+\chapter{Abstract Syntax Tree of Expressions}
+\label{app:ASTExp}
+
+\begin{figure}
+\begin{alltt}
+data Exp
+  = Raise Exp
+  | Handle Exp [(Pat, Exp)]
+  | Literal Lit
+  | Con (Maybe (Id ConN)) [Exp]
+  | Var (Id VarN)
+  | Fun VarN Exp
+  | App Op [Exp]
+  | Log LOp Exp Exp
+  | If Exp Exp Exp
+  | Mat Exp [(Pat, Exp)]
+  | Let (Maybe VarN) Exp Exp
+  | LetRec [(VarN, VarN, Exp)] Exp
+  | TAnnot Exp T
+\end{alltt}
+\caption{Expressions of CakeML}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data Op
+  -- Integer operations
+  = OPN Opn
+  | OPB Opb
+  -- Equality
+  | Equality
+  -- Function application
+  | OpApp
+  -- Char operations
+  | Ord
+  | Chr
+  | ChOpb Opb
+  -- String operations
+  | Implode
+  | StrSub
+  | StrLen
+  -- Vector operations
+  | VFromList
+  | VSub
+  | VLength
+\end{alltt}
+\caption{Operations for the App constructor of expressions}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data Opn
+  = Plus
+  | Minus
+  | Times
+  | Divide
+  | Modulo
+\end{alltt}
+\caption{Numerical operators for the App constructor of expressions}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data Opb
+  = Lt
+  | Gt
+  | LEq
+  | GEq
+\end{alltt}
+\caption{Boolean operators for the App constructor of expressions}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data LOp
+  = And
+  | Or
+\end{alltt}
+\caption{Boolean operators for the Log constructor of expressions}
+\end{figure}

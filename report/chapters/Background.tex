@@ -1,0 +1,159 @@
+\chapter{Background}
+Chapter~\ref{chapter:intro} shortly introduced the basics of lazy and strict
+semantics. This chapter will present a more in-depth description of semantics
+and compilers, as well as present some previous similar work on the subject.
+
+\section{Semantics}
+Every programming language has its own \textit{semantics}. The semantics of a
+programming defines the meaning of programs~\cite{Fernand:PLangOpSem}. In other
+words, the semantics of a language describes how programs are executed.
+Different languages tend to use the same constructs, e.g. \texttt{if/else}, but
+evaluate these constructs differently. This is where the semantics defines the
+language.
+
+The semantics of a language can be defined in different approaches. The most
+natural approach for the semantics of this project is
+\textit{operational semantics}. Fernández states that operational semantics
+is very useful for implementing languages and proving correctness of compiler
+optimisations~\cite{Fernand:PLangOpSem}. By using operational
+semantics, each construct is defined by computation steps. These steps are
+often described with the help of transition systems, presenting the computation
+steps as a sequence of transitions. For this project, however,
+the operational semantics will be defined in the form of Haskell functions.
+
+
+\subsection{Strict Semantics}
+Strict programming indicates that expressions are always fully evaluated when
+they appear in the chain of evaluation. E.g. when an arithmetic expression is
+bound to a variable, the expression is fully evaluated to become a numerical
+value before being assigned to the variable. The value is then accessible
+by simply calling the variable.
+
+\subsection{Lazy Semantics}
+\label{back:lazySem}
+The main characteristics of laziness is delaying evaluation of expressions
+until they are needed. This is often done when binding the expressions to
+variables. In order to delay the evalution of an expression, lazy semantics
+makes use of a data structure called
+\textit{thunk}~\cite{Ennals:2003:OEA:944746.944731}. A thunk contains a
+suspended expression together with information that is required to finish the
+evaluation of said expression. Expressions that are to be
+evaluated are suspended in thunks and passed on correspondingly. When needed,
+the thunks are \textit{forced} in order to yield a usable value.% Using this
+%mechanic requires more memory usage than when evaluating with strict semantics.
+
+\subsection{Pros and Cons of Both Semantics}
+One reason to why applications are programmed strictly is because it can be
+necessary to have all values fully evaluated. If the evaluation of an expression
+that is erroneous is delayed, it's impendent error will also be delayed.
+An example would be to consider a stateful system; if an operation is dependent
+on a reference, the value assigned to that reference needs to have been
+evaluated. If the evaluation of that value is delayed until after it is used,
+an error is prone to occur, as that value will not be there.
+By using strict evaluation, the evaluation is not delayed, avoiding any
+ambiguity of knowing whether or not references will have valid values.
+
+It is not always certain that all expressions that are contained in a program
+will be used every time that it is executed. The more complex a program is, the
+higher the chance is for branching. For example, a number of expressions may
+be evaluated and bound to variables before a chain of
+\texttt{if}/\texttt{else if} expressions. Certain branches of this program may
+only use a select few, or even none, of the previously assigned variables.
+In such cases, it would not be optimal to actually evaluate them.
+
+Lazy evalution can be motivated with an opposite reason in relation to strict
+evaluation. Programs that have a number of expressions bound by variables may
+not make use of all of them. For example, when using the \texttt{case} construct
+to pattern match in Haskell, the expression that is pattern matched can be
+assigned to a variable as an effect of the pattern matching:
+
+\begin{figure}[H]
+\begin{alltt}
+  case list of
+    [] -> ...
+    xs -> ...
+\end{alltt}
+\end{figure}
+
+\noindent In the second case, \texttt{list} is assigned to the variable
+\texttt{xs} as an effect of the pattern matching. The evaluation of
+\texttt{list} is delayed until \texttt{xs} is called and used, meaning
+that the actual content of list can be infinite in length without having the
+evaluation of the program ending up in a non-terminating loop.
+
+Infinite data structures are also a major benefit for using lazy evaluation.
+As described in section~\ref{intro:Example}, the function \texttt{take}
+in Haskell returns a subset of a given list. \texttt{take} has two arguments,
+an integer \texttt{x} and a list \texttt{xs}. This is used to get the
+$x$ first elements of the list \texttt{xs}. The lazy evaluation of the
+\texttt{xs} in \texttt{take} allows the list to be infinite in size. This
+can be used for a program that e.g. returns the first \texttt{x} elements of
+the Fibonacci numbers.
+
+
+\section{Compilers}
+When a programmer has written code, the code must be translated into a form such
+that it can be executed by a computer. This translation is the job of a
+\textit{compiler}~\cite{DragonBook}. The compiler is a program that reads
+programs in a \textit{source} language and translates it to a \textit{target}
+language. The source language is often some high level language, while the
+target language is a low-level machine language.
+For example, when compiling programs with Java as source language, the target
+language that the compiler translates the code to is most likely Java Virtual
+Machine (JVM)~\cite{JavaJVM}.
+
+There exists a certain category of compilers that translates code from a
+high level language to another high level language. This category of compilers
+is often referred to as \textit{transpilers} or
+\textit{source-to-source compilers}~\cite{kulkarnitranspiler}.
+The goal of transpilers is to generate code in the target language that behaves
+equivalently as the code in the source language. The compiler defined in this %Should this be here?
+thesis can be considered to be of this category. In this case, both the target
+and source languages are the same high level language, CakeML.
+
+A common practice of compilers is to create an intermediate representation of
+the input code in the form of constructors in the form of a syntax
+tree~\cite{DragonBook}. The intermediate representation needs to be
+easy to produce and is used for optimising the code, as well as allowing for
+easy generation of code in the target language.
+For this project, the intermediate representation of CakeML expressions is %Should this be here?
+written as abstract syntax trees (ASTs) in Haskell. The ASTs will be altered so
+that when the target CakeML code is generated, it should be able to be evaluated
+lazily, but with the use of the native CakeML compiler that evaluates strictly.
+
+\section{CakeML}
+\label{back:cakeml}
+This section will present CakeML, the language that is the main focus of this
+thesis.
+
+\section{Previous Work}
+This section will present and discuss previous work that is related to this
+project. Topics include programming language libraries that allow lazy/strict
+evaluation in languages that do not allow it by default, as well as a compiler
+for Haskell that tries to optimise the inherent laziness of the language.
+
+\subsection{Libraries}
+There are many languages that are strict that have additional libraries
+containing lazy versions of primitive functions and vice versa. This section
+will present some examples of languages with this type of functionality.
+
+\subsubsection{Haskell}
+Haskell is one of very few languages that are inherently lazy. All primitive
+operations are lazy by nature, but the language also has certain functions that
+enforce strict evaluation.
+
+An example of a function that enforces strictness is \texttt{seq}. \texttt{seq}
+takes two arguments: \texttt{a} and \texttt{b}, and returns \texttt{b}. The
+result of \texttt{seq} is dependent on both \texttt{a} and \texttt{b}. If
+\texttt{a} does not terminate, \texttt{seq} does not terminate. If \texttt{a}
+does terminate, the result of \texttt{seq} is equal to \texttt{b}. While both
+\texttt{a} and \texttt{b} are evaluated before returning the result,
+\texttt{seq} does not guarantee that \texttt{a} is evaluated before \texttt{b}.
+
+\begin{itemize}
+\item \$!
+\end{itemize}
+
+\subsubsection{.NET}
+
+\subsubsection{Python}

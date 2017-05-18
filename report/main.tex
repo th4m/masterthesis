@@ -1,0 +1,56 @@
+\documentclass[11pt,a4paper,twoside,openright]{report}
+\input{settings/packagescommands}
+\input{settings/settings}
+
+\begin{document}
+
+%REPLACE TITLE WITH PROPER
+
+\title{A Lazy to Strict Language Compiler}
+\author{Philip Tham}
+
+%ToC
+\maketitle
+\newpage
+\input{frontmatter/Abstract}
+\newpage
+\pagenumbering{roman}
+\setcounter{page}{1}
+\pagestyle{fancy}
+\setspecialhdr
+\tableofcontents
+
+%Main area
+\newpage
+\setdefaulthdr
+\pagenumbering{arabic}	
+\setcounter{page}{1}
+
+\input{chapters/Introduction}
+%\newpage
+\cleardoublepage
+\input{chapters/Goals_Limitations}
+%\newpage
+\cleardoublepage
+\input{chapters/Background}
+%\newpage
+\cleardoublepage
+\input{chapters/StrictSemantics}
+%\newpage
+\cleardoublepage
+\input{chapters/LazySemantics}
+%\newpage
+\cleardoublepage
+\input{chapters/Compiler}
+
+%newpage
+\cleardoublepage
+\bibliography{backmatter/ref}
+
+%Appendices
+\cleardoublepage
+\begin{appendices}
+  \input{appendices/AST}
+\end{appendices}
+
+\end{document}

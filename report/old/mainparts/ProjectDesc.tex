@@ -1,0 +1,49 @@
+\chapter{PRJCTDESC}
+\section{Project Description}
+
+This project will create a compiler that takes code from a lazy programming
+language and compiles it into a strict programming language. The resulting
+strict code should have the same user-observable evaluation as the given lazy
+code. The purpose of creating such a compiler is to explore the formal
+connection between lazy and strict evaluation. The compiler will be written in
+the programming language Haskell. The source language for the compiler will be
+CakeML with custom semantics for laziness and the target language to which
+the compiler will output will be CakeML with its standard strict semantics. This
+means that the semantics to express laziness will be defined as part of this
+project and translated to the original semantics of CakeML.
+
+Internally, the compiler will take a
+CakeML function with lazy semantics and translate it to one
+or more strict CakeML functions in order to get a semantically equivalent
+evaluation. When it comes to handling laziness, lazy functions will be
+translated to explicit thunk values\cite{Ingerman:1961:TWC:366062.366084} in
+CakeML. Thunks are expressions that have yet to be evaluated. Thunk values are
+not primitive in CakeML. Our compiler will create code that
+implements the thunk values in CakeML. The compiler will target the stateful
+features of CakeML to avoid repeated evaluation of the same thunk values.
+
+The operational semantics of lazy CakeML will be written as a part of the
+project. As the semantics of CakeML is specified in higher-order logic (HOL)
+\cite{HOLInter57:online},
+the operational semantics for CakeML will be translated from HOL to Haskell
+functions. The compiler will then connect the lazy and strict semantics.
+
+Tests will be written to show that the compiler generates semantically
+equivalent code. This project will employ manual unit testing to test
+expressions and steps of evaluation.
+A interesting and different approach to testing the compiler would be to
+use property-based checking, with the automated testing library QuickCheck for
+Haskell \cite{Introduc44:online}. In contrast to
+unit-testing, which takes user-given data for its tests, QuickCheck does
+property-based testing; it generates random test data according to the provided
+specification and uses them to test properties. If time allows for it, this 
+project will investigate
+the possibility of using QuickCheck to test a compiler's formal correctness.
+
+In summary, the project will consist of three major parts that will be developed
+in parallel:
+\begin{itemize}
+ \item Writing lazy semantics for the programming language CakeML
+ \item Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML
+ \item Testing the compiler by writing operational semantics in the form of functions and running unit tests, and possibly QuickCheck.
+\end{itemize}
