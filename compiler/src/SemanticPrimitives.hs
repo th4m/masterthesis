@@ -535,7 +535,7 @@ pmatchLazy envC (PLit l) (LitV l') env =
 pmatchLazy envC (PCon (Just n) ps) (ConV (Just (n', t')) vs) env =
   case lookup_alist_mod_env n envC of
     Just (l, t) ->
-      if same_tid t t' && length ps == 1 then
+      if same_tid t t' && length ps == (fromIntegral l) then
         if same_ctor (id_to_n n, t) (n', t') then
           pmatchListLazy envC ps vs env
         else
