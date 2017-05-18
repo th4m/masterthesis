@@ -190,3 +190,56 @@ ifEx2  = If false undefined (Literal (IntLit 0))
 recLet = Let (Just "xo") (App OpApp [inf, true]) (Literal (StrLit "OK"))
 
 inf = LetRec [("f","n", App OpApp [Var (Short "f"), true])] (Var (Short "f"))
+
+
+-- takes a list and returns the first element
+-- cakeHead = Fun "list" $ Mat (Var (Short "list")) $
+--   [(PCon (Just (Short "nil")) [], Literal (StrLit "error: empty list"))
+--   ,(PCon (Just (Short "::" )) [PVar "elem", PVar "rest"], Var (Short "elem"))]
+
+mkList :: [Int] -> Exp
+mkList []     = emptyList
+mkList (x:xs) = consList x xs
+
+emptyList     = Con (Just (Short "nil")) []
+consList x xs = Con (Just (Short "::" )) [Literal (IntLit x), mkList xs]
+
+cakeTake :: Exp
+cakeTake =
+  LetRec [("take", "n",
+           Fun "ls" $
+           If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+ {-then-}  emptyList
+ {-else-}  (Mat (Var (Short "ls"))
+            [(PCon (Just (Short "::" )) [PVar "elem", PVar "rest"]
+             ,Con (Just (Short "::")) [Var (Short "elem")
+                                      ,cakeTake2])
+            ,(PCon (Just (Short "nil")) [], emptyList)]
+           )
+         )] $
+  Var (Short "take")
+--  Fun "n" $
+
+cakeTake2 = App OpApp [App OpApp [Var (Short "take"), decr], Var (Short "rest")]
+decr = App (OPN Minus) [Var (Short "n"), Literal (IntLit 1)]
+
+applyCT :: Int -> Exp -> Exp
+applyCT n ls = App OpApp [App OpApp [cakeTake, Literal (IntLit n)], ls]
+
+infList :: Int -> Exp
+infList i = LetRec [("infList", "N/A"
+                  ,Con (Just (Short "::")) [Literal (IntLit i)
+                                           , App OpApp [(Var (Short "infList"))
+                                                       , zero]]
+                  )] $
+            Var (Short "infList")
+
+infList1 = App OpApp [infList 1, zero]
+
+zero = Literal (IntLit 0)
+
+stopAtZero = LetRec [("stopAtZero", "n",
+                      If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+                      (Literal (StrLit "OK"))
+                      (App OpApp [Var (Short "stopAtZero"), decr])
+                     )] (Var (Short "stopAtZero"))

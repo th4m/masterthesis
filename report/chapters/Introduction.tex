@@ -73,7 +73,7 @@ take n list =
     Nil
   else
     case list of
-      Cons (a, as) -> Cons (a, (takeHs n-1 as))
+      Cons (a, as) -> Cons (a, (take n-1 as))
       Nil          -> Nil
 \end{alltt}
 \end{figure}
