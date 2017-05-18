@@ -6,7 +6,7 @@ import AbsCakeML
 compile :: Exp -> Exp
 compile (Raise e) = makeThunk $ Raise $ forceCompile e
 compile (Handle e pes) = makeThunk $ Handle (forceCompile e) (compilePats pes)
-compile (Con cn es) = makeVal $ Con cn $ map forceCompile es
+compile (Con cn es) = makeVal $ Con cn $ map thunkCompile es
 compile (Var n) = makeThunk $ Var n
 compile (Fun x e) = makeVal $ Fun x (compile e) -- compile e?
 compile (Literal l) = makeVal $ Literal l
