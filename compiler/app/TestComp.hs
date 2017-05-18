@@ -185,3 +185,8 @@ letEx3 = Let (Just "let3") undefined (Literal (IntLit 0))
 -- Force needed after compile
 ifEx1  = If true (Literal (IntLit 0)) undefined
 ifEx2  = If false undefined (Literal (IntLit 0))
+
+
+recLet = Let (Just "xo") (App OpApp [inf, true]) (Literal (StrLit "OK"))
+
+inf = LetRec [("f","n", App OpApp [Var (Short "f"), true])] (Var (Short "f"))

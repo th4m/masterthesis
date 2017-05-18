@@ -33,11 +33,19 @@ compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) (compilePats pes)
 compile (Let xo e1 e2) = Let xo (thunkCompile e1) (thunkCompile e2)
 compile (LetRec funs e) =
-  LetRec (replace funs invalidNames) (reinstance invalidNames names (thunkCompile e))
-  where names = getNames funs
-        getNames [] = []
-        getNames ((f,_,_):funs') = (f:getNames funs')
-        invalidNames = map (++ " ") names
+  LetRec (recVals funs) (repl (compile e) (fst3 funs))
+  where
+    fst3 []     = []
+    fst3 ((f,_,_):fs) = (f:fst3 fs)
+    repl e []     = e
+    repl e (f:fs) = Let (Just f) (makeVal (Var (Short f))) (repl e fs)
+
+  -- LetRec (replace funs invalidNames) (reinstance invalidNames names (thunkCompile e))
+  -- where names = getNames funs
+  --       getNames [] = []
+  --       getNames ((f,_,_):funs') = (f:getNames funs')
+  --       invalidNames = map (++ " ") names
+
   -- makeVal $
   -- LetRec (funsCompile funs) (thunkCompile e)
   -- Let (Just "E") (thunkCompile e) $
@@ -47,18 +55,23 @@ compile (TAnnot e t) = TAnnot (thunkCompile e) t
 forceCompile = force . compile
 thunkCompile = makeThunk . compile
 
--- | Replace variable names in funs
-replace :: [(VarN, VarN, Exp)] -> [VarN] -> [(VarN, VarN, Exp)]
-replace [] _ = []
-replace ((f,x,e'):funs') (n:ns) =
-  ((n,x,compile (subst f n e')):replace funs' ns)
-replace fs ns = error $ "replace: xs - " ++ show (length fs) ++ ", ys - " ++ show (length ns)
+recVals :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
+recVals []           = []
+recVals ((f,x,e):xs) =
+  (f,x, Let (Just f) (makeVal (Var (Short f))) (compile e)):(recVals xs)
 
--- | Reinstance x as y
-reinstance :: [VarN] -> [VarN] -> Exp -> Exp
-reinstance [] [] e = e
-reinstance (x:xs) (y:ys) e = Let (Just y) (makeVal (Var (Short x))) (reinstance xs ys e)
-reinstance xs ys _ = error $ "reinstance: xs - " ++ show (length xs) ++ ", ys - " ++ show (length ys)
+-- -- | Replace variable names in funs
+-- replace :: [(VarN, VarN, Exp)] -> [VarN] -> [(VarN, VarN, Exp)]
+-- replace [] _ = []
+-- replace ((f,x,e'):funs') (n:ns) =
+--   ((n,x,compile (subst f n e')):replace funs' ns)
+-- replace fs ns = error $ "replace: xs - " ++ show (length fs) ++ ", ys - " ++ show (length ns)
+
+-- -- | Reinstance x as y
+-- reinstance :: [VarN] -> [VarN] -> Exp -> Exp
+-- reinstance [] [] e = e
+-- reinstance (x:xs) (y:ys) e = Let (Just y) (makeVal (Var (Short x))) (reinstance xs ys e)
+-- reinstance xs ys _ = error $ "reinstance: xs - " ++ show (length xs) ++ ", ys - " ++ show (length ys)
 
 mapFun :: (Exp -> Exp) -> [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
 mapFun _ [] = []
