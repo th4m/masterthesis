@@ -243,3 +243,16 @@ stopAtZero = LetRec [("stopAtZero", "n",
                       (Literal (StrLit "OK"))
                       (App OpApp [Var (Short "stopAtZero"), decr])
                      )] (Var (Short "stopAtZero"))
+
+-- repeats elem for n times
+cakeRepeat = LetRec [("repeat", "elem",
+                     Fun "n" $
+                     If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+                     emptyList
+                     (Con (Just (Short "::")) [Var (Short "elem"),
+                                               App OpApp [App OpApp [Var (Short "repeat"),
+                                                                     Var (Short "elem")],
+                                                           decr]])
+                     )] (Var (Short "repeat"))
+
+applyCR elem n = App OpApp [App OpApp [cakeRepeat, elem], Literal (IntLit n)]
