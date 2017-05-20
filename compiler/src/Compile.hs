@@ -7,7 +7,10 @@ compile :: Exp -> Exp
 compile (Raise e) = makeThunk $ Raise $ forceCompile e
 compile (Handle e pes) = makeThunk $ Handle (forceCompile e) (compilePats pes)
 compile (Con cn es) = makeVal $ Con cn $ map thunkCompile es
-compile (Var n) = makeThunk $ Var n
+compile (Var n) = assign $ solve --makeThunk $ Var n
+  where solve = makeVal $ force $ App OpDeref [force (Var n)]
+        assign = Let Nothing (App OpAssign [force (Var n), solve]) --in
+--        getVal = App OpDeref [force (Var n)]
 compile (Fun x e) = makeVal $ Fun x (compile e) -- compile e?
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case (op, es) of
@@ -31,7 +34,9 @@ compile (Log lop e1 e2) = -- Log lop (forceCompile e1) $ thunkCompile e2
   makeVal $ Log lop (Var (Short "E1")) (Var (Short "E2"))
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) (compilePats pes)
-compile (Let xo e1 e2) = Let xo (thunkCompile e1) (thunkCompile e2)
+compile (Let xo e1 e2) = mkRef $ thunkCompile e2
+  --Let xo (thunkCompile e1) (thunkCompile e2)
+  where mkRef = Let xo (makeVal ((App OpRef [thunkCompile e1]))) --in
 compile (LetRec funs e) =
   LetRec (recVals funs) (repl (compile e) (fst3 funs))
   where
