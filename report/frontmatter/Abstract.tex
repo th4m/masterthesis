@@ -1,16 +1,17 @@
 \thispagestyle{empty}
 
 \begin{abstract}
-  Evaluation strategies can vary significantly between programming languages.
-  Two commonly known strategies are strict and lazy evaluation.
+  The evaluation strategies of programming languages can be broadly categorised as strict or lazy.
   A common approach to strict evaluation is to implement a call-by-value semantics
   that always evaluates expressions when they are bound to variables, while lazy
   evaluation is often implemented as call-by-need semantics that evaluates
   expressions when they are needed for some computation. Lazy semantics makes
   use of thunks, a data structure that contains an expression whose evaluation
   has become suspended together with its environment. This thesis presents
-  (1) a translation of the strict semantics of CakeML, a strict programming
-  language, to Haskell, (2) a definition of lazy semantics for CakeML, and
-  (3) a compiler that that makes use of the lazy semantics to reconstruct
-  expressions in order to make the strict evaluation in CakeML become lazy.
+  (1) a Haskell definition of the existing semantics of CakeML, a strict programming
+  language, (2) a Haskell definition of lazy semantics for the pure part
+  of CakeML, and (3) a Haskell implementation of a compiler that compiles lazy
+  CakeML to strict CakeML with respect to (1) and (2). The compiler will make
+  use of stateful features in strict CakeML to optimise evaluation so that each
+  thunk is evaluated at most once, simulating a call-by-need semantics.
 \end{abstract}
