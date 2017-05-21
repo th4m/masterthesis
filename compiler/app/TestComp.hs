@@ -67,7 +67,7 @@ efc = ex . force . compile
 -------------------------------------
 
 compareEval :: Exp -> Bool
-compareEval e = strict == lazy
+compareEval e = snd strict == snd lazy
   where strict = ex e
         lazy   = efc e
 
