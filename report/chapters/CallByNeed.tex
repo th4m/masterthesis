@@ -1,0 +1,94 @@
+\chapter{Call-By-Need Semantics}
+With the completion of the compiler, expressions bound as variables are stored
+as thunks, delaying their evaluation until they are called. While this means
+the compiled code exhibits lazy behavior, the thunks are evaluated every
+time that the variable is called. The optimal behavior, called
+\textit{call-by-need}, is to evaluate the thunks at most once and reuse the
+resulting value. This chapter will describe how the compiler was optimised to
+use the stateful features of CakeML in order to implement call-by-need
+mechanics.
+
+\section{Implementation}
+With the implementation of the compiler, as described in
+Chapter~\ref{chapter:compiler}, expressions bound by variables have been stored
+in the environment as thunks and evaluated when called. In order to use
+call-by-need mechanics, the compiler was altered to make use of CakeML's
+inherent state in order to save thunks, as well as their evaluated value.
+
+The first and perhaps largest change was that instead of storing variable-bound
+expressions in the environment, they were stored in the state. The reference to
+the expressions were thus stored in the environment, so that the thunks could be
+accessed by using the dereference operator. The second change was made to what
+happens when a variable is called, making it call from the state by using the
+reference saved in the environment.
+
+In order to be able to utilise the state, there were three operations that were
+vital: \texttt{OpRef}, \texttt{OpDeref}, and \texttt{OpAssign}. These have all
+been defined under the \texttt{Op} datatype, which is used in combination with
+the \texttt{App} expression. When evaluated, \texttt{App OpRef [e]} creates a new
+entry in the state for the value that \texttt{e} is evaluated to. The reference
+is then returned as a location value \texttt{Loc n}. \texttt{App OpDeref [e]}
+takes an expression \texttt{e} that is to be evaluated to a reference (e.g. a
+variable that contains the reference), and returns the value that was stored in
+the state for the given reference. \texttt{App OpAssign [e1, e2]} takes a
+reference \texttt{e1} and an expression \texttt{e2}, and changes the value
+stored in the state in the location given by \texttt{e1} to the value that
+\texttt{e2} is evaluated to. The result of evaluating \texttt{App OpAssign}
+is a a constructor expression containing \texttt{Nothing}, which needs to be
+kept in mind when using \texttt{OpAssign}.
+
+The first step of optimising the compiler by using the above operations was to
+change the compilation of the \texttt{Let} expression, as it is what binds
+expressions to variables. The \texttt{OpRef} operation was used to store the
+thunk in the state. The resulting location value was thus stored in the
+environment under the variable that originally would be used to store the thunk.
+Thus, \texttt{compile} for the \texttt{Let} expression was changed from
+\begin{alltt}
+  compile (Let xo e1 e2) =
+    Let xo (thunkCompile e1) (thunkCompile e2)
+\end{alltt}
+to
+\begin{alltt}
+  compile (Let xo e1 e2) =
+    Let xo (makeVal (App OpRef [thunkCompile e1])) (thunkCompile e2)
+\end{alltt}
+With this change, thunks are now stored in the state instead of the environment.
+The reference returned from storing the thunk was wrapped in the \texttt{Val}
+constructor before being stored in the environment.
+What remained was to change what happens when a variable is called.
+
+Calling a variable from the environment is what happens when the \texttt{Var}
+expression is evaluated with the strict semantics. The previous implementation
+of \texttt{compile} for \texttt{Var} simple returned the variable wrapped in a
+thunk:
+\begin{alltt}
+  compile (Var n) = makeThunk \$ Var n
+\end{alltt}
+This was changed to take the reference stored in the environment for the
+variable and make a call to the state in order to retrieve the stored thunk.
+Retrieving the thunk from the state was done with the \texttt{OpDeref}
+operation in combination with the reference that the variable \texttt{n} is
+pointing at:
+\begin{alltt}
+  compile (Var n) = makeVal \$ force \$ App OpDeref [force (Var n)]
+\end{alltt}
+To make the compiler exhibit call-by-need semantics, it was necessary to
+change the stored thunk to a value after it was evaluated. This was done by
+using the \texttt{OpAssign} operator. The compiler was thus changed to assign
+the evaluated thunk to the variable that it was bound to whenever the variable
+was called:
+\begin{alltt}
+  compile (Var n) = assign \$ solve
+    where solve  = makeVal \$ force \$ App OpDeref [force (Var n)]
+          assign = Let Nothing (App OpAssign [force (Var n), solve])
+\end{alltt}
+\noindent This solution makes use of the \texttt{Let} expression with \texttt{Nothing} as
+variable, as the assignment does not return any particularly useful value. The
+\texttt{Let} expression is a partially applied expression, missing the last
+expression that should be evaluated after the assignment. This was filled in
+with a call to the state to get the desired value.
+
+
+%% Discussion: use state instead of overshadowing in the environment
+%% TODO: fix LetRec to save in the state
+%% TODO: fix Let to save a call to the reference instead? Not possible to do it efficiently/reliably? Discuss?
