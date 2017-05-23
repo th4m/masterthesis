@@ -25,6 +25,15 @@
 \usepackage{float}
 \usepackage[titletoc]{appendix}
 
+\usepackage{etoolbox}
+\AtBeginEnvironment{alltt}{\setlength{\topsep}{0pt}}
+
+\usepackage{xargs}
+\usepackage[pdftex,dvipsnames]{xcolor}
+
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\newcommandx{\notdone}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+
 \newcommand{\rd}{\ensuremath{\mathrm{d}}}
 \newcommand{\id}{\ensuremath{\,\rd}}
 \newcommand{\degC}{\ensuremath{\,\unit{^\circ C}}}

@@ -1,7 +1,6 @@
 \chapter{Introduction}
 \label{chapter:intro}
-Lazy programming is a style of programming that makes use of lazy evaluation.
-Evaluating a program lazily means that expressions that are bound by variables
+Lazy evaluation is a style of programming where expressions that are bound by variables
 are not evaluated until their results are needed in another part of the
 program~\cite{Lazyeval6:online}. This is often put in contrast with another
 evaluation style called strict evaluation, which always evaluates expressions
@@ -11,8 +10,8 @@ The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective semantics take. With strict semantics,
 expressions are evaluated when they are created, while with lazy semantics,
 expressions are evaluated when they are needed~\cite{ThunkHas27:online}.
-This means that in lazy semantics
-you can give a function an argument that cannot be terminated, and as long as
+This means that in lazy semantics you can give a function an argument
+whose evaluation cannot be terminated, and as long as
 that argument is never used, the function itself can still terminate normally.
 
 It has been argued that lazy programming (and functional programming in general)
@@ -21,7 +20,7 @@ modularity~\cite{Hu1989}~\cite{Hu2015}. Laziness allows the creation of certain
 types of programs that cannot be executed by using strict semantics.
 For example, the \textit{Fibonacci numbers} is an infinite sequence of numbers
 where each number is equal to the sum of the two previous numbers. [CITE?]
-Defining the Fibonacci numbers as an expression with strict semantics would
+Defining the list of all Fibonacci numbers as an expression with strict semantics would
 cause the execution to never terminate, as it is required for the function to be
 fully evaluated when assigning it to a variable. In a lazy context, however,
 the expression that defines the Fibonacci numbers would simply not be evaluted
@@ -37,7 +36,7 @@ to apply lazy evaluation, rather than strict evaluation, is how lazy evaluation
 delays the evaluation of expressions. The act of delaying evaluation creates
 an overhead in both memory and processing time.
 In cases where there are no superfluous expressions in the code, using lazy
-semantics can actually cause slower evaluation time when compared to
+semantics can cause slower evaluation time when compared to
 strict semantics. Despite this potential drawback, laziness can be a desirable
 feature in many use cases. 
 
@@ -80,6 +79,6 @@ take n list =
 
 \noindent The function can be written like this (with some syntax differences)
 for any language, but the semantics
-changes the strategy of evaluation. E.g. a strict language is likely to evaluate
+changes the strategy of evaluation. E.g. a strict language will evaluate
 all of \texttt{list} when pattern matching, while a lazy language is likely to
 evaluate only part of the list as much as needed. 
