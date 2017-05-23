@@ -176,8 +176,8 @@ semantics, using the same dummy environment and expressions.
 The result from the lazy evaluation was compared to what the strict evaluation
 would yield to make sure that they were equal. An additional test method was
 applied for lazy evaluation as well. This testing consisted of checking for
-termination in expressions that would normally not terminate with the strict
-semantics. These two test methods will be described in this section.
+termination in evaluation of expressions that would normally not terminate with
+the strict semantics. These two test methods will be described in this section.
 
 \subsection{Comparing Results}
 For comparing results between lazy and strict evaluation, a function, called
@@ -249,7 +249,7 @@ expression before returning a string literal "OK".
 \end{figure}
 
 \noindent Running \texttt{termExp} with the strict semantics naturally caused a
-non-termininating loop, while running \texttt{termExp} with the lazy semantics
+non-terminating loop, while running \texttt{termExp} with the lazy semantics
 resulted with the literal value "OK", as expected.
 
 With the test results showing positive results, the lazy semantics were deemed

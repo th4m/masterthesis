@@ -46,11 +46,12 @@ the expression together with an environment.
 
 \texttt{Con} expressions are constructors that allow separation between thunks
 and values. Thunks and values were separated with constructor names that
-uniquely identified them. For an expression \texttt{e}, thunks were defined as:
+uniquely identified them. For an expression \texttt{e}, thunks were defined and
+simplified with the Haskell function makeThunk:
 
 \begin{figure}[H]
 \begin{alltt}
-  Con (Just (Short "Thunk")) [Fun "" e]
+  makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
 \end{alltt}
 \end{figure}
 
@@ -62,11 +63,12 @@ A value in the case of the compiler is an expression that does not require
 a delayed evaluation. This mainly applies to expressions such as \texttt{Lit}
 and \texttt{Fun}. When wrapping a value around a \texttt{Con} expression, there
 is no need to keep the environment with it, as the evaluation is not to be
-delayed. Thus, for an expression \texttt{e}, values were defined as:
+delayed. Thus, for an expression \texttt{e}, values were defined and simplified
+with the Haskell function \texttt{makeVal}:
 
 \begin{figure}[H]
 \begin{alltt}
-  Con (Just (Short "Val")) [e]
+  makeVal e = Con (Just (Short "Val")) [e]
 \end{alltt}
 \end{figure}
 
@@ -150,7 +152,7 @@ which is a function composition of \texttt{force} and \texttt{compile}, and
 \noindent When evaluated, this expression takes the following steps:
 
 \begin{enumerate}
-\item \texttt{e1} is forced and evaluated to the value \texttt{v}
+\item \texttt{e1} is forced and evaluated to the value \texttt{v}.
 \item \texttt{v} is used as argument to \texttt{do\_if} together with \texttt{e2} and \texttt{e3}, both compiled and wrapped in thunks.
 \item The resulting expression \texttt{e} is evaluated.
   %% \begin{itemize}
@@ -211,13 +213,65 @@ are given their true names. All this was done in the definition of
 
 \begin{figure}[H]
 \begin{alltt}
-compile (LetRec funs e) =
-  LetRec (replace funs invN) (reinstance invN names (thunkCompile e))
-  where names = getNames funs
-        getNames [] = []
-        getNames ((f,_,_):funs') = (f:getNames funs')
-        invN = map (++ " ") names
+  compile (LetRec funs e) =
+    LetRec (replace funs invN) (reinstance invN names (thunkCompile e))
+    where names = getNames funs
+          getNames [] = []
+          getNames ((f,_,_):funs') = (f:getNames funs')
+          invN = map (++ " ") names
 \end{alltt}
 \end{figure}
 
 \section{Testing the compiler}
+The compiler was tested similarly to the lazy semantics. Firstly, a number of
+common expressions were compiled and evaluated, followed by a comparison with
+the evaluation of the non-compiled expressions. Secondly, termination was tested
+to see if expressions that would not terminate when evaluated with the strict
+semantics would terminate after compiling and evaluating them with the same
+strict semantics.
+
+The evaluation of non-compiled
+expressions used the same function \texttt{ex} that uses an empty state and
+dummy environment, as when testing the lazy semantics. Evaluation of
+compiled expressions was simplified with a function called \texttt{efc} that
+compiles, forces, and evaluates a given expression:
+
+\begin{figure}[H]
+\begin{alltt}
+  efc = ex . force . compile
+\end{alltt}
+\end{figure}
+
+\noindent The two evaluations were then compared with a function \texttt{compareEval}:
+
+\begin{figure}[H]
+\begin{alltt}
+  compareEval :: Exp -> Bool
+  compareEval e = strict == lazy
+    where strict = ex e
+          lazy   = efc e
+\end{alltt}
+\end{figure}
+
+\noindent As the results of \texttt{compareEval} gave a \texttt{True} value,
+the compiler was deemed to work as intended.
+
+Termination was tested for the compiler by running \texttt{efc} for expressions
+that do not terminate when simply evaluated with the strict semantics, but would
+terminate with the lazy semantics. For example, the expression used in the lazy
+semantics:
+
+\begin{figure}[H]
+\begin{alltt}
+  termExp =
+    Let (Just "var") (inf) (Literal (StrLit "OK"))
+    where inf =
+      LetRec [("fun", "par", App OpApp [Var (Short "fun")
+                                       ,Literal (IntLit 0)])]
+      (App OpApp [Var (Short "fun"), Literal (IntLit 0)])
+\end{alltt}
+\end{figure}
+
+\noindent When executed with \texttt{efc}, this expression gave the literal
+value "OK", which indicated that the compiler indeed produces expressions that
+exhibit laziness.
