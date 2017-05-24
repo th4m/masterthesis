@@ -256,3 +256,24 @@ cakeRepeat = LetRec [("repeat", "elem",
                      )] (Var (Short "repeat"))
 
 applyCR elem n = App OpApp [App OpApp [cakeRepeat, elem], Literal (IntLit n)]
+
+forceV :: (State, Result [V] V) -> (State, Result [V] V)
+forceV (st, RVal [ConV (Just ("Thunk",TypeId (Short "lazy"))) [Closure env n e]]) =
+  forceV $ evaluate st env [force e]
+forceV (st, RVal [ConV (Just ("Val",TypeId (Short "lazy"))) [v]]) =
+  (st, RVal [v])
+forceV res = res
+
+getVal (st, RVal [v]) = v
+
+forceList :: (State, Result [V] V) -> V
+forceList (st, RVal [ConV (Just ("::",TypeId (Short "list"))) [e,es]]) =
+  (ConV (Just ("::",TypeId (Short "list"))) [forceList (forceV (st,RVal [e])), forceList (forceV (st,RVal [es]))])
+forceList (_, RVal [nil]) = nil
+forceList _ = undefined
+
+forceCons :: (State, Result [V] V) -> V
+forceCons (st, RVal [ConV name thunks]) =
+  (ConV name $ map (forceCons . forceV) (map (\x -> (st, RVal [x])) thunks)) --TODO
+forceCons (st, RVal [v]) = v
+forceCons (st, RErr err) = error $ show err
