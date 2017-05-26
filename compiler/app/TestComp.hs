@@ -36,7 +36,9 @@ ex_env = insertVarIntoEnv env1 "apa" (ConV (Just ("Val",TypeId (Short "lazy"))) 
                           ([], [("::", (2, TypeId (Short "list"))),
                                ("nil", (0, TypeId (Short "list"))),
                                ("Thunk", (1, TypeId (Short "lazy"))),
-                               ("Val", (1, TypeId (Short "lazy")))])
+                               ("Val", (1, TypeId (Short "lazy"))),
+                               ("ThunkRef", (1, TypeId (Short "lazy")))
+                               ])
                          }
 
 -- | Insert an expression, and this function will run it with an
@@ -72,7 +74,7 @@ compareEval e = snd strict == snd lazy
         lazy   = efc e
 
 testAll =
-  and $
+  --and $
   map compareEval
   [ plusExp intLitA intLitB
   , minusExp intLitA intLitB
@@ -94,7 +96,8 @@ testAll =
   , orExp false true
   , orExp true false
   , orExp false false
-  , ifExp1
+  ,
+  ifExp1
   , ifExp2
   , Mat (Literal (IntLit 1))
     [(PLit (IntLit 1), (Literal (StrLit "first"))), (PLit (IntLit 2), (Literal (StrLit "second")))]
@@ -258,6 +261,10 @@ cakeRepeat = LetRec [("repeat", "elem",
 applyCR elem n = App OpApp [App OpApp [cakeRepeat, elem], Literal (IntLit n)]
 
 forceV :: (State, Result [V] V) -> (State, Result [V] V)
+-- forceV (st, RVal [ConV (Just ("ThunkRef",TypeId (Short "callbyneed"))) [loc]]) =
+--   evaluate st ex_env (undefined)
+-- forceV (st, RVal [ConV (Just ("TopVal",TypeId (Short "callbyneed"))) [v]]) =
+--   forceV (st, RVal [v])
 forceV (st, RVal [ConV (Just ("Thunk",TypeId (Short "lazy"))) [Closure env n e]]) =
   forceV $ evaluate st env [force e]
 forceV (st, RVal [ConV (Just ("Val",TypeId (Short "lazy"))) [v]]) =

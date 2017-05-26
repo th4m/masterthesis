@@ -4,14 +4,14 @@ import AbsCakeML
 
 
 compile :: Exp -> Exp
-compile (Raise e) = makeThunk $ Raise $ forceCompile e
-compile (Handle e pes) = makeThunk $ Handle (forceCompile e) (compilePats pes)
+compile (Raise e) = thunkToState $ Raise $ forceCompile e
+compile (Handle e pes) = Handle (forceCompile e) (compilePats pes)
 compile (Con cn es) = makeVal $ Con cn $ map thunkCompile es
 compile (Var n) =
   --assign $ solve
-  makeThunk $ Var n
-  where solve = makeVal $ force $ App OpDeref [force (Var n)]
-        assign = Let Nothing (App OpAssign [force (Var n), solve]) --in
+  Var n
+  -- where solve = makeVal $ force $ App OpDeref [force (Var n)]
+  --       assign = Let Nothing (App OpAssign [force (Var n), solve]) --in
 --        getVal = App OpDeref [force (Var n)]
 compile (Fun x e) = makeVal $ Fun x (compile e) -- compile e?
 compile (Literal l) = makeVal $ Literal l
@@ -21,7 +21,7 @@ compile (App op es) = case (op, es) of
 
     Let (Just "E1") (forceCompile e1) $
     Let (Just "E2") (thunkCompile e2) $
-    makeThunk $ App op [Var (Short "E1"), Var (Short "E2")]
+    thunkToState $ App op [Var (Short "E1"), Var (Short "E2")]
   (OPN op, [_, _]) ->
     compOnOpn op es
   _ ->
@@ -38,7 +38,7 @@ compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) (compilePats pes)
 compile (Let xo e1 e2) = --mkRef $ thunkCompile e2
   Let xo (thunkCompile e1) (thunkCompile e2)
-  where mkRef = Let xo (makeVal ((App OpRef [thunkCompile e1]))) --in
+--  where mkRef = Let xo (makeVal ((App OpRef [thunkCompile e1]))) --in
 compile (LetRec funs e) =
   LetRec (recVals funs) (repl (compile e) (fst3 funs))
   where
@@ -60,7 +60,7 @@ compile (LetRec funs e) =
 compile (TAnnot e t) = TAnnot (thunkCompile e) t
 
 forceCompile = force . compile
-thunkCompile = makeThunk . compile
+thunkCompile = thunkToState . compile
 
 recVals :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
 recVals []           = []
@@ -80,9 +80,9 @@ recVals ((f,x,e):xs) =
 -- reinstance (x:xs) (y:ys) e = Let (Just y) (makeVal (Var (Short x))) (reinstance xs ys e)
 -- reinstance xs ys _ = error $ "reinstance: xs - " ++ show (length xs) ++ ", ys - " ++ show (length ys)
 
-mapFun :: (Exp -> Exp) -> [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
-mapFun _ [] = []
-mapFun f ((v1,v2,e):funs) = ((v1,v2,f e):(mapFun f funs))
+-- mapFun :: (Exp -> Exp) -> [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
+-- mapFun _ [] = []
+-- mapFun f ((v1,v2,e):funs) = ((v1,v2,f e):(mapFun f funs))
 
 -- funsCompile :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
 -- funsCompile = mapFun thunkCompile
@@ -90,42 +90,42 @@ mapFun f ((v1,v2,e):funs) = ((v1,v2,f e):(mapFun f funs))
 -- funsCompile ((f,x,e):fs) = ((f,x,thunkCompile e): funsCompile fs)
 
 -- | Changes names of variables
-subst :: VarN -> VarN -> Exp -> Exp
-subst old new (Var n) =
-  case n of
-    Short name ->
-      if name == old then
-        Var (Short new)
-      else
-        Var (Short name)
-    Long m n -> undefined
-subst o n (Raise e) =
-  Raise (subst o n e)
-subst o n (Handle e pes) =
-  Handle (subst o n e) (map (mapPat (subst o n)) pes)
-subst o n (Con cn es) =
-  Con cn (map (subst o n) es)
-subst o n (Fun x e) =
-  Fun x (subst o n e)
-subst _ _ (Literal l) =
-  Literal l
-subst o n (App op es) =
-  App op (map (subst o n) es)
-subst o n (Log lop e1 e2) =
-  Log lop e1' e2'
-  where [e1',e2'] = map (subst o n) [e1,e2]
-subst o n (If e1 e2 e3) =
-  If e1' e2' e3'
-  where [e1',e2',e3'] = map (subst o n) [e1,e2,e3]
-subst o n (Mat e pes) =
-  Mat (subst o n e) (map (mapPat (subst o n)) pes)
-subst o n (Let xo e1 e2) =
-  Let xo e1' e2'
-  where [e1',e2'] = map (subst o n) [e1,e2]
-subst o n (LetRec funs e) =
-  LetRec (mapFun (subst o n) funs) (subst o n e)
-subst o n (TAnnot e t) =
-  TAnnot (subst o n e) t
+-- subst :: VarN -> VarN -> Exp -> Exp
+-- subst old new (Var n) =
+--   case n of
+--     Short name ->
+--       if name == old then
+--         Var (Short new)
+--       else
+--         Var (Short name)
+--     Long m n -> undefined
+-- subst o n (Raise e) =
+--   Raise (subst o n e)
+-- subst o n (Handle e pes) =
+--   Handle (subst o n e) (map (mapPat (subst o n)) pes)
+-- subst o n (Con cn es) =
+--   Con cn (map (subst o n) es)
+-- subst o n (Fun x e) =
+--   Fun x (subst o n e)
+-- subst _ _ (Literal l) =
+--   Literal l
+-- subst o n (App op es) =
+--   App op (map (subst o n) es)
+-- subst o n (Log lop e1 e2) =
+--   Log lop e1' e2'
+--   where [e1',e2'] = map (subst o n) [e1,e2]
+-- subst o n (If e1 e2 e3) =
+--   If e1' e2' e3'
+--   where [e1',e2',e3'] = map (subst o n) [e1,e2,e3]
+-- subst o n (Mat e pes) =
+--   Mat (subst o n e) (map (mapPat (subst o n)) pes)
+-- subst o n (Let xo e1 e2) =
+--   Let xo e1' e2'
+--   where [e1',e2'] = map (subst o n) [e1,e2]
+-- subst o n (LetRec funs e) =
+--   LetRec (mapFun (subst o n) funs) (subst o n e)
+-- subst o n (TAnnot e t) =
+--   TAnnot (subst o n e) t
 
 -- Might be used for pattern matching?
 mapPat :: (Exp -> Exp) -> (Pat, Exp) -> (Pat, Exp)
@@ -140,6 +140,10 @@ makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
 makeVal :: Exp -> Exp
 makeVal e = Con (Just (Short "Val")) [e]
 
+-- Adds an expression to the state as a thunk and returns the reference,
+-- wrapped in a constructor
+thunkToState e = Con (Just (Short "ThunkRef")) [App OpRef [makeThunk e]]
+
 force :: Exp -> Exp
 force e =
   App OpApp [LetRec [("force", "exp"
@@ -149,12 +153,19 @@ force e =
                                     , App OpApp [Var (Short "Thunk")
                                                 , Literal (IntLit 0)]])
                        ,(valPat [PVar "Val"]
-                        , Var (Short "Val"))]
+                        , Var (Short "Val"))
+                       ,(statePat [PVar "TRef"]
+                        , Let Nothing (App OpAssign [Var (Short "TRef"), makeVal solve]) solve
+                        )]
                      )] (Var (Short "force"))
             , e]
+  where solve = App OpApp [Var (Short "force"), deref]
+        deref = App OpDeref [Var (Short "TRef")]
 
 thunkPat ps = PCon (Just (Short "Thunk")) ps
 valPat   ps = PCon (Just (Short "Val"))   ps
+
+statePat  ps = PCon (Just (Short "ThunkRef")) ps
 
 thunkCon es = Con (Just (Short "Thunk")) es
 litCon   es = Con (Just (Short "Val"))   es
