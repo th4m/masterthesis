@@ -30,13 +30,18 @@ insertVarIntoEnv env varn v' =
 
 -- | Returns an environment with variables "apa" = IntLit 7
 --   and "bepa" = IntLit 5
-ex_env = insertVarIntoEnv env1 "apa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 7)])
-  where env1 = insertVarIntoEnv env2 "bepa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 5)])
+ex_env = env2
+  -- insertVarIntoEnv env1 "apa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 7)])
+  where --env1 = insertVarIntoEnv env2 "bepa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 5)])
         env2 = empty_env {c =
                           ([], [("::", (2, TypeId (Short "list"))),
                                ("nil", (0, TypeId (Short "list"))),
                                ("Thunk", (1, TypeId (Short "lazy"))),
-                               ("Val", (1, TypeId (Short "lazy")))])
+                               ("Val", (1, TypeId (Short "lazy"))),
+                               ("RefVal", (1, TypeId (Short "callbyneed"))),
+                               ("RefExp", (1, TypeId (Short "callbyneed")))
+                               ]
+                          )
                          }
 
 -- | Insert an expression, and this function will run it with an
@@ -72,7 +77,7 @@ compareEval e = snd strict == snd lazy
         lazy   = efc e
 
 testAll =
-  and $
+--  and $
   map compareEval
   [ plusExp intLitA intLitB
   , minusExp intLitA intLitB
