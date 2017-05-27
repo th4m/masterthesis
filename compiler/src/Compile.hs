@@ -12,17 +12,13 @@ compile (Fun x e) = makeVal $ Fun x (compile e)
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case (op, es) of
   (OpApp, [e1, e2])  ->
-    Let (Just "E1") (forceCompile e1) $
-    Let (Just "E2") (thunkCompile e2) $
-    makeThunk $ App op [Var (Short "E1"), Var (Short "E2")]
+    makeThunk $ App op [forceCompile e1, thunkCompile e2]
   (OPN op, [_, _]) ->
     compOnOpn op es
   _ ->
     makeVal $ App op $ map forceCompile es
 compile (Log lop e1 e2) =
-  Let (Just "E1") (forceCompile e1) $
-  Let (Just "E2") (forceCompile e2) $
-  makeVal $ Log lop (Var (Short "E1")) (Var (Short "E2"))
+  makeVal $ Log lop (forceCompile e1) (forceCompile e2)
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) (compilePats pes)
 compile (Let xo e1 e2) = Let xo (thunkCompile e1) (thunkCompile e2)
@@ -72,15 +68,15 @@ force e =
             , e]
 
 refMat :: Exp -> Exp
-refMat e = Mat e
-           [(refValPat [PVar "RefV"]
-            ,Var (Short "RefV"))
-           ,(refExpPat [PVar "RefE"]
-            ,Let Nothing (App OpAssign [Var (Short "TPtr"), makeRefVal sol])
-             (getVal (App OpDeref [Var (Short "TPtr")]))
-             -- sol
-            )
-           ]
+refMat e =
+  Mat (e)
+  [(refValPat [PVar "RefV"]
+   ,Var (Short "RefV"))
+  ,(refExpPat [PVar "RefE"]
+   ,Let Nothing (App OpAssign [Var (Short "TPtr"), makeRefVal sol])
+     (getVal (App OpDeref [Var (Short "TPtr")]))
+   )
+  ]
   where sol = App OpApp [Var (Short "force"),
                          App OpApp [Var (Short "RefE")
                                     , Literal (IntLit 0)]]
