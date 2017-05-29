@@ -1,4 +1,4 @@
-\chapter{Call-By-Need Semantics}
+\chapter{Call-by-need semantics}
 With the completion of the compiler, expressions bound as variables are stored
 as thunks, delaying their evaluation until they are called. While this means
 the compiled code exhibits lazy behavior, the thunks are evaluated every
@@ -9,22 +9,27 @@ use the stateful features of CakeML in order to implement call-by-need
 mechanics.
 
 \section{Implementation}
+\label{cbn:impl}
 With the implementation of the compiler, as described in
 Chapter~\ref{chapter:compiler}, expressions bound by variables have been stored
 in the environment as thunks and evaluated when called. In order to use
 call-by-need mechanics, the compiler was altered to make use of CakeML's
 inherent state in order to save thunks, as well as their evaluated value.
 
-The first and perhaps largest change was that instead of storing variable-bound
-expressions in the environment, they were stored in the state. The reference to
-the expressions were thus stored in the environment, so that the thunks could be
-accessed by using the dereference operator. The second change was made to what
-happens when a variable is called, making it call from the state by using the
-reference saved in the environment.
+Thunks were changed so that instead of containing delayed expressions, they
+contained references that point to the location of the delayed expressions in
+the state. Two new constructors were introduced under a new type to represent
+expressions and values stored in the state: \texttt{RefExp} and \texttt{RefVal}.
+Delayed expressions were wrapped in \texttt{Fun} expressions inside the
+\texttt{RefExp} constructor, similarly to how they were with the \texttt{Thunk}
+constructor before the optimisation. Fully evaluated values were wrapped in the
+\texttt{RefVal} constructor without any further modifications, just like with
+the \texttt{Val} constructor.
 
-In order to be able to utilise the state, there were three operations that were
+In order to be able to utilise the state, there are three operations that are
 vital: \texttt{OpRef}, \texttt{OpDeref}, and \texttt{OpAssign}. These have all
-been defined under the \texttt{Op} datatype, which is used in combination with
+been defined under the \texttt{Op} datatype of the CakeML grammar, which is used
+in combination with
 the \texttt{App} expression. When evaluated, \texttt{App OpRef [e]} creates a new
 entry in the state for the value that \texttt{e} is evaluated to. The reference
 is then returned as a location value \texttt{Loc n}. \texttt{App OpDeref [e]}
@@ -37,58 +42,129 @@ stored in the state in the location given by \texttt{e1} to the value that
 is a a constructor expression containing \texttt{Nothing}, which needs to be
 kept in mind when using \texttt{OpAssign}.
 
-The first step of optimising the compiler by using the above operations was to
-change the compilation of the \texttt{Let} expression, as it is what binds
-expressions to variables. The \texttt{OpRef} operation was used to store the
-thunk in the state. The resulting location value was thus stored in the
-environment under the variable that originally would be used to store the thunk.
-Thus, \texttt{compile} for the \texttt{Let} expression was changed from
+By using the operations \texttt{OpRef}, \texttt{OpDeref}, and \texttt{OpAssign},
+two operations in the compiler were changed. The first change of the compiler
+was made to how thunks were generated. This was done in the
+\texttt{makeThunk} function, which previously took an expression \texttt{e} and
+wrapped it in the \texttt{Thunk} constructor and \texttt{Fun} expression. With
+the optimisation, \texttt{makeThunk}
+takes \texttt{e} and creates a reference in the state for a \texttt{Fun}
+expression wrapped around a \texttt{RefExp} constructor, and finally wraps
+everything with a \texttt{Thunk} constructor:
+\begin{figure}[H]
 \begin{alltt}
-  compile (Let xo e1 e2) =
-    Let xo (thunkCompile e1) (thunkCompile e2)
+  makeThunk e =
+    Con (Just (Short "Thunk"))
+      [App OpRef
+        [Con (Just (Short "RefExp"))
+          [Fun "" e]
+        ]
+      ]
 \end{alltt}
-to
+\end{figure}
+When evaluated, this expression will add the delayed expression to the state and
+return a reference to its location. This means that each time a thunk is
+created, it will be stored in the state instead of simply being wrapped in a
+\texttt{Thunk} constructor and a closure. Similarly, values in the state are
+created with a function called \texttt{makeRefVal}:
+\begin{figure}[H]
 \begin{alltt}
-  compile (Let xo e1 e2) =
-    Let xo (makeVal (App OpRef [thunkCompile e1])) (thunkCompile e2)
+  makeRefVal e = Con (Just (Short "RefVal")) [e]
 \end{alltt}
-With this change, thunks are now stored in the state instead of the environment.
-The reference returned from storing the thunk was wrapped in the \texttt{Val}
-constructor before being stored in the environment.
-What remained was to change what happens when a variable is called.
+\end{figure}
 
-Calling a variable from the environment is what happens when the \texttt{Var}
-expression is evaluated with the strict semantics. The previous implementation
-of \texttt{compile} for \texttt{Var} simple returned the variable wrapped in a
-thunk:
+The second change that was made with the optimisation was how \texttt{force}
+behaved. As the \texttt{Thunk} constructor no longer contains a closure, but
+instead a reference, the \texttt{Thunk} case of the pattern matching in
+\texttt{force} uses the \texttt{OpDeref} operation to get what is stored in
+the state for the given reference. The reference can point at either a
+\texttt{RefExp} or a \texttt{RefVal} constructor, and must thus be pattern
+matched. When a \texttt{RefVal} is caught in the pattern matching, the contained
+value is simply returned as it is. For the \texttt{RefExp} case, the contained
+value is a delayed expression in a closure and must thus be forced.
+The \texttt{RefExp} that the reference was pointing to is then changed with an
+\texttt{OpAssign} operation to a \texttt{RefVal} of the value that the
+\texttt{force} yielded. After the assignment, the evaluated value is returned.
+
+\begin{figure}[H]
 \begin{alltt}
-  compile (Var n) = makeThunk \$ Var n
+  force :: Exp -> Exp
+  force e =
+    App OpApp [LetRec [("force", "exp"
+                       , Mat (Var (Short "exp"))
+                         [(PCon (Just (Short "Thunk")) [PVar "TPtr"]
+                          ,refMat (App OpDeref [Var (Short "TPtr")]))
+                         ,(PCon (Just (Short "Val")) [PVar "Val"]
+                          , Var (Short "Val"))]
+                       )] (Var (Short "force"))
+              , e]
+
+  refMat :: Exp -> Exp
+  refMat e =
+    Mat (e)
+    [(PCon (Just (Short "RefVal")) [PVar "RefV"]
+     ,Var (Short "RefV"))
+    ,(PCon (Just (Short "RefExp")) [PVar "RefE"]
+     ,Let Nothing (App OpAssign [Var (Short "TPtr"), makeRefVal sol])
+       (getVal (App OpDeref [Var (Short "TPtr")])))
+    ]
+    where sol = App OpApp [Var (Short "force"),
+                           App OpApp [Var (Short "RefE")
+                                     ,Literal (IntLit 0)]]
+          getVal e' = Mat e'
+                      [(refValPat [PVar "RVal"]
+                       ,Var (Short "RVal"))]
 \end{alltt}
-This was changed to take the reference stored in the environment for the
-variable and make a call to the state in order to retrieve the stored thunk.
-Retrieving the thunk from the state was done with the \texttt{OpDeref}
-operation in combination with the reference that the variable \texttt{n} is
-pointing at:
-\begin{alltt}
-  compile (Var n) = makeVal \$ force \$ App OpDeref [force (Var n)]
-\end{alltt}
-To make the compiler exhibit call-by-need semantics, it was necessary to
-change the stored thunk to a value after it was evaluated. This was done by
-using the \texttt{OpAssign} operator. The compiler was thus changed to assign
-the evaluated thunk to the variable that it was bound to whenever the variable
-was called:
-\begin{alltt}
-  compile (Var n) = assign \$ solve
-    where solve  = makeVal \$ force \$ App OpDeref [force (Var n)]
-          assign = Let Nothing (App OpAssign [force (Var n), solve])
-\end{alltt}
-\noindent This solution makes use of the \texttt{Let} expression with \texttt{Nothing} as
-variable, as the assignment does not return any particularly useful value. The
-\texttt{Let} expression is a partially applied expression, missing the last
-expression that should be evaluated after the assignment. This was filled in
-with a call to the state to get the desired value.
+\end{figure}
+With these re-definitions, the \texttt{compile} function does not need any
+changes and can be used as before the optimisation.
+
+\section{Testing call-by-need}
+The testing of the call-by-need mechanics mainly consisted of running the tests
+that were used in the creation of the \texttt{compile} function, by using
+\texttt{compareEval} described in Section~\ref{compiler:test}. However, with
+the optimisation, the state is used for creating thunks. This means that
+evaluating certain compiled expressions causes the state to grow to a larger
+size than when evaluating the same expressions without compiling them. Thus, the
+state was omitted in the comparison of this testing phase, testing only the
+result of the evaluations.
+
+Another factor that needed testing was how the thunks were changed in the state.
+As stated in Section~\ref{cbn:impl}, when thunks are created, they are created
+as delayed evaluations of expressions, represented as \texttt{RefExp}. When they
+are forced, they are changed to become values, represented as \texttt{RefVal}.
+In order to test that evaluated thunks indeed were changed to \texttt{RefVal}
+values, expressions that created and called thunks were evaluated with the
+\texttt{efc} function described in Section~\ref{compiler:test}. Similarly,
+thunks that were not forced were checked to see if they remained as
+\texttt{RefExp} values after evaluation. As evaluation yields both the result
+and the state, the thunk references could be investigated to see if they were
+\texttt{RefExp} or \texttt{RefVal} constructors.
+
+When the results of this testing phase were positive, the implementation of the
+call-by-need semantics was deemed to be finished. This would also mark the
+completion of the compiler as a whole, meaning that all the coding had now been
+finished.
+
+%% TODO: tested the compiler with large lists.
+%% Lazy lists showed better results for certain operations (take).
+%% Repeating a saved value in a list has almost no difference in execution time
+%%   compared to strict semantics.
+
+\section{Discussion}
+
+Manual testing of the compiler proved to be inadequate.
+  Certain bugs in the code could only be discovered by combining specific expressions.
+  Unit testing requires the programmer to write their own expressions to test,
+  demanding time and "imagination".
+  This could be amended by employing property-based testing. Haskell has QuickCheck.
+
+Other forms of the constructors for CBN was considered.
+  However, the current one was used in the end because it felt like the optimal structure.
+  Pattern matching is done smoothly in order to distinguish RefExp and RefVal
+  Adding only one constructor, and to the same type as Thunk and Val, would require an
+    additional case to force. This would technically allow thunks outside of the state.
 
 
-%% Discussion: use state instead of overshadowing in the environment
-%% TODO: fix LetRec to save in the state
-%% TODO: fix Let to save a call to the reference instead? Not possible to do it efficiently/reliably? Discuss?
+
+%%TODO: delayed expressions -> delayed evaluations?

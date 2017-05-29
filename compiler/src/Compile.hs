@@ -79,7 +79,7 @@ refMat e =
   ]
   where sol = App OpApp [Var (Short "force"),
                          App OpApp [Var (Short "RefE")
-                                    , Literal (IntLit 0)]]
+                                   ,Literal (IntLit 0)]]
         getVal e' = Mat e'
                     [(refValPat [PVar "RVal"]
                      ,Var (Short "RVal"))]

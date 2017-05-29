@@ -28,7 +28,7 @@ section~\ref{lazySem:impl}. In order to further explain how this was done,
 more information about how thunks and \texttt{force} were implemented needs to
 be detailed.
 
-\section{Thunks as defined in the compiler}
+\subsection{Thunks as defined in the compiler}
 \label{comp:thunk}
 In the lazy semantics, thunks were defined as values. As the compiler only makes
 use of expressions, values are not available as resources.
@@ -77,7 +77,7 @@ they need to be defined under a type identifier in the environment. Thus,
 when the compiler was tested, the constructors were defined under the type
 identifier \texttt{lazy}.
 
-\section{Defining \texttt{force} in the compiler}
+\subsection{Defining \texttt{force} in the compiler}
 With the definition of thunks and values finished, the task of defining
 \texttt{force} remained. In the lazy semantics, \texttt{force} pattern
 matched on values to recursively evaluate expressions inside of the thunks until
@@ -114,7 +114,7 @@ constructor is given as input, the content of the constuctor is extracted and
 forced. In the case of the \texttt{Val} constructor, the content is simply
 extracted and returned.
 
-\section{The \texttt{compile} function}
+\subsection{The \texttt{compile} function}
 With the important elements of thunks and \texttt{force} implemented, the next
 step was to utilise them in the \texttt{compile} function. 
 \texttt{compile} takes an expression and returns an expression. Thus the type of
@@ -223,6 +223,7 @@ are given their true names. All this was done in the definition of
 \end{figure}
 
 \section{Testing the compiler}
+\label{compiler:test}
 The compiler was tested similarly to the lazy semantics. Firstly, a number of
 common expressions were compiled and evaluated, followed by a comparison with
 the evaluation of the non-compiled expressions. Secondly, termination was tested
@@ -242,7 +243,8 @@ compiles, forces, and evaluates a given expression:
 \end{alltt}
 \end{figure}
 
-\noindent The two evaluations were then compared with a function \texttt{compareEval}:
+\noindent The two evaluations were then compared with a function called
+\texttt{compareEval}:
 
 \begin{figure}[H]
 \begin{alltt}
