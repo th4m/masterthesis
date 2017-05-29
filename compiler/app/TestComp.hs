@@ -262,6 +262,9 @@ cakeRepeat = LetRec [("repeat", "elem",
 
 applyCR elem n = App OpApp [App OpApp [cakeRepeat, elem], Literal (IntLit n)]
 
+
+-- Before call-by-need
+
 forceV :: (State, Result [V] V) -> (State, Result [V] V)
 forceV (st, RVal [ConV (Just ("Thunk",TypeId (Short "lazy"))) [Closure env n e]]) =
   forceV $ evaluate st env [force e]
@@ -271,14 +274,47 @@ forceV res = res
 
 getVal (st, RVal [v]) = v
 
-forceList :: (State, Result [V] V) -> V
-forceList (st, RVal [ConV (Just ("::",TypeId (Short "list"))) [e,es]]) =
-  (ConV (Just ("::",TypeId (Short "list"))) [forceList (forceV (st,RVal [e])), forceList (forceV (st,RVal [es]))])
-forceList (_, RVal [nil]) = nil
-forceList _ = undefined
-
 forceCons :: (State, Result [V] V) -> V
 forceCons (st, RVal [ConV name thunks]) =
   (ConV name $ map (forceCons . forceV) (map (\x -> (st, RVal [x])) thunks)) --TODO
 forceCons (st, RVal [v]) = v
 forceCons (st, RErr err) = error $ show err
+
+
+-- Call by need
+
+forceState :: (State, Result [V] V) -> (State, Result [V] V)
+forceState (st, RVal [ConV (Just ("Thunk",TypeId (Short "lazy"))) [Loc n]]) =
+  case store_lookup n store of
+    Just (RefV stV) -> case stV of
+      ConV (Just ("RefExp",TypeId (Short "callbyneed"))) [Closure env _ e] ->
+        evaluate st env [force e]
+      ConV (Just ("RefVal",TypeId (Short "callbyneed"))) [v] ->
+        (st, RVal [v])
+      res -> error $ show res
+    Nothing -> error $ show (Loc n) ++ ": Not found in state."
+    res -> error $ show res ++ " not handled here."
+  where store = refs st
+forceState (st, v) = (st, v)
+
+-- forceCons' :: (State, Result [V] V) -> (State, Result [V] V)
+-- forceCons' s@(st, (RVal [ConV name (t:ts)])) =
+--   case forceCons' (forceState s) of
+--     (st', RVal [v]) ->
+--       case forceCons' (forceState (st', RVal ts) of
+--         (st'', RVal vs) ->
+--           (st'', RVal [ConV name (v:vs)])
+--         res -> res
+--     res -> res
+-- forceCons' res = res
+
+forceList' :: (State, Result [V] V) -> (State, Result [V] V)
+forceList' s@(st, RVal [ConV (Just ("::",TypeId (Short "list"))) [v,vs]]) =
+  case forceState (st, RVal [v]) of
+    (st', RVal [v']) ->
+      case forceList' (forceState (st', RVal [vs])) of
+        (st'', RVal vs') -> (st'', RVal [ConV (Just ("::",TypeId (Short "list"))) (v':vs')])
+        res -> res
+    res -> res
+forceList' (st, RVal [nil]) = (st, RVal [nil])
+forceList' _ = undefined
