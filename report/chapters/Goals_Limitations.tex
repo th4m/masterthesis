@@ -9,7 +9,7 @@ resulting code should have the same user-observable evaluation as the given
 strict code. The purpose of creating such a compiler is to explore the formal
 connection between lazy and strict evaluation. The compiler will be written in
 the programming language Haskell. The source language for the compiler will be
-CakeML (which has strict semantics ) and the target language to which the
+CakeML (which has strict semantics) and the target language to which the
 compiler will output will be CakeML, but with support for lazy evaluation. This
 means that the semantics to express laziness will be defined as part of this
 project and used as a base to implement the compiler.
@@ -34,7 +34,7 @@ Tests will be written to show that the compiler generates semantically
 equivalent code. This project will employ manual unit testing to test
 expressions and steps of evaluation.
 
-In summary, the project will consist of three major parts that will be developed
+In summary, the project consists of three major parts that were developed
 in parallel:
 \begin{itemize}
  \item Writing lazy semantics for the programming language CakeML
@@ -46,23 +46,20 @@ in parallel:
 Due to the time constraints of this thesis, certain limitations will be enforced
 to keep the workload within a reasonable size. These limitations are:
 
-\begin{itemize}
-\item Expressions will be the highest level of the grammar that will be implemented
-\item No parser will be written to take actual CakeML code in string format
-\item Only the version of CakeML at the start of this thesis will be used as base for the implementation of the compiler
-\end{itemize}
-
+\paragraph{Only expressions were considered.}
 As expressions make up of the majority of the language, they will be the highest
 category of the grammar that will be implemented. This means that declarations
 will not be a part of this thesis.
 
-No actual parser that takes written CakeML code will be created for this thesis.
-Instead, an internal representation of CakeML expressions will be created in
-Haskell and be used to create the semantics and compiler. A parser that
+\paragraph{No parser was developed for the compiler.}
+No actual parser that takes written CakeML code was created for this thesis.
+Instead, an internal representation of CakeML expressions was created in
+Haskell and used to create the semantics and compiler. A parser that
 takes CakeML code in string format and converts it to the internal
-representation can be created at any time. It should not prove to be a
-challenging task to link said parser together with the compiler.
+representation can be created at any time in the future. It should not prove to
+be a challenging task to link said parser together with the compiler.
 
+\paragraph{A fixed version of CakeML was focused on.}
 At the time of writing, the programming language CakeML is still evolving at a
 high pace, meaning that the semantics of the language is prone to change at
 any time. In order to keep a steady workflow, any updates to the semantics after

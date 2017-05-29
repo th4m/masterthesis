@@ -6,7 +6,7 @@ The lazy semantics defined in Haskell was designed to delay evaluation by
 storing partially evaluated expressions in thunks. This chapter will describe
 the implementation of the lazy semantics.
 
-\section{Implementation}
+\section{Definition}
 \label{lazySem:impl}
 %% Modified two modules: semantic primitives and evaluate (mainly) 
 %% SemPrim was modified to remove state from certain functions
@@ -23,26 +23,28 @@ the implementation of the lazy semantics.
 %% Attempt 2 was successful. Forced certain subexpressions instead.
 
 The task of defining the lazy semantics for CakeML consisted of defining a new
-\texttt{evaluate} function (called \texttt{evaluateLazy from now} and
+\texttt{evaluate} function (called \texttt{evaluateLazy} from now) and
 appropriate functions in the semantic primitives.
 In order to implement laziness, it was also necessary to incorporate the idea of
-thunks, as described in section~\ref{back:lazySem}. As such, thunks were added
+thunks, as described in Section~\ref{back:lazySem}. As such, thunks were added
 as the \texttt{Thunk} constructor in the \texttt{V} datatype. This would
 effectively make it a value that could be returned as a result by
 \texttt{evaluateLazy}. The main purpose of using thunks was to suspend partially
 evaluated expressions within. To further evaluate said expressions, additional
 information, contained in the environment, is required.
-The \texttt{Thunk} constructor was thus defined as such:
+The \texttt{Thunk} constructor was thus added to the \texttt{V} type:
 
 \begin{figure}[H]
 \begin{alltt}
-  Thunk (Environment V) Exp
+  data V =
+    ...
+    | Thunk (Environment V) Exp
 \end{alltt}
 \end{figure}
 
-\texttt{evaluateLazy}, the lazy version of \texttt{evaluate}, was implemented
-with the goal of evaluating expressions as little as possible. While the type
-of \texttt{evaluateLazy} needed to stay similar to
+The function \texttt{evaluateLazy}, the lazy version of \texttt{evaluate}, was
+implemented with the goal of evaluating expressions as little as possible. While
+the type of \texttt{evaluateLazy} needed to stay similar to
 \texttt{evaluate}, minor changes were made; mainly, the state was omitted
 altogether in order to keep the evaluation pure. The type of
 \texttt{evaluateLazy} was thus declared as:
@@ -53,15 +55,16 @@ altogether in order to keep the evaluation pure. The type of
 \end{alltt}
 \end{figure}
 
-With the addition of the \texttt{Thunk} constructor, \texttt{evaluateLazy}
+\noindent With the addition of the \texttt{Thunk} constructor, \texttt{evaluateLazy}
 returns either a thunk or any other value.
 
 Another vital function that needed to be implemented was \texttt{force}.
-\texttt{force} is designed to take a value and pattern match for the
+This function is designed to take a value and pattern match for the
 \texttt{Thunk} constructor. When the \texttt{Thunk} case has been entered,
 the expression wrapped inside the thunk is extracted and lazily evaluated until
-a pure value is yielded. When any other value is caught in the pattern matching,
-the value is simply returned as a result. \texttt{force} is defined as such:
+an actual value is yielded. When any other value is caught in the pattern matching,
+the value is simply returned as a result. The function \texttt{force} is defined
+as such:
 
 \begin{figure}[H]
 \begin{alltt}
@@ -73,7 +76,8 @@ the value is simply returned as a result. \texttt{force} is defined as such:
 \end{alltt}
 \end{figure}
 
-The implementation of \texttt{evaluateLazy} was performed in two attempts, which
+Using the definition of thunks and \texttt{force}, the definition of
+\texttt{evaluateLazy} was written in two attempts, which
 will be described in the following sections.
 
 \subsection{Attempt 1}
@@ -159,7 +163,7 @@ result.
 This new idea of forcing sub-expressions was applied to all cases of the
 pattern matching in \texttt{evaluateLazy}.
 
-\section{Testing the Implementation}
+\section{Testing the Definition}
 %% Tested the implementation
 %% Used the list of expressions that was tested for the strict semantics
 %% Created a comparison function that evaluated each expression with both
@@ -172,8 +176,8 @@ semantics, using the same dummy environment and expressions.
 The result from the lazy evaluation was compared to what the strict evaluation
 would yield to make sure that they were equal. An additional test method was
 applied for lazy evaluation as well. This testing consisted of checking for
-termination in expressions that would normally not terminate with the strict
-semantics. These two test methods will be described in this section.
+termination in evaluation of expressions that would normally not terminate with
+the strict semantics. These two test methods will be described in this section.
 
 \subsection{Comparing Results}
 For comparing results between lazy and strict evaluation, a function, called
@@ -245,7 +249,7 @@ expression before returning a string literal "OK".
 \end{figure}
 
 \noindent Running \texttt{termExp} with the strict semantics naturally caused a
-non-termininating loop, while running \texttt{termExp} with the lazy semantics
+non-terminating loop, while running \texttt{termExp} with the lazy semantics
 resulted with the literal value "OK", as expected.
 
 With the test results showing positive results, the lazy semantics were deemed

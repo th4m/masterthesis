@@ -1,23 +1,23 @@
 \chapter{Strict Semantics}
 \label{chapter:strict}
-As stated in section~\ref{intro:project}, the first major step of this project
+As stated in Section~\ref{intro:project}, the first major step of this project
 was to write lazy semantics for CakeML in Haskell. However, before this could be
 done, the existing strict semantics would have to be defined. The definition
 would include the basic abstract syntax tree and semantic primitives of the
 language.
 
-\section{Implementation}
+\section{Definition}
 As CakeML is an already defined language, its underlying semantics already
 exists. The compiler for this project is to be written in Haskell, meaning that
 the semantics must be defined in Haskell in order for it to be usable. This is
 what this section will describe: defining the strict semantics of CakeML in
 Haskell.
 
-The semantics of CakeML is defined in Lem, as described in
-section~\ref{back:cakeml}. At the beginning of this thesis, a link to CakeML's
+The semantics of CakeML is defined in Lem~\cite{Lem33:online}, as described in
+Section~\ref{back:cakeml}. At the beginning of this thesis, a link to CakeML's
 GitHub repository was provided, in which the semantics was contained in the form
 of \textit{.lem} files. The goal of this part of the thesis was thus to manually
-translate the semantics from Lem to Haskell. 
+translate the semantics from Lem to Haskell.
 
 In order to translate the semantics of CakeML, three items needed to be
 investigated and manually transcribed from Lem to Haskell:
@@ -49,13 +49,33 @@ are represented in Lem as such:
     | Var of id varN
     | Fun of varN * exp
     | App of op * list exp
+    ...
 \end{alltt}
 \end{figure}
 
 \noindent In order from top to bottom, these expressions represent literals,
 variables, functions, and applications. The constructors are complemented with
-data from other datatypes, e.g. \texttt{lit} and \texttt{id}, that are defined
-as a part of the language.
+data from other datatypes, e.g. \texttt{lit} and \texttt{op}, that are also
+defined as a part of the language:
+\begin{figure}[H]
+\begin{alltt}
+  type lit =
+    | IntLit of integer
+    | Char of char
+    | StrLit of string
+    ...
+
+  type op =
+    | Opn of opn
+    | Opb of opb
+    ...
+
+  type opn = Plus | Minus | Times | Divide | Modulo
+
+  type opb = Lt | Gt | Leq | Geq
+\end{alltt}
+\end{figure}
+
 The above expressions were translated to Haskell as such:
 
 \begin{figure}[H]
@@ -65,12 +85,31 @@ The above expressions were translated to Haskell as such:
     | Var (Id VarN)
     | Fun VarN Exp
     | App Op [Exp]
+    ...
 \end{alltt}
 \end{figure}
 
-\noindent Similarly, complementing datatypes, such as \texttt{Lit} and
+\noindent Similarly, complementing datatypes, such as \texttt{lit} and
 \texttt{id}, as well as other categories in the grammar, were also translated
-as needed.
+as needed:
+\begin{figure}[H]
+\begin{alltt}
+  data Lit
+    = IntLit Int
+    | Char Char
+    | StrLit String
+    ...
+
+  data Op
+    = OPN Opn
+    | OPB Opb
+    ...
+
+  data Opn = Plus | Minus | Times | Divide | Modulo
+
+  data Opb = Lt | Gt | LEq | GEq
+\end{alltt}
+\end{figure}
 
 These expressions are the basic building blocks that a programmer uses to create
 their program. For example, a simple integer such as 5 is represented as
@@ -79,7 +118,7 @@ their program. For example, a simple integer such as 5 is represented as
 \end{alltt}
 when using this abstract syntax. Building more
 complex expressions is as simple as combining multiple expressions. For example
-the arithmetic expression $1 + (7 - 8)$ can be represented as
+the arithmetic expression \(1 + (7 - 8)\) can be represented as
 
 \begin{figure}[H]
 \begin{alltt}
@@ -102,12 +141,14 @@ Values are represented by the datatype \texttt{V} and are what expressions
 ususally are evaluated to. Some of the values of CakeML are represented in
 Lem as such:
 
+\begin{figure}[H]
 \begin{alltt}
   type v =
     | Litv of lit
     | Closure of environment v * varN * exp
-    | Vectorv of list v
+    ...
 \end{alltt}
+\end{figure}
 
 \noindent In order, these values represent literals, closures, and vectors.
 Just as with the expressions described above, other datatypes that represent
@@ -115,14 +156,14 @@ other parts of the grammar are needed. However, these mostly already exist from
 the definition of the abstract syntax and are therefore reused.
 
 The translation of these values to Haskell was performed analogously to the
-abstract syntax described in~\ref{strict:abs}:
+abstract syntax described in Section~\ref{strict:abs}:
 
 \begin{figure}[H]
 \begin{alltt}
   data V
     = LitV Lit
     | Closure (Environment V) VarN Exp
-    | VectorV [V]
+    ...
 \end{alltt}
 \end{figure}
 
@@ -158,7 +199,7 @@ they are pattern matched to be evaluated with unique strategies:
 \begin{figure}[H]
 \begin{alltt}
   let rec
-  evaluate st env []           = ...
+  evaluate st env []           = (st, Rval [])
   and
   evaluate st env (e1::e2::es) = ...
   and
@@ -232,7 +273,7 @@ follows:
 \end{alltt}
 \end{figure}
 
-\section{Testing the Implementation}
+\section{Testing the Definition}
 %% Tested the implementation
 %% Created a Haskell module to run tests
 %% Imported all three above mentioned modules

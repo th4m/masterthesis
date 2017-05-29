@@ -263,6 +263,17 @@ do_app s op vs =
       case do_eq v1 v2 of
         Eq_Type_Error -> Nothing
         Eq_Val b      -> Just (s, (RVal (boolv b)))
+    (OpAssign, [Loc lnum, v]) ->
+      case store_assign lnum (RefV v) s of
+        Just s' -> Just (s', RVal (ConV Nothing []))
+        Nothing -> Nothing
+    (OpRef, [v]) ->
+      let (s',n) = store_alloc (RefV v) s in
+        Just (s', RVal (Loc n))
+    (OpDeref, [Loc n]) ->
+      case store_lookup n s of
+        Just (RefV v) -> Just (s, RVal v)
+        _             -> Nothing
     (Ord, [LitV (Char c)]) ->
       Just (s, RVal $ LitV $ IntLit $ C.ord c)
     (Chr, [LitV (IntLit i)]) ->
@@ -535,7 +546,7 @@ pmatchLazy envC (PLit l) (LitV l') env =
 pmatchLazy envC (PCon (Just n) ps) (ConV (Just (n', t')) vs) env =
   case lookup_alist_mod_env n envC of
     Just (l, t) ->
-      if same_tid t t' && length ps == 1 then
+      if same_tid t t' && length ps == (fromIntegral l) then
         if same_ctor (id_to_n n, t) (n', t') then
           pmatchListLazy envC ps vs env
         else

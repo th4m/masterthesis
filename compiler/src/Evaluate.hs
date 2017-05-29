@@ -57,7 +57,7 @@ evaluate st env  [App op es] =
           Nothing ->
             (st', RErr (RAbort RType_Error))
       else
-        case do_app (refs st) op (reverse vs) of
+        case do_app (refs st') op (reverse vs) of
           Just (refs', r) -> (st'{refs = refs'}, list_result r)
           Nothing         -> (st', RErr (RAbort RType_Error))
     res -> res

@@ -30,13 +30,18 @@ insertVarIntoEnv env varn v' =
 
 -- | Returns an environment with variables "apa" = IntLit 7
 --   and "bepa" = IntLit 5
-ex_env = insertVarIntoEnv env1 "apa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 7)])
-  where env1 = insertVarIntoEnv env2 "bepa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 5)])
+ex_env = env2
+  -- insertVarIntoEnv env1 "apa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 7)])
+  where --env1 = insertVarIntoEnv env2 "bepa" (ConV (Just ("Val",TypeId (Short "lazy"))) [LitV (IntLit 5)])
         env2 = empty_env {c =
                           ([], [("::", (2, TypeId (Short "list"))),
                                ("nil", (0, TypeId (Short "list"))),
                                ("Thunk", (1, TypeId (Short "lazy"))),
-                               ("Val", (1, TypeId (Short "lazy")))])
+                               ("Val", (1, TypeId (Short "lazy"))),
+                               ("RefVal", (1, TypeId (Short "callbyneed"))),
+                               ("RefExp", (1, TypeId (Short "callbyneed")))
+                               ]
+                          )
                          }
 
 -- | Insert an expression, and this function will run it with an
@@ -67,12 +72,12 @@ efc = ex . force . compile
 -------------------------------------
 
 compareEval :: Exp -> Bool
-compareEval e = strict == lazy
+compareEval e = snd strict == snd lazy
   where strict = ex e
         lazy   = efc e
 
 testAll =
-  and $
+--  and $
   map compareEval
   [ plusExp intLitA intLitB
   , minusExp intLitA intLitB
@@ -190,3 +195,126 @@ ifEx2  = If false undefined (Literal (IntLit 0))
 recLet = Let (Just "xo") (App OpApp [inf, true]) (Literal (StrLit "OK"))
 
 inf = LetRec [("f","n", App OpApp [Var (Short "f"), true])] (Var (Short "f"))
+
+
+-- takes a list and returns the first element
+-- cakeHead = Fun "list" $ Mat (Var (Short "list")) $
+--   [(PCon (Just (Short "nil")) [], Literal (StrLit "error: empty list"))
+--   ,(PCon (Just (Short "::" )) [PVar "elem", PVar "rest"], Var (Short "elem"))]
+
+mkList :: [Int] -> Exp
+mkList []     = emptyList
+mkList (x:xs) = consList x xs
+
+emptyList     = Con (Just (Short "nil")) []
+consList x xs = Con (Just (Short "::" )) [Literal (IntLit x), mkList xs]
+
+cakeTake :: Exp
+cakeTake =
+  LetRec [("take", "n",
+           Fun "ls" $
+           If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+ {-then-}  emptyList
+ {-else-}  (Mat (Var (Short "ls"))
+            [(PCon (Just (Short "::" )) [PVar "elem", PVar "rest"]
+             ,Con (Just (Short "::")) [Var (Short "elem")
+                                      ,cakeTake2])
+            ,(PCon (Just (Short "nil")) [], emptyList)]
+           )
+         )] $
+  Var (Short "take")
+--  Fun "n" $
+
+cakeTake2 = App OpApp [App OpApp [Var (Short "take"), decr], Var (Short "rest")]
+decr = App (OPN Minus) [Var (Short "n"), Literal (IntLit 1)]
+
+applyCT :: Int -> Exp -> Exp
+applyCT n ls = App OpApp [App OpApp [cakeTake, Literal (IntLit n)], ls]
+
+infList :: Int -> Exp
+infList i = LetRec [("infList", "N/A"
+                  ,Con (Just (Short "::")) [Literal (IntLit i)
+                                           , App OpApp [(Var (Short "infList"))
+                                                       , zero]]
+                  )] $
+            Var (Short "infList")
+
+infList1 = App OpApp [infList 1, zero]
+
+zero = Literal (IntLit 0)
+
+stopAtZero = LetRec [("stopAtZero", "n",
+                      If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+                      (Literal (StrLit "OK"))
+                      (App OpApp [Var (Short "stopAtZero"), decr])
+                     )] (Var (Short "stopAtZero"))
+
+-- repeats elem for n times
+cakeRepeat = LetRec [("repeat", "elem",
+                     Fun "n" $
+                     If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+                     emptyList
+                     (Con (Just (Short "::")) [Var (Short "elem"),
+                                               App OpApp [App OpApp [Var (Short "repeat"),
+                                                                     Var (Short "elem")],
+                                                           decr]])
+                     )] (Var (Short "repeat"))
+
+applyCR elem n = App OpApp [App OpApp [cakeRepeat, elem], Literal (IntLit n)]
+
+
+-- Before call-by-need
+
+forceV :: (State, Result [V] V) -> (State, Result [V] V)
+forceV (st, RVal [ConV (Just ("Thunk",TypeId (Short "lazy"))) [Closure env n e]]) =
+  forceV $ evaluate st env [force e]
+forceV (st, RVal [ConV (Just ("Val",TypeId (Short "lazy"))) [v]]) =
+  (st, RVal [v])
+forceV res = res
+
+getVal (st, RVal [v]) = v
+
+forceCons :: (State, Result [V] V) -> V
+forceCons (st, RVal [ConV name thunks]) =
+  (ConV name $ map (forceCons . forceV) (map (\x -> (st, RVal [x])) thunks)) --TODO
+forceCons (st, RVal [v]) = v
+forceCons (st, RErr err) = error $ show err
+
+
+-- Call by need
+
+forceState :: (State, Result [V] V) -> (State, Result [V] V)
+forceState (st, RVal [ConV (Just ("Thunk",TypeId (Short "lazy"))) [Loc n]]) =
+  case store_lookup n store of
+    Just (RefV stV) -> case stV of
+      ConV (Just ("RefExp",TypeId (Short "callbyneed"))) [Closure env _ e] ->
+        evaluate st env [force e]
+      ConV (Just ("RefVal",TypeId (Short "callbyneed"))) [v] ->
+        (st, RVal [v])
+      res -> error $ show res
+    Nothing -> error $ show (Loc n) ++ ": Not found in state."
+    res -> error $ show res ++ " not handled here."
+  where store = refs st
+forceState (st, v) = (st, v)
+
+-- forceCons' :: (State, Result [V] V) -> (State, Result [V] V)
+-- forceCons' s@(st, (RVal [ConV name (t:ts)])) =
+--   case forceCons' (forceState s) of
+--     (st', RVal [v]) ->
+--       case forceCons' (forceState (st', RVal ts) of
+--         (st'', RVal vs) ->
+--           (st'', RVal [ConV name (v:vs)])
+--         res -> res
+--     res -> res
+-- forceCons' res = res
+
+forceList' :: (State, Result [V] V) -> (State, Result [V] V)
+forceList' s@(st, RVal [ConV (Just ("::",TypeId (Short "list"))) [v,vs]]) =
+  case forceState (st, RVal [v]) of
+    (st', RVal [v']) ->
+      case forceList' (forceState (st', RVal [vs])) of
+        (st'', RVal vs') -> (st'', RVal [ConV (Just ("::",TypeId (Short "list"))) (v':vs')])
+        res -> res
+    res -> res
+forceList' (st, RVal [nil]) = (st, RVal [nil])
+forceList' _ = undefined

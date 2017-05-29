@@ -4,9 +4,11 @@ semantics. This chapter will present a more in-depth description of semantics
 and compilers, as well as present some previous similar work on the subject.
 
 \section{Semantics}
-Every programming language has its own \textit{semantics}. The semantics of a
-programming defines the meaning of programs~\cite{Fernand:PLangOpSem}. In other
-words, the semantics of a language describes how programs are executed.
+Every programming language has its own \textit{semantics}. Semantics are often
+informally explained in English prose, but some languages have formal semantics.
+The semantics of a programming language defines
+the meaning of programs~\cite{Fernand:PLangOpSem}.
+In other words, the semantics of a language describes how programs are executed.
 Different languages tend to use the same constructs, e.g. \texttt{if/else}, but
 evaluate these constructs differently. This is where the semantics defines the
 language.
@@ -24,8 +26,8 @@ the operational semantics will be defined in the form of Haskell functions.
 
 \subsection{Strict Semantics}
 Strict programming indicates that expressions are always fully evaluated when
-they appear in the chain of evaluation. E.g. when an arithmetic expression is
-bound to a variable, the expression is fully evaluated to become a numerical
+they appear in the chain of evaluation. For example, when an arithmetic expression
+is bound to a variable, the expression is fully evaluated to become a numerical
 value before being assigned to the variable. The value is then accessible
 by simply calling the variable.
 
@@ -37,9 +39,10 @@ variables. In order to delay the evalution of an expression, lazy semantics
 makes use of a data structure called
 \textit{thunk}~\cite{Ennals:2003:OEA:944746.944731}. A thunk contains a
 suspended expression together with information that is required to finish the
-evaluation of said expression. Expressions that are to be
-evaluated are suspended in thunks and passed on correspondingly. When needed,
-the thunks are \textit{forced} in order to yield a usable value.% Using this
+evaluation of the expression. Expressions that are to be
+evaluated are suspended in so called thunk values and passed on correspondingly.
+When needed, these thunks are \textit{forced} in order to yield an actual usable value.
+% Using this
 %mechanic requires more memory usage than when evaluating with strict semantics.
 
 \subsection{Pros and Cons of Both Semantics}
@@ -151,9 +154,9 @@ does terminate, the result of \texttt{seq} is equal to \texttt{b}. While both
 \texttt{seq} does not guarantee that \texttt{a} is evaluated before \texttt{b}.
 
 \begin{itemize}
-\item \$!
+\item \$!\notdone{TODO}
 \end{itemize}
 
-\subsubsection{.NET}
+\subsubsection{.NET}\notdone{TODO}
 
-\subsubsection{Python}
+\subsubsection{Python}\notdone{TODO}

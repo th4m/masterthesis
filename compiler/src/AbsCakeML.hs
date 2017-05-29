@@ -100,6 +100,10 @@ data Op
   | Equality
   -- Function application
   | OpApp
+  -- Reference operations
+  | OpAssign
+  | OpRef
+  | OpDeref
   -- Word/Integer conversions
   | WordFromInt Word_Size
   | WordToInt Word_Size
