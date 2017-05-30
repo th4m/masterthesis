@@ -2,7 +2,7 @@
 \label{chapter:compiler}
 The third major step of this project was to implement the compiler that takes
 regular strict CakeML expressions and produces CakeML expressions that allows
-lazy evaluation. The compiler has been defined in Haskell by using the ideas
+lazy evaluation. The compiler has been implemented in Haskell by using the ideas
 behind the definition of the lazy semantics. This chapter will describe the
 implementation of the compiler that compiles CakeML expressions from the lazy
 semantics into the strict semantics in such a way that the lazy behavior
@@ -243,8 +243,8 @@ compiles, forces, and evaluates a given expression:
 \end{alltt}
 \end{figure}
 
-\noindent The two evaluations were then compared with a function called
-\texttt{compareEval}:
+\noindent The two evaluations \texttt{ex} and \texttt{efc} were then compared
+with a function called \texttt{compareEval}:
 
 \begin{figure}[H]
 \begin{alltt}
@@ -276,4 +276,17 @@ semantics:
 
 \noindent When executed with \texttt{efc}, this expression gave the literal
 value "OK", which indicated that the compiler indeed produces expressions that
-exhibit laziness.
+exhibit lazy traits.
+
+\section{Discussion}
+While the compiler at this stage successfully delays expressions in thunks
+until they are called, it is still not quite producing truly lazy expressions.
+True laziness is often associated with call-by-need semantics, where thunks
+retain the values that their expressions were evaluated to. The semantics that
+the compiler is exhibiting at this stage is called \texttt{call-by-name}, where
+evaluations are simply delayed. If the thunk is used more than once, it will
+be evaluated each time it is called~\cite{DragonBook}~\cite{pltbook}.
+Call-by-need semantics can be seen as more beneficial than call-by-name, as
+repeated use of e.g. variables would require repeated use of thunks.
+
+

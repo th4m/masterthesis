@@ -188,8 +188,9 @@ consist of a list of values or an error. Also contributing to the evaluation
 of expressions are a state and an environment, which are given as input to
 \texttt{evaluate}. The type of \texttt{evaluate} (in Lem notation) is thus:
 
+\todo{Is it okay to have no spaces between state*result?}
 \begin{alltt}
-evaluate:state -> environment v -> list exp -> state * result (list v) v
+  evaluate:state -> environment v -> list exp -> state*result (list v) v
 \end{alltt}
 
 \noindent Expressions are taken either as a sequence in \texttt{evaluate},
@@ -249,8 +250,15 @@ semantic function \texttt{do\_if} to decide whether \texttt{e2} or
 \end{alltt}
 \end{figure}
 
-The translation to Haskell maintained the same structure of \texttt{evaluate}
-with similar usage of lists and pattern matching.
+The translation to Haskell maintained the same structure of \texttt{evaluate}.
+The type declaration for \texttt{evaluate} was transcribed to Haskell as:
+\begin{figure}[H]
+\begin{alltt}
+  evaluate :: State -> Environment V -> [Exp] -> (State, Result [V] V)
+\end{alltt}
+\end{figure}
+
+\noindent Lists and pattern matching were used in similar ways in the Haskell definition:
 
 \begin{figure}[H]
 \begin{alltt}

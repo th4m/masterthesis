@@ -1,0 +1,85 @@
+\chapter{Conclusion}
+This thesis has presented a Haskell definition of CakeML's strict semantics,
+a Haskell definition of lazy semantics for CakeML's pure parts, and a Haskell
+implementation of a compiler that compiles lazy CakeML to strict CakeML.
+
+The first step of this project, translating CakeML's semantics from Lem to
+Haskell, was performed successfully. Three items were transcribed to Haskell:
+
+\begin{itemize}
+\item The abstract syntax of CakeML.
+\item The semantic primitives of CakeML.
+\item The \texttt{evaluate} function.
+\end{itemize}
+The abstract syntax represents the grammar of the language, including literals,
+expressions, and operations. The highest level of the grammar that was
+translated was expressions, as it is the most important part of the language
+that allows operations and literals to be represented.
+The semantic primitives of a language are the operations that are needed
+to go produce a value. Some of these operations include arithmetics and
+pattern matching. Also a part of the semantic primitives are the representation
+of values, environment, and state.
+In order to go from an expression to a value, the \texttt{evaluate} function
+links the abstract syntax and the semantic primitives. Taking a state,
+a environment, and a list of expressions, \texttt{evaluate} applies the
+operations found in the semantic primitives to produce a state and a value.
+
+The similarity in syntactical structure between the Lem and Haskell made the
+task of translating CakeML's semantics allowed the translation to be finished
+begin fairly early, which was followed by the second phase of the project:
+defining the lazy semantics. The task of defining the lazy semantics mainly
+consisted of creating a new definition of \texttt{evaluate}, called
+\texttt{evaluateLazy}, that targets the pure parts of CakeML.
+The lazy semantics used the idea of thunks to suspend
+evaluation of expressions until called. Thunks were defined under the value
+datatype in the semantic primitives and contained an expression together with
+its environment. The function \texttt{evaluateLazy} tries to evaluate an
+expression as little as possible before returning either a thunk with the
+partially evaluated expression and its environment, or another type of value.
+When a thunk is \textit{forced} to become a usable value, with a function
+appropriately called \texttt{force}, its expression is repeatedly evaluated with
+its environment until it produces a usable (non-thunk) value.
+
+When the definition of the lazy semantics was finished, the third phase of this
+project began: constructing the compiler. This was formalised with a
+\texttt{compile} function that takes an expression and alters it with respect to
+the lazy semantics defined for this project. As such, thunks were defined by
+using the \texttt{Con} expression, which represents constructors. Together with
+the \texttt{Thunk} constructor, a \texttt{Val} constructor was also created to
+represent all non-thunk values. Values were simply put inside the \texttt{Val}
+constructor, while thunks required more processing. To simulate the
+encapsulation that thunks had in the lazy semantics, an expression was put
+inside a \texttt{Fun} expression to be evaluated to closures. This allows the
+expression to stay together with its environment in the \texttt{Thunk}
+constructor. In order for the compiled expressions to evaluate to usable values,
+a \texttt{force} function was defined. The idea behind the compiler's
+\texttt{force} was the same as the one defined for the lazy semantics, except
+that the compiler's \texttt{force} was defined by using CakeML expressions.
+By doing this, \texttt{force} could be injected into the compiled code to be
+evaluated together with the thunks and values, allowing non-thunk values to be
+produced at the end of the evaluation chain.
+
+The implementation of the compiler allowed evaluation of expressions to be
+delayed until when needed. However, delaying the evaluation only results in
+\textit{call-by-name} semantics, meaning that if the thunks are used on multiple
+occasions, they will be evaluated each time. True laziness is achieved through
+\textit{call-by-need} semantics where thunks retain the value that was yielded
+by the evaluation of their expressions. This optimisation was implemented by
+altering how thunks were produced and how \texttt{force} handled this new
+definition of thunks. Thunks were changed to contain a reference to a location
+in the state, where a suspended expression would be stored. Thus, \texttt{force}
+was change to extract the value that the reference pointed to, which would be
+represented by one of two new constructors \texttt{RefExp} and \texttt{RefVal}.
+Suspended expressions were represented by \texttt{RefExp}, while the values that
+the expressions were forced to were represented by \texttt{RefVal}. The change
+from \texttt{RefExp} to \texttt{RefVal} was handled by using an assign operation
+whenever a \texttt{RefExp} was forced to replace the value that the thunk
+reference was pointing at.
+
+The ultimate goal of this project was to produce a compiler that takes lazy
+semantics and enforces it in strict semantics. This goal is considered to have
+been reached with the completion of the third phase. The call-by-need semantics
+optimised the compiler further to achieve true laziness, where forced thunks
+would replace their suspended expressions with the value yielded from
+the evaluation. With these results, this project is considered to have been
+successful.

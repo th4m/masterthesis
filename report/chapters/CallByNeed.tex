@@ -141,6 +141,43 @@ thunks that were not forced were checked to see if they remained as
 and the state, the thunk references could be investigated to see if they were
 \texttt{RefExp} or \texttt{RefVal} constructors.
 
+Call-by-need was also tested by using thunks that require a noticeable amount of
+time to evaluate. One method was to create a list of a replicated expression:
+\begin{figure}[H]
+\begin{alltt}
+  cakeReplicate =
+    LetRec [("repeat", "elem",
+              Fun "n" $
+              If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+               (Con (Just (Short "nil")) [])
+               (Con (Just (Short "::"))
+                [Var (Short "elem"),
+                 App OpApp [App OpApp [Var (Short "repeat"),
+                                       Var (Short "elem")],
+                            decr]])
+            )] (Var (Short "repeat"))
+\end{alltt}
+\end{figure}
+This function \texttt{cakeReplicate} was used to create a list with an
+expression that counts down to 0 and returns the string literal "OK":
+\begin{figure}[H]
+\begin{alltt}
+  stopAtZero =
+    LetRec [("stopAtZero", "n",
+             If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+              (Literal (StrLit "OK"))
+              (App OpApp [Var (Short "stopAtZero"), decr])
+            )] (Var (Short "stopAtZero"))
+\end{alltt}
+\end{figure}
+Replication of \texttt{stopAtZero} was tested with two versions of the compiler:
+(1) with the call-by-need optimisation and (2) without call-by-need. For a list
+of \texttt{stopAtZero} that counted from 100, (1) printed the whole list much
+faster than (2), which required a noteworthy amount of evaluation time for each
+list element. This result showed that call-by-need in (1) was indeed working as
+intended: each thunk's suspended expression is evaluated once and replaced with
+a value, which is used in future calls, reducing the total evaluation time.
+
 When the results of this testing phase were positive, the implementation of the
 call-by-need semantics was deemed to be finished. This would also mark the
 completion of the compiler as a whole, meaning that all the coding had now been
@@ -152,18 +189,39 @@ finished.
 %%   compared to strict semantics.
 
 \section{Discussion}
+Alternative structures were considered for the constructors used to implement
+call-by-need. One of these was to add a constructor under the same type
+identifier as the \texttt{Val} and \texttt{Thunk} constructors that contained
+a reference. The expression or value that the reference pointed at would then be
+forced and assigned to the reference. A problem with this approach would be
+that by using the same type, there is no clear distinction between references
+and other expressions. Suspended evaluations could be created and exist on the
+same level as the references to the suspensions. The structure that was used in
+the end creates a border between different types. By having \texttt{RefExp} and
+\texttt{RefVal} represent all thunks in the state, and \texttt{Val} and
+\texttt{Thunk} represent values and references to thunks,
+it is clear where everything belongs. This
+distinction also allows separate pattern matching for the contents of the
+references that \texttt{Thunk} points at, making it easier to know when to
+make an assignment of a new value to a reference or to just return the stored
+value.
 
-Manual testing of the compiler proved to be inadequate.
-  Certain bugs in the code could only be discovered by combining specific expressions.
-  Unit testing requires the programmer to write their own expressions to test,
-  demanding time and "imagination".
-  This could be amended by employing property-based testing. Haskell has QuickCheck.
+Manually written unit tests proved to be lacking, as it required consideration \placement{Should this paragraph be here?}
+of all cases where the implementation of the compilation or evaluation might be
+bugged. As a compiler handles construction of a program, it can be difficult to
+create a very specific combination of expressions to create a certain bug.
+For example, a bug concerning the state was discovered at the testing stage
+of call-by-need. The bug caused the wrong state to be returned and occurred in
+the evaluation of the \texttt{App OpApp} expression. This means that to catch
+this bug, a \texttt{Fun x e} expression needed to be created (and called) with
+\texttt{e} being an expression that causes some change to the state. Unit
+testing can be replaced with property-based testing. Haskell has the
+property-based testing library QuickCheck~\cite{Introduc44:online}. By writing
+properties for tests, QuickCheck generates and runs tests automatically,
+allowing for extensive testing. Unfortunately, exploring the usage of QuickCheck
+for this project was not possible because of time constraints, as property-based
+testing for compilers might be enough workload for a project of its own.
 
-Other forms of the constructors for CBN was considered.
-  However, the current one was used in the end because it felt like the optimal structure.
-  Pattern matching is done smoothly in order to distinguish RefExp and RefVal
-  Adding only one constructor, and to the same type as Thunk and Val, would require an
-    additional case to force. This would technically allow thunks outside of the state.
 
 
 
