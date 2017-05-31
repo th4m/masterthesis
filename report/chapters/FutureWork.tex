@@ -1,0 +1,53 @@
+\chapter{Future Work}
+
+While this project was deemed to be successful, there is always the possibility
+to do more. This chapter will discuss potential work that could be performed in
+addition to what has been done for this project. Suggestions will not only
+concern what the compiler takes as input and produces, but also tasks such as
+testing.
+
+\section{Compiling declarations}
+As stated in Section~\ref{sec:limitations}, expressions were the highest
+category of CakeML's grammar considered for this project. CakeML has a level
+of grammar above expressions: declarations. Declarations handle e.g. multiple
+bindings at once and type definitions, and increase the expressiveness of the
+language. In order to support all of CakeML's semantics, defining declarations
+in the Haskell port of the semantics must be done. Lazy semantics and
+compilation of declarations would then need to be defined and implemented.
+
+\section{Property-based testing}
+The semantics and compiler were tested by using unit tests.
+As unit tests are dependent on the manual work of inventing and writing
+test cases, they cannot be fully trusted to be able to catch all types of
+errors. In the case of compiler construction, the expressiveness of the
+source and target languages can be tremendous, making it very difficult to
+think of all types of expressions to test. A different approach to testing
+is property-based testing. For Haskell, QuickCheck is a well known tool for
+formulating and running property-based
+tests~\cite{Claessen:2000:QLT:351240.351266}.
+It was suggested at the planning phase of this project that QuickCheck would
+be used to run property-based tests for the produced compiler. However, doing
+property-based testing on compilers was deduced to be a task that may warrant
+a project of its own. Thus, due to time constraints, property-based testing
+was not included for this project.
+
+\section{Update semantics}
+CakeML is a language that is being developed at a high pace at the time of
+writing. As such, the version of semantics used to create the compiler for this
+project was already outdated shortly after the project start. If the compiler
+is to be used for the newest version of CakeML, the semantics would need
+updating. For constant support, the semantics would need to be continuously
+updated.
+
+\section{Applying the compiler to actual CakeML code}
+This project only handled the intermediate representation of CakeML's abstract
+syntax. An interesting application of the compiler would be to create a parser
+to produce code that can be executed through CakeML's own compiler. The parser
+would need to be able to take CakeML's concrete syntax, convert it to the
+Haskell port of the abstract syntax. Once the abstrax syntax has been generated,
+it can be run through the compiler to produce altered abstract syntax, which
+can then be converted back to the concrete syntax.
+
+
+% Application to actual CakeML code
+% Update the compiler to the latest version of CakeML
