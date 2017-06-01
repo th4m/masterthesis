@@ -5,7 +5,7 @@ regular strict CakeML expressions and produces CakeML expressions that allows
 lazy evaluation. The compiler has been implemented in Haskell by using the ideas
 behind the definition of the lazy semantics. This chapter will describe the
 implementation of the compiler that compiles CakeML expressions from the lazy
-semantics into the strict semantics in such a way that the lazy behavior
+semantics into the strict semantics in such a way that the lazy behaviour
 is preserved.
 
 \section{Implementation}
@@ -32,7 +32,7 @@ be detailed.
 \label{comp:thunk}
 In the lazy semantics, thunks were defined as values. As the compiler only makes
 use of expressions, values are not available as resources.
-The idea is to simulate the behavior of storing partially evaluated expressions
+The idea is to simulate the behaviour of storing partially evaluated expressions
 wrapped inside thunks in the environment as done in the lazy semantics.
 For this purpose, it is necessary to store an expression
 together with the environment that is in use when the expression is originally
@@ -61,7 +61,9 @@ evaluation when called as an argument to an \texttt{App Op} expression.
 
 A value in the case of the compiler is an expression that does not require
 a delayed evaluation. This mainly applies to expressions such as \texttt{Lit}
-and \texttt{Fun}. When wrapping a value around a \texttt{Con} expression, there
+and \texttt{Fun} that do not require any further evaluation other than returning
+the appropriate value. When wrapping
+a value around a \texttt{Con} expression, there
 is no need to keep the environment with it, as the evaluation is not to be
 delayed. Thus, for an expression \texttt{e}, values were defined and simplified
 with the Haskell function \texttt{makeVal}:
@@ -105,8 +107,8 @@ force e =
 \end{alltt}
 \end{figure}
 
-This definition of \texttt{force} was injected into the code in order to
-generate actual values from thunks. When a \texttt{lazy} constructor is given
+\noindent This definition of \texttt{force} was injected into the code in order
+to generate actual values from thunks. When a \texttt{lazy} constructor is given
 as input to \texttt{force}, it will be pattern matched to check if it is a
 \texttt{Thunk} or a \texttt{Val}. Similarly to the definition of \texttt{force}
 for the lazy semantics in Section~\ref{lazySem:impl}, when a \texttt{Thunk}
@@ -278,15 +280,15 @@ semantics:
 value "OK", which indicated that the compiler indeed produces expressions that
 exhibit lazy traits.
 
-\section{Discussion}
+\section{Discussion} \todo{I would like some more discussion, but I can't think of any at the moment.}
 While the compiler at this stage successfully delays expressions in thunks
 until they are called, it is still not quite producing truly lazy expressions.
 True laziness is often associated with call-by-need semantics, where thunks
-retain the values that their expressions were evaluated to. The semantics that
+retain the values that their expressions were evaluated to~\cite{pltbook}\todo{Actually not quite sure about this reference. Will confirm soon.}. 
+The semantics that
 the compiler is exhibiting at this stage is called \texttt{call-by-name}, where
 evaluations are simply delayed. If the thunk is used more than once, it will
-be evaluated each time it is called~\cite{DragonBook}~\cite{pltbook}.
+be evaluated each time it is called~\cite{DragonBook}.
 Call-by-need semantics can be seen as more beneficial than call-by-name, as
 repeated use of e.g. variables would require repeated use of thunks.
-
 

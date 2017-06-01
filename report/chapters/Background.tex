@@ -127,13 +127,14 @@ lazily, but with the use of the native CakeML compiler that evaluates strictly.
 \section{CakeML}
 \label{back:cakeml}
 This section will present CakeML, the language that is the main focus of this
-thesis.
+thesis. \notdone{TODO}
 
 \section{Previous Work}
 This section will present and discuss previous work that is related to this
 project. Topics include programming language libraries that allow lazy/strict
-evaluation in languages that do not allow it by default, as well as a compiler
-for Haskell that tries to optimise the inherent laziness of the language.
+evaluation in languages that do not allow it by default, as well as an
+evaluation strategy for Haskell that tries to optimise the inherent laziness
+of the language.
 
 \subsection{Libraries}
 There are many languages that are strict that have additional libraries
@@ -160,3 +161,11 @@ does terminate, the result of \texttt{seq} is equal to \texttt{b}. While both
 \subsubsection{.NET}\notdone{TODO}
 
 \subsubsection{Python}\notdone{TODO}
+
+\subsection{Optimistic evaluation}
+
+This section will present and discuss an evaluation strategy that was developed
+for Haskell by Ennals and Peyton Jones. In their paper they state that they
+measure common usage of thunks. This lead them to create an evaluation strategy
+that makes use of their observation. \notdone{Expand more.}
+

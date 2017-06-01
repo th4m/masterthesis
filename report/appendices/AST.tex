@@ -1,4 +1,4 @@
-\chapter{Abstract Syntax Tree of Expressions}
+\chapter{Haskell definition of CakeML's abstract syntax}
 \label{app:ASTExp}
 
 \begin{figure}
@@ -23,6 +23,48 @@ data Exp
 
 \begin{figure}
 \begin{alltt}
+data Lit
+  = IntLit Int
+  | Char Char
+  | StrLit String
+  | Word8 Word8
+  | Word64 Word64
+\end{alltt}
+\caption{Literals of CakeML}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data Id a
+  = Short a
+  | Long ModN a
+\end{alltt}
+\caption{Identifiers of CakeML}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+-- | Variable Names
+type VarN = String
+
+-- | Constructor Names
+type ConN = String
+
+-- | Type Names
+type TypeN = String
+
+-- | Type Variable Names
+type TVarN = String
+
+-- | Module Names
+type ModN = String
+\end{alltt}
+\caption{Different types of names of CakeML}
+\end{figure}
+
+
+\begin{figure}
+\begin{alltt}
 data Op
   -- Integer operations
   = OPN Opn
@@ -31,6 +73,10 @@ data Op
   | Equality
   -- Function application
   | OpApp
+  -- Reference operations
+  | OpAssign
+  | OpRef
+  | OpDeref
   -- Char operations
   | Ord
   | Chr

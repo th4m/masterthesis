@@ -1,0 +1,85 @@
+\chapter{Haskell definition of important datatypes of CakeML's semantic primitives}
+\label{app:semprim}
+
+\begin{figure}
+\begin{alltt}
+data V
+  = LitV Lit
+  -- Constructor Application
+  | ConV (Maybe (ConN, TId_or_Exn)) [V]
+  -- Function Closures
+  | Closure (Environment V) VarN Exp
+  | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
+  | Loc Natural
+  | VectorV [V]
+  | Thunk (Environment V) Exp
+\end{alltt}
+\caption{Values of CakeML}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data TId_or_Exn
+  = TypeId (Id TypeN)
+  | TypeExn (Id ConN)
+\end{alltt}
+\caption{A flexible datatype for type identifiers or type expressions}
+\end{figure}
+\todo{Does TypeExn stand for type expression?}
+
+\begin{figure}
+\begin{alltt}
+data Environment v' = Env {
+  v :: AList VarN V, -- Map.Map VarN V,
+  c :: AList_Mod_Env ConN (Natural, TId_or_Exn),
+  m :: AList ModN (AList VarN V) -- Map.Map ModN (Map.Map VarN V)
+  }
+\end{alltt}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data State = St {
+  refs          :: Store V,
+  defined_types :: S.Set TId_or_Exn,
+  defined_mods  :: S.Set ModN
+ }
+\end{alltt}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data Store_V a
+  = RefV a
+  | W8Array [Word8]
+  | VArray [a]
+\end{alltt}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+type Store a
+  = [Store_V a]
+\end{alltt}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+data Result a b
+  = RVal a
+  | RErr (Error_Result b)
+\end{alltt}
+\end{figure}
+
+
+\begin{figure}
+\begin{alltt}
+data Error_Result a
+  = RRaise a
+  | RAbort Abort
+
+data Abort
+  = RType_Error
+  | RTimeout_Error
+\end{alltt}
+\end{figure}

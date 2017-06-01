@@ -112,7 +112,7 @@ in each iteration. The strict \texttt{evaluate} evaluates \texttt{e} with
 the input environment. This act of passing on an altered environment is an
 unwanted process, as \texttt{e1} may assign some variables that were only
 intended to be temporary for the evaluation of \texttt{e1}. The strict
-\texttt{evaluate} does not exhibit this behavior, but instead keeps the
+\texttt{evaluate} does not exhibit this behaviour, but instead keeps the
 evaluation of \texttt{e1} in its own scope.
 
 \subsection{Attempt 2}
@@ -217,6 +217,10 @@ By collecting a list of expressions, testing was performed by simply running
 \texttt{compareEval} on said list. This was done whenever the semantics was
 changed and needed to be tested to control that the results would not change.
 
+One expression that was not compared was the \texttt{Con} expression. The lazy
+evaluation of \texttt{Con} expressions produces thunks of the constructors'
+contents. When forced, they are not evaluated. This behaviour allows the
+possibility of infinite data structures, such as lists, to exist.
 
 \subsection{Testing Termination}
 As laziness brings the feature of delaying evaluation of expressions, certain
@@ -229,7 +233,7 @@ variable \texttt{x}, allowing the evaluation to continue to evaluating
 \texttt{e2}.
 
 This test method consisted of creating CakeML expressions that would exhibit the
-behavior explained above. One such expression was defined and called
+behaviour explained above. One such expression was defined and called
 \texttt{termExp}. A non-terminating expression \texttt{inf} was also defined to
 be used together with \texttt{termExp}.
 \texttt{inf} was defined to create a recursive function \texttt{fun}
@@ -252,6 +256,36 @@ expression before returning a string literal "OK".
 non-terminating loop, while running \texttt{termExp} with the lazy semantics
 resulted with the literal value "OK", as expected.
 
-With the test results showing positive results, the lazy semantics were deemed
+With the test results showing positive results, the lazy semantics was deemed
 to work as intended. This would signal that the groundwork for the compiler
 had been completed.
+
+\section{Discussion} \todo{I would like some more discussion, but I can't think of any at the moment.}
+
+The lazy semantics for \texttt{Con} expressions does not force the contents of
+the constructors. By allowing them to remain as thunks, it is possible to
+represent infinite data structures. For example, the constructors for lists are
+twofold: \texttt{(::)} and \texttt{nil}. As the name suggests, \texttt{nil}
+represents nothing, or an empty list, and is used to denote the end of a list.
+The constructor \texttt{(::)} contains two expressions: the first being an
+element of the list, and the second being the rest of the list.
+By representing both elements as thunks, certain information is "hidden" until
+necessary. For example, it is possible to represent the expression
+\texttt{[1..]}, as it is not a concrete list, but an expression that generates a
+list of infinite literals of the number 1.
+If the list was forced to show every element that it contains, the evaluation
+would not terminate. On the contrary, as long as this list is not fully forced
+to show all of its elements, it can be used for certain list operations. The
+function \texttt{take} that was described in Section~\ref{intro:Example}, for
+example, can evaluate \texttt{[1..]} as much as it needs and discard the thunk
+for the rest of the list that it does not need.
+
+Keeping the contents of a list as thunks can also save computation time if,
+for example, \texttt{take} is applied to a significantly large list, but only
+takes a minimal amount of elements. However, thunks can also
+act as a double-edged sword. For example, in the case where a full list is to be
+shown, the strict semantics will be faster to generate the list. This is because
+of the additional steps that the lazy semantics takes to produce thunks only to
+force them to non-thunk values, which the strict semantics produces directly.
+This example shows that lazy semantics is not always optimal and that different
+situations may require different semantics for the best performance.

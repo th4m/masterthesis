@@ -1,8 +1,8 @@
 \chapter{Call-by-need semantics}
 With the completion of the compiler, expressions bound as variables are stored
 as thunks, delaying their evaluation until they are called. While this means
-the compiled code exhibits lazy behavior, the thunks are evaluated every
-time that the variable is called. The optimal behavior, called
+the compiled code exhibits lazy behaviour, the thunks are evaluated every
+time that the variable is called. The optimal behaviour, called
 \textit{call-by-need}, is to evaluate the thunks at most once and reuse the
 resulting value. This chapter will describe how the compiler was optimised to
 use the stateful features of CakeML in order to implement call-by-need

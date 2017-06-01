@@ -76,7 +76,7 @@ defined as a part of the language:
 \end{alltt}
 \end{figure}
 
-The above expressions were translated to Haskell as such:
+CakeML expressions were translated to Haskell as such:
 
 \begin{figure}[H]
 \begin{alltt}
@@ -112,7 +112,7 @@ as needed:
 \end{figure}
 
 These expressions are the basic building blocks that a programmer uses to create
-their program. For example, a simple integer such as 5 is represented as
+their programs. For example, a simple integer such as 5 is represented as
 \begin{alltt}
   Literal (IntLit 5)
 \end{alltt}
@@ -129,6 +129,36 @@ the arithmetic expression \(1 + (7 - 8)\) can be represented as
                  ]
 \end{alltt}
 \end{figure}
+
+With the \texttt{Fun} expression, it is possible to create functions that take
+arguments and produces values. For example, \texttt{take} that was described in
+Section~\ref{intro:Example} can be defined by combining a number of expressions:
+\begin{figure}[H]
+\begin{alltt}
+  cakeTake =
+    LetRec [("take", "n",
+             Fun "ls" $
+             If (App Equality [Var (Short "n"), Literal (IntLit 0)])
+              (Con (Just (Short "nil")) [])
+              (Mat (Var (Short "ls"))
+               [(PCon (Just (Short "::" )) [PVar "elem", PVar "rest"]
+                ,Con (Just (Short "::")) [Var (Short "elem")
+                                         ,cakeTake2])
+               ,(PCon (Just (Short "nil")) []
+                ,Con (Just (Short "nil")) [])]
+              )
+            )] $
+    Var (Short "take")
+    where cakeTake2 =
+            App OpApp [App OpApp [Var (Short "take")
+                                 ,decr]
+                      ,Var (Short "rest")]
+          decr =
+            App (OPN Minus) [Var (Short "n")
+                            ,Literal (IntLit 1)]
+\end{alltt}
+\end{figure}
+
 
 \subsection{Semantic Primitives}
 The semantic primitives of a language is how its calculations are performed.
@@ -189,9 +219,11 @@ of expressions are a state and an environment, which are given as input to
 \texttt{evaluate}. The type of \texttt{evaluate} (in Lem notation) is thus:
 
 \todo{Is it okay to have no spaces between state*result?}
+\begin{figure}[H]
 \begin{alltt}
   evaluate:state -> environment v -> list exp -> state*result (list v) v
 \end{alltt}
+\end{figure}
 
 \noindent Expressions are taken either as a sequence in \texttt{evaluate},
 in which case they are evaluated sequentially, or as singletons, in which case
@@ -298,5 +330,46 @@ The results of the evaluations were compared with values that were expected
 in the form of unit testing to see if there were any deviations. 
 
 Faulty results indicated erroneous implementation of the semantics.
-Thus, through troubleshooting and amending code, the semantics eventually
+Through troubleshooting and amending code, the semantics eventually
 reached a satisfactory state that could evaluated expressions correctly.
+
+\section{Discussion}\todo{I would like some more discussion, but I can't think of any at the moment.}
+The Haskell definition of CakeML's semantics was written as a direct port. \todo{Create subsection?}
+As Lem and
+Haskell are similar in syntactical structure, it was not a difficult \todo{Okay to say difficult?}
+task to transcribe the semantics. However, a different approach of the porting
+could be considered by using monads in
+Haskell~\cite{MonadHas66:online}~\cite{AllAbout63:online}~\cite{learnhaskell}.
+For example, the Lem definition of \texttt{evaluate} explicitly passes the state
+from input to output. Haskell has a \texttt{State} monad~\cite{StateMon99:online}
+that implicitly passes the state. Operations on the state can be called through
+monadic functions such as \texttt{get}, \texttt{put}, and \texttt{assign}.
+Using the \texttt{State} monad could prevent possible mistakes of returning the
+wrong state at the end of an evaluation. However, using a monadic approach to
+define \texttt{evaluate} would also affect any other functions that uses it,
+causing the port to possibly deviate from its original definition.
+The explicity of the non-monadic approach can also be seen as making the
+semantics easy \todo{Okay to say "easy"?} to read and understand.
+
+CakeML's semantics always fully evaluate sub-expressions for the evaluation \todo{Create subsection?}
+of any expression. This call-by-value behaviour does not allow for infinite
+data structures, even when the whole data structure is not used. For example,
+the function \texttt{take}, described in Section~\ref{intro:Example} and defined
+in CakeML syntax in Section~\ref{strict:abs}, will take a \texttt{Con}
+expression that represents a list and fully evaluate it before producing the
+final list. This is because when the list is bound to the variable \texttt{ls},
+it is evaluated. The evaluation of \texttt{Con} expressions always evaluates the
+arguments of the constructors. List constructors are defined as:
+\begin{figure}[H]
+\begin{alltt}
+  Con (Just (Short "nil")) []
+  Con (Just (Short "::" )) [e,es]
+\end{alltt}
+\end{figure}
+\noindent The \texttt{nil} constructor denotes an empty list and thus has no arguments.
+The \texttt{(::)} constructor denotes the continuation of a list and thus has
+an element \texttt{e} and the rest of the list \texttt{es} as arguments.
+As \texttt{es} also is a list, it will be either a \texttt{nil} or a
+\texttt{(::)} constructor. This means that when a list is evaluated, a chain
+of recursive evaluation will continue until a \texttt{nil} is encountered.
+Thus, a list will always be fully evaluated when called.
