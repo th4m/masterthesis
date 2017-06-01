@@ -5,8 +5,7 @@ the compiled code exhibits lazy behaviour, the thunks are evaluated every
 time that the variable is called. The optimal behaviour, called
 \textit{call-by-need}, is to evaluate the thunks at most once and reuse the
 resulting value. This chapter will describe how the compiler was optimised to
-use the stateful features of CakeML in order to implement call-by-need
-mechanics.
+use the stateful features of CakeML in order to implement call-by-need.
 
 \section{Implementation}
 \label{cbn:impl}
@@ -158,7 +157,7 @@ time to evaluate. One method was to create a list of a replicated expression:
             )] (Var (Short "repeat"))
 \end{alltt}
 \end{figure}
-This function \texttt{cakeReplicate} was used to create a list with an
+\noindent This function \texttt{cakeReplicate} was used to create a list with an
 expression that counts down to 0 and returns the string literal "OK":
 \begin{figure}[H]
 \begin{alltt}
@@ -188,39 +187,39 @@ finished.
 %% Repeating a saved value in a list has almost no difference in execution time
 %%   compared to strict semantics.
 
-\section{Discussion}
-Alternative structures were considered for the constructors used to implement
-call-by-need. One of these was to add a constructor under the same type
-identifier as the \texttt{Val} and \texttt{Thunk} constructors that contained
-a reference. The expression or value that the reference pointed at would then be
-forced and assigned to the reference. A problem with this approach would be
-that by using the same type, there is no clear distinction between references
-and other expressions. Suspended evaluations could be created and exist on the
-same level as the references to the suspensions. The structure that was used in
-the end creates a border between different types. By having \texttt{RefExp} and
-\texttt{RefVal} represent all thunks in the state, and \texttt{Val} and
-\texttt{Thunk} represent values and references to thunks,
-it is clear where everything belongs. This
-distinction also allows separate pattern matching for the contents of the
-references that \texttt{Thunk} points at, making it easier to know when to
-make an assignment of a new value to a reference or to just return the stored
-value.
+%% \section{Discussion}
+%% Alternative structures were considered for the constructors used to implement
+%% call-by-need. One of these was to add a constructor under the same type
+%% identifier as the \texttt{Val} and \texttt{Thunk} constructors that contained
+%% a reference. The expression or value that the reference pointed at would then be
+%% forced and assigned to the reference. A problem with this approach would be
+%% that by using the same type, there is no clear distinction between references
+%% and other expressions. Suspended evaluations could be created and exist on the
+%% same level as the references to the suspensions. The structure that was used in
+%% the end creates a border between different types. By having \texttt{RefExp} and
+%% \texttt{RefVal} represent all thunks in the state, and \texttt{Val} and
+%% \texttt{Thunk} represent values and references to thunks,
+%% it is clear where everything belongs. This
+%% distinction also allows separate pattern matching for the contents of the
+%% references that \texttt{Thunk} points at, making it easier to know when to
+%% make an assignment of a new value to a reference or to just return the stored
+%% value.
 
-Manually written unit tests proved to be lacking, as it required consideration \placement{Should this paragraph be here?}
-of all cases where the implementation of the compilation or evaluation might be
-bugged. As a compiler handles construction of a program, it can be difficult to
-create a very specific combination of expressions to create a certain bug.
-For example, a bug concerning the state was discovered at the testing stage
-of call-by-need. The bug caused the wrong state to be returned and occurred in
-the evaluation of the \texttt{App OpApp} expression. This means that to catch
-this bug, a \texttt{Fun x e} expression needed to be created (and called) with
-\texttt{e} being an expression that causes some change to the state. Unit
-testing can be replaced with property-based testing. Haskell has the
-property-based testing library QuickCheck~\cite{Introduc44:online}. By writing
-properties for tests, QuickCheck generates and runs tests automatically,
-allowing for extensive testing. Unfortunately, exploring the usage of QuickCheck
-for this project was not possible because of time constraints, as property-based
-testing for compilers might be enough workload for a project of its own.
+%% Manually written unit tests proved to be lacking, as it required consideration \placement{Should this paragraph be here?}
+%% of all cases where the implementation of the compilation or evaluation might be
+%% bugged. As a compiler handles construction of a program, it can be difficult to
+%% create a very specific combination of expressions to create a certain bug.
+%% For example, a bug concerning the state was discovered at the testing stage
+%% of call-by-need. The bug caused the wrong state to be returned and occurred in
+%% the evaluation of the \texttt{App OpApp} expression. This means that to catch
+%% this bug, a \texttt{Fun x e} expression needed to be created (and called) with
+%% \texttt{e} being an expression that causes some change to the state. Unit
+%% testing can be replaced with property-based testing. Haskell has the
+%% property-based testing library QuickCheck~\cite{Introduc44:online}. By writing
+%% properties for tests, QuickCheck generates and runs tests automatically,
+%% allowing for extensive testing. Unfortunately, exploring the usage of QuickCheck
+%% for this project was not possible because of time constraints, as property-based
+%% testing for compilers might be enough workload for a project of its own.
 
 
 

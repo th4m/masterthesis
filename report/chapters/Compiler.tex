@@ -24,7 +24,7 @@ is preserved.
 For the task of creating the compiler, a \texttt{compile} function was defined.
 The \texttt{compile} function was designed to take an expression and alter it to
 another expression that incorporates the logic of thunks and \texttt{force} defined in
-section~\ref{lazySem:impl}. In order to further explain how this was done,
+Section~\ref{lazySem:impl}. In order to further explain how this was done,
 more information about how thunks and \texttt{force} were implemented needs to
 be detailed.
 
@@ -45,9 +45,9 @@ in use at the time of evaluation. This fulfills the requirements of keeping
 the expression together with an environment.
 
 \texttt{Con} expressions are constructors that allow separation between thunks
-and values. Thunks and values were separated with constructor names that
+and values. Thunks and values are separated with constructor names that
 uniquely identified them. For an expression \texttt{e}, thunks were defined and
-simplified with the Haskell function makeThunk:
+simplified with the Haskell function \texttt{makeThunk}:
 
 \begin{figure}[H]
 \begin{alltt}
@@ -60,8 +60,8 @@ actually evaluated. Instead, it is put inside the resulting closure, awaiting
 evaluation when called as an argument to an \texttt{App Op} expression.
 
 A value in the case of the compiler is an expression that does not require
-a delayed evaluation. This mainly applies to expressions such as \texttt{Lit}
-and \texttt{Fun} that do not require any further evaluation other than returning
+a delayed evaluation. This mainly applies to expressions such as \texttt{Lit},
+\texttt{Fun}, and Con that do not require any further evaluation other than returning
 the appropriate value. When wrapping
 a value around a \texttt{Con} expression, there
 is no need to keep the environment with it, as the evaluation is not to be
@@ -83,12 +83,13 @@ identifier \texttt{lazy}.
 With the definition of thunks and values finished, the task of defining
 \texttt{force} remained. In the lazy semantics, \texttt{force} pattern
 matched on values to recursively evaluate expressions inside of the thunks until
-they stopped producing thunks. As the compiler does not perform any evaluation
-itself, it needs to somehow make the actual semantics make this pattern matching
-and recursive evaluation. Thus, \texttt{force} was defined by combining a number
-of CakeML expressions: \texttt{LetRec} for recursion, \texttt{Mat} for pattern
+they stopped producing thunks.
+
+In order to simulate the behaviour of \texttt{force} defined for the lazy
+semantics, a number of CakeML expressions were combined:
+\texttt{LetRec} for recursion, \texttt{Mat} for pattern
 matching, and \texttt{App OpApp} both for applying \texttt{force} recursively
-and forcing an evaluation.
+and forcing an evaluation of the closure contained in a thunk.
 
 \begin{figure}[H]
 \begin{alltt}
@@ -96,11 +97,11 @@ force :: Exp -> Exp
 force e =
   App OpApp [LetRec [("force", "exp"
                      , Mat (Var (Short "exp"))
-                       [(thunkPat [PVar "Thunk"]
+                       [(PCon (Just (Short "Thunk")) [PVar "Thunk"]
                         , App OpApp [Var (Short "force")
                                     , App OpApp [Var (Short "Thunk")
                                                 , Literal (IntLit 0)]])
-                       ,(valPat [PVar "Val"]
+                       ,(PCon (Just (Short "Val")) [PVar "Val"]
                         , Var (Short "Val"))]
                      )] (Var (Short "force"))
             , e]
@@ -119,7 +120,7 @@ extracted and returned.
 \subsection{The \texttt{compile} function}
 With the important elements of thunks and \texttt{force} implemented, the next
 step was to utilise them in the \texttt{compile} function. 
-\texttt{compile} takes an expression and returns an expression. Thus the type of
+As \texttt{compile} takes an expression and returns an expression,the type of
 the function is
 
 \begin{figure}[H]
@@ -130,13 +131,13 @@ the function is
 
 \noindent Pattern matching for all expressions in Haskell allows the function to
 handle each expression uniquely. With the lazy semantics defined in
-chapter~\ref{lazySem} in mind, \texttt{compile} was implemented with a similar
-approach. Expressions were wrapped in either \texttt{Thunk} of
+Chapter~\ref{lazySem} in mind, \texttt{compile} was implemented with a similar
+approach. Expressions were wrapped in either \texttt{Thunk} or
 \texttt{Val} constructors. When an expression needs to be fully evaluated,
 \texttt{force} is applied.
 
 An example of compiling an expression can be described with the expression
-\texttt{If e1 e2 e3}. As seen in section~\ref{lazySem:att2}, \texttt{e1} needs
+\texttt{If e1 e2 e3}. As seen in Section~\ref{lazySem:att2}, \texttt{e1} needs
 to be forced, while \texttt{e2} or \texttt{e3} should be returned as a thunk.
 This is handled by applying \texttt{force} on \texttt{e1} after compiling it,
 as well as wrapping \texttt{e2} and \texttt{e3} after compiling them.
@@ -173,7 +174,7 @@ expression. This issue (and its solution) will be explained in the following
 subsection.
 
 \subsection{Compiling \texttt{LetRec}}
-\texttt{LetRec} is the expression that makes recursive definitions possible.
+The expression \texttt{LetRec} is what makes recursive definitions possible.
 The expression consists of a list of local function definitions that each have a
 function name, argument name, and a function body. This list is followed by
 another expression to be evaluated. When evaluated, these function definitions
@@ -186,7 +187,7 @@ Evaluation of \texttt{LetRec} expressions is defined as such:
 \begin{alltt}
   evaluate st env [LetRec funs e] =
     if allDistinct (map (\textbackslash(x,y,z) -> x) funs) then
-      evaluate st (env {v = build_rec_env funs env (v env)}) [e]
+      evaluate st (env \{v = build_rec_env funs env (v env)\}) [e]
     else
       (st, RErr (RAbort RType_Error))
 \end{alltt}
@@ -201,9 +202,8 @@ that the compiler cannot wrap the \texttt{RecClosure} values in the
 to result in a type error when called, as it pattern matches on the constructors
 \texttt{Thunk} and \texttt{Val}.
 
-As the evaluation of \texttt{LetRec} expressions will cause calls to the locally
-defined functions to always result in type errors, a workaround was created to
-make valid\texttt{RecClosure} values in the environment. This workaround
+A workaround was created to
+make valid \texttt{RecClosure} values in the environment. This workaround
 consisted of allowing the \texttt{evaluate} function to create the
 \texttt{RecClosure} values that were incompatible with \texttt{force} and
 reassigning them as valid values. In order to not create possible conflicts
@@ -216,11 +216,19 @@ are given their true names. All this was done in the definition of
 \begin{figure}[H]
 \begin{alltt}
   compile (LetRec funs e) =
-    LetRec (replace funs invN) (reinstance invN names (thunkCompile e))
-    where names = getNames funs
-          getNames [] = []
-          getNames ((f,_,_):funs') = (f:getNames funs')
-          invN = map (++ " ") names
+    LetRec (recVals funs) (repl (compile e) (fst3 funs))
+    where
+      fst3 []           = []
+      fst3 ((f,_,_):fs) = (f:fst3 fs)
+      repl e []     = e
+      repl e (f:fs) = Let (Just f) (makeVal (Var (Short f))) (repl e fs)
+      recVals []           = []
+      recVals ((f,x,e):xs) =
+        (f,x,
+         Let (Just f)
+         (makeVal (Var (Short f)))
+         (compile e)
+        ):(recVals xs)
 \end{alltt}
 \end{figure}
 
@@ -233,8 +241,8 @@ to see if expressions that would not terminate when evaluated with the strict
 semantics would terminate after compiling and evaluating them with the same
 strict semantics.
 
-The evaluation of non-compiled
-expressions used the same function \texttt{ex} that uses an empty state and
+The evaluation of non-compiled expressions used the function \texttt{ex},
+defined in Section~\ref{lazy:compres}, that uses an empty state and
 dummy environment, as when testing the lazy semantics. Evaluation of
 compiled expressions was simplified with a function called \texttt{efc} that
 compiles, forces, and evaluates a given expression:
@@ -280,15 +288,15 @@ semantics:
 value "OK", which indicated that the compiler indeed produces expressions that
 exhibit lazy traits.
 
-\section{Discussion} \todo{I would like some more discussion, but I can't think of any at the moment.}
 While the compiler at this stage successfully delays expressions in thunks
 until they are called, it is still not quite producing truly lazy expressions.
 True laziness is often associated with call-by-need semantics, where thunks
-retain the values that their expressions were evaluated to~\cite{pltbook}\todo{Actually not quite sure about this reference. Will confirm soon.}. 
+retain the values that their expressions were evaluated to~\cite{pltbook}
 The semantics that
 the compiler is exhibiting at this stage is called \texttt{call-by-name}, where
 evaluations are simply delayed. If the thunk is used more than once, it will
 be evaluated each time it is called~\cite{DragonBook}.
 Call-by-need semantics can be seen as more beneficial than call-by-name, as
 repeated use of e.g. variables would require repeated use of thunks.
-
+The next stage of this project was thus to optimise the compiler by implementing
+call-by-need semantics.

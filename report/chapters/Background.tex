@@ -1,7 +1,7 @@
 \chapter{Background}
 Chapter~\ref{chapter:intro} shortly introduced the basics of lazy and strict
 semantics. This chapter will present a more in-depth description of semantics
-and compilers, as well as present some previous similar work on the subject.
+and compilers, as well as present some previous work on the subject.
 
 \section{Semantics}
 Every programming language has its own \textit{semantics}. Semantics are often
@@ -13,7 +13,7 @@ Different languages tend to use the same constructs, e.g. \texttt{if/else}, but
 evaluate these constructs differently. This is where the semantics defines the
 language.
 
-The semantics of a language can be defined in different approaches. The most
+The semantics of a language can be defined in different ways. The most
 natural approach for the semantics of this project is
 \textit{operational semantics}. Fernández states that operational semantics
 is very useful for implementing languages and proving correctness of compiler
@@ -29,19 +29,20 @@ Strict programming indicates that expressions are always fully evaluated when
 they appear in the chain of evaluation. For example, when an arithmetic expression
 is bound to a variable, the expression is fully evaluated to become a numerical
 value before being assigned to the variable. The value is then accessible
-by simply calling the variable.
+by simply using the variable.
 
 \subsection{Lazy Semantics}
 \label{back:lazySem}
 The main characteristics of laziness is delaying evaluation of expressions
-until they are needed. This is often done when binding the expressions to
+until they are needed. This is often done when binding expressions to
 variables. In order to delay the evalution of an expression, lazy semantics
 makes use of a data structure called
 \textit{thunk}~\cite{Ennals:2003:OEA:944746.944731}. A thunk contains a
 suspended expression together with information that is required to finish the
 evaluation of the expression. Expressions that are to be
 evaluated are suspended in so called thunk values and passed on correspondingly.
-When needed, these thunks are \textit{forced} in order to yield an actual usable value.
+When needed, these thunks are \textit{forced} in order to yield an actual usable
+value.
 % Using this
 %mechanic requires more memory usage than when evaluating with strict semantics.
 
@@ -79,7 +80,13 @@ assigned to a variable as an effect of the pattern matching:
 \end{figure}
 
 \noindent In the second case, \texttt{list} is assigned to the variable
-\texttt{xs} as an effect of the pattern matching. The evaluation of
+\texttt{xs} as an effect of the pattern matching. For the pattern matching,
+\texttt{list} is evaluated to check its outermost constructor. If it is an empty
+list, it will matched to the \texttt{[]} case, while the \texttt{xs} case
+handles all other cases, where \texttt{list} is bound to the variable
+\texttt{xs}.
+
+The evaluation of
 \texttt{list} is delayed until \texttt{xs} is called and used, meaning
 that the actual content of list can be infinite in length without having the
 evaluation of the program ending up in a non-terminating loop.
@@ -99,20 +106,20 @@ When a programmer has written code, the code must be translated into a form such
 that it can be executed by a computer. This translation is the job of a
 \textit{compiler}~\cite{DragonBook}. The compiler is a program that reads
 programs in a \textit{source} language and translates it to a \textit{target}
-language. The source language is often some high level language, while the
+language. The source language is often some high-level language, while the
 target language is a low-level machine language.
 For example, when compiling programs with Java as source language, the target
 language that the compiler translates the code to is most likely Java Virtual
 Machine (JVM)~\cite{JavaJVM}.
 
 There exists a certain category of compilers that translates code from a
-high level language to another high level language. This category of compilers
+high-level language to another high-level language. This category of compilers
 is often referred to as \textit{transpilers} or
 \textit{source-to-source compilers}~\cite{kulkarnitranspiler}.
 The goal of transpilers is to generate code in the target language that behaves
 equivalently as the code in the source language. The compiler defined in this %Should this be here?
-thesis can be considered to be of this category. In this case, both the target
-and source languages are the same high level language, CakeML.
+thesis can be considered to be of this category. In this case, the source
+language is lazy CakeML and the target language is strict CakeML.
 
 A common practice of compilers is to create an intermediate representation of
 the input code in the form of constructors in the form of a syntax

@@ -30,8 +30,8 @@ thunks, as described in Section~\ref{back:lazySem}. As such, thunks were added
 as the \texttt{Thunk} constructor in the \texttt{V} datatype. This would
 effectively make it a value that could be returned as a result by
 \texttt{evaluateLazy}. The main purpose of using thunks was to suspend partially
-evaluated expressions within. To further evaluate said expressions, additional
-information, contained in the environment, is required.
+evaluated expressions within. To further evaluate suspended expressions,
+additional information, contained in the environment, is required.
 The \texttt{Thunk} constructor was thus added to the \texttt{V} type:
 
 \begin{figure}[H]
@@ -63,15 +63,18 @@ This function is designed to take a value and pattern match for the
 \texttt{Thunk} constructor. When the \texttt{Thunk} case has been entered,
 the expression wrapped inside the thunk is extracted and lazily evaluated until
 an actual value is yielded. When any other value is caught in the pattern matching,
-the value is simply returned as a result. The function \texttt{force} is defined
-as such:
+the value is simply returned as a result.
+When the evaluation of an expression has ended at top level, the returned value
+must be an actual non-thunk value, as in the strict semantics of CakeML.
+The function \texttt{force} is defined as such:
 
 \begin{figure}[H]
 \begin{alltt}
   force :: V -> Result [V] V
-  force (Thunk env e) = case evaluateLazy env [e] of
-    RVal [Thunk env' e'] -> force (Thunk env' e')
-    res -> res
+  force (Thunk env e) =
+    case evaluateLazy env [e] of
+      RVal [Thunk env' e'] -> force (Thunk env' e')
+      res -> res
   force v = RVal [v]
 \end{alltt}
 \end{figure}
@@ -84,14 +87,14 @@ will be described in the following sections.
 The first (erroneous) attempt of implementing \texttt{evaluateLazy} used a naive
 idea of evaluating expressions as little as possible. This was mainly seen in
 expressions that contained sub-expressions, e.g. \texttt{If e1 e2 e3}. The first
-version of \texttt{evaluateLazy} on \texttt{If} would apply
-\texttt{evaluateLazy} on \texttt{e1} and check if it returned a thunk or a
+version of \texttt{evaluateLazy} on \texttt{If} applied
+\texttt{evaluateLazy} on \texttt{e1} and checked if it returned a thunk or a
 value. If it was a thunk, wrapped together with a partially evaluated expresion
 \texttt{e1'} and a potentially different environment \texttt{env'}, it would
 create and return a new thunk \texttt{Thunk env' (If e1' e2 e3)}. If it was
 another type of value \texttt{v}, it would apply \texttt{do\_if} to yield either
-\texttt{e2} or \texttt{e3} as the expression \texttt{e}. This would in turn
-, assuming that \texttt{v} was valid, create and return a new thunk containing
+\texttt{e2} or \texttt{e3} as the expression \texttt{e}. This would in turn,
+assuming that \texttt{v} was valid, create and return a new thunk containing
 \texttt{e} and the environment that was given as input to \texttt{evaluateLazy}.
 
 \begin{figure}[H]
@@ -180,9 +183,10 @@ termination in evaluation of expressions that would normally not terminate with
 the strict semantics. These two test methods will be described in this section.
 
 \subsection{Comparing Results}
+\label{lazy:compres}
 For comparing results between lazy and strict evaluation, a function, called
-\texttt{compareEval} was defined. \texttt{compareEval} takes a list of
-expressions and applies \texttt{evaluate} and \texttt{evaluateLazy}
+\texttt{compareEval} was defined. The function \texttt{compareEval} takes a list
+of expressions and applies \texttt{evaluate} and \texttt{evaluateLazy}
 in separate passes. Both evaluation processes use the same dummy environment.
 Evaluation with the an empty state (called \texttt{empty\_st}) and
 a dummy environment (called \texttt{ex\_env}) was simplified by defining a
@@ -214,13 +218,22 @@ and \texttt{exForce}, \texttt{compareEval} could be defined:
 \end{figure}
 
 By collecting a list of expressions, testing was performed by simply running
-\texttt{compareEval} on said list. This was done whenever the semantics was
+\texttt{compareEval} on a given list. This was done whenever the semantics was
 changed and needed to be tested to control that the results would not change.
 
 One expression that was not compared was the \texttt{Con} expression. The lazy
 evaluation of \texttt{Con} expressions produces thunks of the constructors'
 contents. When forced, they are not evaluated. This behaviour allows the
 possibility of infinite data structures, such as lists, to exist.
+Keeping the contents of a list as thunks can save computation time if,
+for example, \texttt{take} is applied to a significantly large list, but only
+takes a minimal amount of elements. However, thunks can also
+act as a double-edged sword. For example, in the case where a full list is to be
+shown, the strict semantics will be faster to generate the list. This is because
+of the additional steps that the lazy semantics takes to produce thunks only to
+force them to non-thunk values, which the strict semantics produces directly.
+This example shows that lazy semantics is not always optimal and that different
+situations may require different semantics for the best performance.
 
 \subsection{Testing Termination}
 As laziness brings the feature of delaying evaluation of expressions, certain
@@ -233,11 +246,13 @@ variable \texttt{x}, allowing the evaluation to continue to evaluating
 \texttt{e2}.
 
 This test method consisted of creating CakeML expressions that would exhibit the
-behaviour explained above. One such expression was defined and called
-\texttt{termExp}. A non-terminating expression \texttt{inf} was also defined to
-be used together with \texttt{termExp}.
+behaviour explained above. One such expression was defined
+and called \texttt{termExp}. A non-terminating expression \texttt{inf} was also
+defined to be used together with \texttt{termExp}.
+The expression
 \texttt{inf} was defined to create a recursive function \texttt{fun}
-that simply calls itself to create an infinite loop. \texttt{recExp} used
+that simply calls itself to create an infinite loop.
+The definition of \texttt{termExp} used
 \texttt{inf} by binding it to a variable \texttt{var} in a \texttt{Let}
 expression before returning a string literal "OK".
 
@@ -260,32 +275,6 @@ With the test results showing positive results, the lazy semantics was deemed
 to work as intended. This would signal that the groundwork for the compiler
 had been completed.
 
-\section{Discussion} \todo{I would like some more discussion, but I can't think of any at the moment.}
+\section{Discussion}
 
-The lazy semantics for \texttt{Con} expressions does not force the contents of
-the constructors. By allowing them to remain as thunks, it is possible to
-represent infinite data structures. For example, the constructors for lists are
-twofold: \texttt{(::)} and \texttt{nil}. As the name suggests, \texttt{nil}
-represents nothing, or an empty list, and is used to denote the end of a list.
-The constructor \texttt{(::)} contains two expressions: the first being an
-element of the list, and the second being the rest of the list.
-By representing both elements as thunks, certain information is "hidden" until
-necessary. For example, it is possible to represent the expression
-\texttt{[1..]}, as it is not a concrete list, but an expression that generates a
-list of infinite literals of the number 1.
-If the list was forced to show every element that it contains, the evaluation
-would not terminate. On the contrary, as long as this list is not fully forced
-to show all of its elements, it can be used for certain list operations. The
-function \texttt{take} that was described in Section~\ref{intro:Example}, for
-example, can evaluate \texttt{[1..]} as much as it needs and discard the thunk
-for the rest of the list that it does not need.
 
-Keeping the contents of a list as thunks can also save computation time if,
-for example, \texttt{take} is applied to a significantly large list, but only
-takes a minimal amount of elements. However, thunks can also
-act as a double-edged sword. For example, in the case where a full list is to be
-shown, the strict semantics will be faster to generate the list. This is because
-of the additional steps that the lazy semantics takes to produce thunks only to
-force them to non-thunk values, which the strict semantics produces directly.
-This example shows that lazy semantics is not always optimal and that different
-situations may require different semantics for the best performance.

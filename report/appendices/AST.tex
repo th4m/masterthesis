@@ -1,49 +1,20 @@
 \chapter{Haskell definition of CakeML's abstract syntax}
 \label{app:ASTExp}
 
-\begin{figure}
+This appendix displays the Haskell definition of CakeML's abstract syntax.
+\\
 \begin{alltt}
-data Exp
-  = Raise Exp
-  | Handle Exp [(Pat, Exp)]
-  | Literal Lit
-  | Con (Maybe (Id ConN)) [Exp]
-  | Var (Id VarN)
-  | Fun VarN Exp
-  | App Op [Exp]
-  | Log LOp Exp Exp
-  | If Exp Exp Exp
-  | Mat Exp [(Pat, Exp)]
-  | Let (Maybe VarN) Exp Exp
-  | LetRec [(VarN, VarN, Exp)] Exp
-  | TAnnot Exp T
-\end{alltt}
-\caption{Expressions of CakeML}
-\end{figure}
-
-\begin{figure}
-\begin{alltt}
+-- | Literal constants
 data Lit
   = IntLit Int
   | Char Char
   | StrLit String
-  | Word8 Word8
-  | Word64 Word64
-\end{alltt}
-\caption{Literals of CakeML}
-\end{figure}
 
-\begin{figure}
-\begin{alltt}
+-- | Identifiers
 data Id a
   = Short a
   | Long ModN a
-\end{alltt}
-\caption{Identifiers of CakeML}
-\end{figure}
 
-\begin{figure}
-\begin{alltt}
 -- | Variable Names
 type VarN = String
 
@@ -58,19 +29,48 @@ type TVarN = String
 
 -- | Module Names
 type ModN = String
-\end{alltt}
-\caption{Different types of names of CakeML}
-\end{figure}
 
+-- | Type Constructors
+data TCtor
+  = TC_int
+  | TC_char
+  | TC_string
+  | TC_fn
 
-\begin{figure}
-\begin{alltt}
+-- | Types
+data T
+  = TVar TVarN
+  | TVar_DB Natural
+  | TApp [T] TCtor
+
+-- | Patterns
+data Pat
+  = PVar VarN
+  | PLit Lit
+  | PCon (Maybe (Id ConN)) [Pat]
+  | PRef Pat
+  | PTAnnot Pat T
+
+-- | Expressions
+data Exp
+  = Raise Exp
+  | Handle Exp [(Pat, Exp)]
+  | Literal Lit
+  | Con (Maybe (Id ConN)) [Exp]
+  | Var (Id VarN)
+  | Fun VarN Exp
+  | App Op [Exp]
+  | Log LOp Exp Exp
+  | If Exp Exp Exp
+  | Mat Exp [(Pat, Exp)]
+  | Let (Maybe VarN) Exp Exp
+  | LetRec [(VarN, VarN, Exp)] Exp
+  | TAnnot Exp T
+\newpage
 data Op
   -- Integer operations
   = OPN Opn
   | OPB Opb
-  -- Equality
-  | Equality
   -- Function application
   | OpApp
   -- Reference operations
@@ -89,38 +89,22 @@ data Op
   | VFromList
   | VSub
   | VLength
-\end{alltt}
-\caption{Operations for the App constructor of expressions}
-\end{figure}
 
-\begin{figure}
-\begin{alltt}
+-- | Built-in binary operations
 data Opn
   = Plus
   | Minus
   | Times
   | Divide
   | Modulo
-\end{alltt}
-\caption{Numerical operators for the App constructor of expressions}
-\end{figure}
 
-\begin{figure}
-\begin{alltt}
 data Opb
   = Lt
   | Gt
   | LEq
   | GEq
-\end{alltt}
-\caption{Boolean operators for the App constructor of expressions}
-\end{figure}
 
-\begin{figure}
-\begin{alltt}
 data LOp
   = And
   | Or
 \end{alltt}
-\caption{Boolean operators for the Log constructor of expressions}
-\end{figure}

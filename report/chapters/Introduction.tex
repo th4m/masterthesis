@@ -19,19 +19,19 @@ brings improvement to software development in the form of
 modularity~\cite{Hu1989}~\cite{Hu2015}. Laziness allows the creation of certain
 types of programs that cannot be executed by using strict semantics.
 For example, the \textit{Fibonacci numbers} is an infinite sequence of numbers
-where each number is equal to the sum of the two previous numbers. [CITE?]
+where each number is equal to the sum of the two previous numbers.
 Defining the list of all Fibonacci numbers as an expression with strict semantics would
 cause the execution to never terminate, as it is required for the function to be
 fully evaluated when assigning it to a variable. In a lazy context, however,
-the expression that defines the Fibonacci numbers would simply not be evaluted
-until it is actually needed, meaning that simply assigning it to a variable
-would not cause the program to not terminate.
+the expression that defines the list of all Fibonacci numbers would simply not
+be evaluted until it is actually needed, meaning that simply assigning it to a
+variable would not cause the program to not terminate.
 
 While lazy evaluation can be seen as very beneficial, there are cases where it
 would not be optimal to evaluate lazily. For example, programs where there are
 no superfluous expressions would not have much use of lazy evaluation. When it
-is known that all expressions bound by variables will be used, it is a fact that
-they will all need to be evaluated. The underlying reason why it would be worse
+is known that all expressions bound by variables will be used,
+their evaluation is inevitable. The underlying reason why it would be worse
 to apply lazy evaluation, rather than strict evaluation, is how lazy evaluation
 delays the evaluation of expressions. The act of delaying evaluation creates
 an overhead in both memory and processing time.
@@ -42,10 +42,9 @@ feature in many use cases.
 
 \section{An Example of Lazy vs Strict Evaluation}
 \label{intro:Example}
-The difference between strict and lazy evaluation has now been described.
 In order to gain a better picture of the benefits of using lazy evaluation,
-this section will illustrate and discuss an example of evaluation of an
-expression.
+this section will illustrate how lazy and strict evaluation differ by using
+an example.
 
 A useful feature in lazy programming languages is
 infinite data structures, such as infinite lists. Using
@@ -53,9 +52,8 @@ these infinite data structures will not cause non-termination, as long as the
 program is not trying to access all of its elements. In Haskell, a lazy
 functional language, it is possible to write \texttt{take 5 [1..]} and get the
 result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
-an expression of an infinite list. This is because the list is not generated
-until it is needed, and only the necessary number of elements are generated.
-
+an expression of an infinite list. This is because only the used part of the
+list is generated.
 Below is an example of how \texttt{take} could be implemented. The function
 takes an integer (for the number of elements to take) and a list as arguments.
 This assumes that there is a datatype definition for \texttt{List} with two
@@ -67,18 +65,18 @@ constructors:
 
 \begin{figure}[H]
 \begin{alltt}
-take n list =
-  if n == 0 then
-    Nil
-  else
-    case list of
-      Cons (a, as) -> Cons (a, (take n-1 as))
-      Nil          -> Nil
+  take n list =
+    if n == 0 then
+      Nil
+    else
+      case list of
+        Cons (a, as) -> Cons (a, (take n-1 as))
+        Nil          -> Nil
 \end{alltt}
 \end{figure}
 
 \noindent The function can be written like this (with some syntax differences)
 for any language, but the semantics
-changes the strategy of evaluation. E.g. a strict language will evaluate
+changes the strategy of evaluation. For example, a strict language will evaluate
 all of \texttt{list} when pattern matching, while a lazy language is likely to
 evaluate only part of the list as much as needed. 

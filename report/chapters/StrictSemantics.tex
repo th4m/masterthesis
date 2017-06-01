@@ -2,14 +2,16 @@
 \label{chapter:strict}
 As stated in Section~\ref{intro:project}, the first major step of this project
 was to write lazy semantics for CakeML in Haskell. However, before this could be
-done, the existing strict semantics would have to be defined. The definition
+done, the existing strict semantics had to be defined in Haskell. The definition
 would include the basic abstract syntax tree and semantic primitives of the
 language.
 
 \section{Definition}
-As CakeML is an already defined language, its underlying semantics already
-exists. The compiler for this project is to be written in Haskell, meaning that
-the semantics must be defined in Haskell in order for it to be usable. This is
+CakeML is a language with a semantics defined prior to this project.
+The compiler for this project is to be written in Haskell and produce CakeML
+syntax in the form of its Haskell representation. This means that
+the semantics must be defined in Haskell in order for it to be compatible with
+the code that the compiler produces. This is
 what this section will describe: defining the strict semantics of CakeML in
 Haskell.
 
@@ -23,8 +25,8 @@ In order to translate the semantics of CakeML, three items needed to be
 investigated and manually transcribed from Lem to Haskell:
 \begin{itemize}
 \item The abstract syntax of CakeML
-\item The semantic primitives of CakeML
-\item The \texttt{evaluate} function
+\item Helper functions for CakeML's semantics
+\item The top level interpreter function \texttt{evaluate}
 \end{itemize}
 
 \noindent All three items were defined as Lem modules in the provided GitHub
@@ -40,100 +42,201 @@ operations, and expressions. Translating the abstract syntax from Lem to Haskell
 proved to not be all too difficult, as Lem and Haskell are fairly similar in
 structure. With the use of algebraic datatypes, each category in the grammar is
 defined as its own type. For example, some of the expressions of CakeML
-are represented in Lem as such:
+are represented in Lem in figure~\ref{fig:lemexp}.
+The constructors are complemented with data from other datatypes,
+e.g. \texttt{lit} and \texttt{op}, that are also defined as a part of the
+language. These datatypes are shown in figures~\ref{fig:lemlit}
+to~\ref{fig:lempat}.
 
-\begin{figure}[H]
+\begin{figure}
 \begin{alltt}
   type exp =
+    (* Literal *)
     | Lit of lit
+    (* Variable *)
     | Var of id varN
+    (* Anonymous function *)
     | Fun of varN * exp
+    (* Application of operators to arguments *)
     | App of op * list exp
+    (* Pattern matching *)
+    | Mat of exp * list (pat * exp)
+    (* Let expression that (potentially) binds a value to a variable
+       in the environment and evaluates another expression *)
+    | Let of maybe varN * exp * exp
+    (* Local definition of (potentially) mutually recursive functions *)
+    | Letrec of list (varN * varN * exp) * exp
     ...
 \end{alltt}
+\caption{Some expressions of CakeML defined in Lem.}
+\label{fig:lemexp}
 \end{figure}
 
-\noindent In order from top to bottom, these expressions represent literals,
-variables, functions, and applications. The constructors are complemented with
-data from other datatypes, e.g. \texttt{lit} and \texttt{op}, that are also
-defined as a part of the language:
-\begin{figure}[H]
+\begin{figure}
 \begin{alltt}
+  (* Literal constants *)
   type lit =
     | IntLit of integer
     | Char of char
     | StrLit of string
     ...
+\end{alltt}
+\caption{Some literals of CakeML defined in Lem.}
+\label{fig:lemlit}
+\end{figure}
 
+\begin{figure}
+\begin{alltt}
+  (* Operators *)
   type op =
+    (* Operations on integers *)
     | Opn of opn
     | Opb of opb
+    (* Function application *)
+    | Opapp
+    (* Reference operations *)
+    | Opassign
+    | Opref
+    | Opderef
     ...
 
+
+  (* Arithmetic operators *)
   type opn = Plus | Minus | Times | Divide | Modulo
 
+  (* Comparison operators *)
   type opb = Lt | Gt | Leq | Geq
 \end{alltt}
+\caption{Some operators of CakeML defined in Lem.}
+\label{fig:lemop}
 \end{figure}
 
-CakeML expressions were translated to Haskell as such:
-
-\begin{figure}[H]
+\begin{figure}
 \begin{alltt}
-  data Exp
-    = Literal Lit
-    | Var (Id VarN)
-    | Fun VarN Exp
-    | App Op [Exp]
+  (* Identifiers *)
+  type id 'a =
+    | Short of 'a
+    | Long of modN * 'a
+
+
+  (* Variable names *)
+  type varN = string
+
+  (* Module names *)
+  type modN = string
+
+  (* Constructor names *)
+  type conN = string
+
+\end{alltt}
+\caption{Identifiers and some names of CakeML defined in Lem.}
+\label{fig:lemid}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+  (* Patterns *)
+  type pat =
+    | Pvar of varN
+    | Plit of lit
+    | Pcon of maybe (id conN) * list pat
     ...
 \end{alltt}
+\caption{Some complementing datatypes of CakeML defined in Lem.}
+\label{fig:lempat}
 \end{figure}
 
-\noindent Similarly, complementing datatypes, such as \texttt{lit} and
-\texttt{id}, as well as other categories in the grammar, were also translated
-as needed:
-\begin{figure}[H]
+The Lem definition of CakeML expressions in figure~\ref{fig:lemexp} is
+translated to Haskell in figure~\ref{fig:hsexp}.
+Similarly, complementing datatypes, such as \texttt{lit} and
+\texttt{op}, as well as other categories in the grammar, were also translated
+as needed. These datatypes can be seen in figure~\ref{fig:hsdata}.
+
+\begin{figure}
 \begin{alltt}
+  data Exp
+    -- Literal
+    = Literal Lit
+    -- Variable
+    | Var (Id VarN)
+    -- Anonymous function
+    | Fun VarN Exp
+    -- Application of operators on arguments
+    | App Op [Exp]
+    -- Pattern matching
+    | Mat Exp [(Pat, Exp)]
+    -- Let expression that (potentially) binds a value to a variable
+    -- in the environment and evaluates another expression
+    | Let (Maybe VarN) Exp Exp
+    -- Local definition of (potentially) mutually recursive functions
+    | LetRec [(VarN, VarN, Exp)] Exp
+    ...
+\end{alltt}
+\caption{Haskell definition of some CakeML's expressions.}
+\label{fig:hsexp}
+\end{figure}
+
+\begin{figure}
+\begin{alltt}
+  -- Literal constants
   data Lit
     = IntLit Int
     | Char Char
     | StrLit String
     ...
 
+
+  -- Operators
   data Op
+    -- Integer operations
     = OPN Opn
     | OPB Opb
+    -- Function application
+    | OpApp
+    -- Reference operations
+    | OpAssign
+    | OpRef
+    | OpDeref
     ...
 
+  -- Arithmetics operators
   data Opn = Plus | Minus | Times | Divide | Modulo
 
+  -- Comparison operators
   data Opb = Lt | Gt | LEq | GEq
+
+
+  -- Identifiers
+  data Id a = Short a | Long ModN a
+
+
+  -- | Patterns
+  data Pat
+    = PVar VarN
+    | PLit Lit
+    | PCon (Maybe (Id ConN)) [Pat]
+    ...
 \end{alltt}
+\caption{Haskell definitions of some complementing CakeML datatypes.}
+\label{fig:hsdata}
 \end{figure}
 
-These expressions are the basic building blocks that a programmer uses to create
-their programs. For example, a simple integer such as 5 is represented as
+\newpage
+\noindent These expressions are the basic building blocks that a programmer uses
+to create their programs. For example, a simple integer such as 5 is represented
+as
 \begin{alltt}
   Literal (IntLit 5)
 \end{alltt}
 when using this abstract syntax. Building more
-complex expressions is as simple as combining multiple expressions. For example
-the arithmetic expression \(1 + (7 - 8)\) can be represented as
-
-\begin{figure}[H]
-\begin{alltt}
-  App (OPN Plus) [Literal (IntLit 1),
-                  App (OPN Minus) [Literal (IntLit 7)
-                                  ,Literal (IntLit 8)
-                                  ]
-                 ]
-\end{alltt}
-\end{figure}
-
-With the \texttt{Fun} expression, it is possible to create functions that take
+complex expressions is as simple as combining multiple expressions. For example,
+with the \texttt{Fun} expression, it is possible to create functions that take
 arguments and produces values. For example, \texttt{take} that was described in
-Section~\ref{intro:Example} can be defined by combining a number of expressions:
-\begin{figure}[H]
+Section~\ref{intro:Example} can be defined by combining a number of expressions.
+The definition of \texttt{take} using CakeML expressions in Haskell can be seen
+in figure~\ref{fig:caketake}.
+
+\begin{figure}
 \begin{alltt}
   cakeTake =
     LetRec [("take", "n",
@@ -157,30 +260,37 @@ Section~\ref{intro:Example} can be defined by combining a number of expressions:
             App (OPN Minus) [Var (Short "n")
                             ,Literal (IntLit 1)]
 \end{alltt}
+\caption{The list function \texttt{take} defined by combining CakeML expressions.}
+\label{fig:caketake}
 \end{figure}
 
 
-\subsection{Semantic Primitives}
-The semantic primitives of a language is how its calculations are performed.
-This includes operations such as basic arithmetic, logical operations,
-lookups, and pattern matching. Also included in the semantic primitives are
-the inner representations of \textit{values}, \textit{state}, and
+\subsection{Helper functions for CakeML's semantics}
+CakeML's semantics has many helper functions that define how computations are
+performed. This includes operations such as basic arithmetic, logical
+operations, lookups, and pattern matching. Also included in the semantic
+primitives are the inner representations of \textit{values}, \textit{state}, and
 \textit{environment}.
 
-Values are represented by the datatype \texttt{V} and are what expressions
+Values are represented by the datatype \texttt{v} (in Haskell it is denoted with
+an upper case \texttt{V}) and are what expressions
 ususally are evaluated to. Some of the values of CakeML are represented in
 Lem as such:
 
 \begin{figure}[H]
 \begin{alltt}
   type v =
+    (* Literal values *)
     | Litv of lit
+    (* Function closures *)
     | Closure of environment v * varN * exp
+    (* Function closure for recursive functions *)
+    | Recclosure of environment v * list (varN * varN * exp) * varN
     ...
 \end{alltt}
 \end{figure}
 
-\noindent In order, these values represent literals, closures, and vectors.
+\noindent In order, these values represent literals, closures, and recursive closures.
 Just as with the expressions described above, other datatypes that represent
 other parts of the grammar are needed. However, these mostly already exist from
 the definition of the abstract syntax and are therefore reused.
@@ -191,8 +301,12 @@ abstract syntax described in Section~\ref{strict:abs}:
 \begin{figure}[H]
 \begin{alltt}
   data V
+    -- Literal values
     = LitV Lit
+    -- Function Closures
     | Closure (Environment V) VarN Exp
+    -- Function closure for recursive functions
+    | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
     ...
 \end{alltt}
 \end{figure}
@@ -210,7 +324,7 @@ which is evaluated to the value
 % Should state and environment be described? Too much info?
 % Just refer to appendix for more info?
 
-\subsection{The \texttt{evaluate} function}
+\subsection{The top level interpreter function \texttt{evaluate}}
 Linking the abstract syntax together with the semantics of CakeML is the
 \texttt{evaluate} function. The job of \texttt{evaluate} is to take a list of
 expressions as input and return a state together with a result. A result can
@@ -218,14 +332,13 @@ consist of a list of values or an error. Also contributing to the evaluation
 of expressions are a state and an environment, which are given as input to
 \texttt{evaluate}. The type of \texttt{evaluate} (in Lem notation) is thus:
 
-\todo{Is it okay to have no spaces between state*result?}
 \begin{figure}[H]
 \begin{alltt}
   evaluate:state -> environment v -> list exp -> state*result (list v) v
 \end{alltt}
 \end{figure}
 
-\noindent Expressions are taken either as a sequence in \texttt{evaluate},
+\noindent Expressions are taken either as a list in \texttt{evaluate},
 in which case they are evaluated sequentially, or as singletons, in which case
 they are pattern matched to be evaluated with unique strategies:
 
@@ -333,43 +446,43 @@ Faulty results indicated erroneous implementation of the semantics.
 Through troubleshooting and amending code, the semantics eventually
 reached a satisfactory state that could evaluated expressions correctly.
 
-\section{Discussion}\todo{I would like some more discussion, but I can't think of any at the moment.}
-The Haskell definition of CakeML's semantics was written as a direct port. \todo{Create subsection?}
-As Lem and
-Haskell are similar in syntactical structure, it was not a difficult \todo{Okay to say difficult?}
-task to transcribe the semantics. However, a different approach of the porting
-could be considered by using monads in
-Haskell~\cite{MonadHas66:online}~\cite{AllAbout63:online}~\cite{learnhaskell}.
-For example, the Lem definition of \texttt{evaluate} explicitly passes the state
-from input to output. Haskell has a \texttt{State} monad~\cite{StateMon99:online}
-that implicitly passes the state. Operations on the state can be called through
-monadic functions such as \texttt{get}, \texttt{put}, and \texttt{assign}.
-Using the \texttt{State} monad could prevent possible mistakes of returning the
-wrong state at the end of an evaluation. However, using a monadic approach to
-define \texttt{evaluate} would also affect any other functions that uses it,
-causing the port to possibly deviate from its original definition.
-The explicity of the non-monadic approach can also be seen as making the
-semantics easy \todo{Okay to say "easy"?} to read and understand.
+%% \section{Discussion}\todo{I would like some more discussion, but I can't think of any at the moment.}
+%% The Haskell definition of CakeML's semantics was written as a direct port. \todo{Create subsection?}
+%% As Lem and
+%% Haskell are similar in syntactical structure, it was not a difficult \todo{Okay to say difficult?}
+%% task to transcribe the semantics. However, a different approach of the porting
+%% could be considered by using monads in
+%% Haskell~\cite{MonadHas66:online}~\cite{AllAbout63:online}~\cite{learnhaskell}.
+%% For example, the Lem definition of \texttt{evaluate} explicitly passes the state
+%% from input to output. Haskell has a \texttt{State} monad~\cite{StateMon99:online}
+%% that implicitly passes the state. Operations on the state can be called through
+%% monadic functions such as \texttt{get}, \texttt{put}, and \texttt{assign}.
+%% Using the \texttt{State} monad could prevent possible mistakes of returning the
+%% wrong state at the end of an evaluation. However, using a monadic approach to
+%% define \texttt{evaluate} would also affect any other functions that uses it,
+%% causing the port to possibly deviate from its original definition.
+%% The explicity of the non-monadic approach can also be seen as making the
+%% semantics easy \todo{Okay to say "easy"?} to read and understand.
 
-CakeML's semantics always fully evaluate sub-expressions for the evaluation \todo{Create subsection?}
-of any expression. This call-by-value behaviour does not allow for infinite
-data structures, even when the whole data structure is not used. For example,
-the function \texttt{take}, described in Section~\ref{intro:Example} and defined
-in CakeML syntax in Section~\ref{strict:abs}, will take a \texttt{Con}
-expression that represents a list and fully evaluate it before producing the
-final list. This is because when the list is bound to the variable \texttt{ls},
-it is evaluated. The evaluation of \texttt{Con} expressions always evaluates the
-arguments of the constructors. List constructors are defined as:
-\begin{figure}[H]
-\begin{alltt}
-  Con (Just (Short "nil")) []
-  Con (Just (Short "::" )) [e,es]
-\end{alltt}
-\end{figure}
-\noindent The \texttt{nil} constructor denotes an empty list and thus has no arguments.
-The \texttt{(::)} constructor denotes the continuation of a list and thus has
-an element \texttt{e} and the rest of the list \texttt{es} as arguments.
-As \texttt{es} also is a list, it will be either a \texttt{nil} or a
-\texttt{(::)} constructor. This means that when a list is evaluated, a chain
-of recursive evaluation will continue until a \texttt{nil} is encountered.
-Thus, a list will always be fully evaluated when called.
+%% CakeML's semantics always fully evaluate sub-expressions for the evaluation \todo{Create subsection?}
+%% of any expression. This call-by-value behaviour does not allow for infinite
+%% data structures, even when the whole data structure is not used. For example,
+%% the function \texttt{take}, described in Section~\ref{intro:Example} and defined
+%% in CakeML syntax in Section~\ref{strict:abs}, will take a \texttt{Con}
+%% expression that represents a list and fully evaluate it before producing the
+%% final list. This is because when the list is bound to the variable \texttt{ls},
+%% it is evaluated. The evaluation of \texttt{Con} expressions always evaluates the
+%% arguments of the constructors. List constructors are defined as:
+%% \begin{figure}[H]
+%% \begin{alltt}
+%%   Con (Just (Short "nil")) []
+%%   Con (Just (Short "::" )) [e,es]
+%% \end{alltt}
+%% \end{figure}
+%% \noindent The \texttt{nil} constructor denotes an empty list and thus has no arguments.
+%% The \texttt{(::)} constructor denotes the continuation of a list and thus has
+%% an element \texttt{e} and the rest of the list \texttt{es} as arguments.
+%% As \texttt{es} also is a list, it will be either a \texttt{nil} or a
+%% \texttt{(::)} constructor. This means that when a list is evaluated, a chain
+%% of recursive evaluation will continue until a \texttt{nil} is encountered.
+%% Thus, a list will always be fully evaluated when called.
