@@ -320,4 +320,95 @@ forceList' s@(st, RVal [ConV (Just ("::",TypeId (Short "list"))) [v,vs]]) =
         res -> res
     res -> res
 forceList' (st, RVal [nil]) = (st, RVal [nil])
-forceList' _ = undefined
+forceList' res = error $ show res
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Demo to show call-by-name
+
+withRefExp = efc $
+  Let
+  (Just "var")
+  (App (OPN Plus) [Literal (IntLit 5), Literal (IntLit 5)])
+  (Literal (IntLit 0))
+
+withRefVal = efc $
+  Let
+  (Just "var")
+  (App (OPN Plus) [Literal (IntLit 5), Literal (IntLit 5)])
+  (Var (Short "var"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Demo to compare call-by-name and call-by-need
+
+okList = getVal $ forceList' $ efc $
+  applyCR (App OpApp [stopAtZero, Literal (IntLit 100)]) 5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Demo to compare lazy vs strict
+
+
+strict1to5000 = valOff $ snd $ ex $
+  mkList [1..5000]
+  where valOff (RVal [v]) = v
+
+lazy1to5000 = getVal $ forceList' $ efc $
+  mkList [1..5000]
