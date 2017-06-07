@@ -8,37 +8,20 @@ compile (Raise e) = makeThunk $ Raise $ forceCompile e
 compile (Handle e pes) = makeThunk $ Handle (forceCompile e) (compilePats pes)
 compile (Con cn es) = makeVal $ Con cn $ map thunkCompile es
 compile (Var n) =
-  --assign $ solve
   makeThunk $ Var n
-  where solve = makeVal $ force $ App OpDeref [force (Var n)]
-        assign = Let Nothing (App OpAssign [force (Var n), solve]) --in
---        getVal = App OpDeref [force (Var n)]
-compile (Fun x e) = makeVal $ Fun x (compile e) -- compile e?
+compile (Fun x e) = makeVal $ Fun x (compile e)
 compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case (op, es) of
   (OpApp, [e1, e2])  ->
-    -- makeThunk $ App OpApp $ map forceCompile es -- ?
-
-    Let (Just "E1") (forceCompile e1) $
-    Let (Just "E2") (thunkCompile e2) $
-    makeThunk $ App op [Var (Short "E1"), Var (Short "E2")]
-  (OPN op, [_, _]) ->
-    compOnOpn op es
+    makeThunk $ App op [forceCompile e1, thunkCompile e2]
   _ ->
-    makeVal $ App op $ map forceCompile es -- ?
-    -- Let (Just "E1") (forceCompile e1) $
-    -- Let (Just "E2") (forceCompile e2) $
-    -- makeVal $ App op [Var (Short "E1"), Var (Short "E2")]
-
-compile (Log lop e1 e2) = -- Log lop (forceCompile e1) $ thunkCompile e2
-  Let (Just "E1") (forceCompile e1) $
-  Let (Just "E2") (forceCompile e2) $
-  makeVal $ Log lop (Var (Short "E1")) (Var (Short "E2"))
+    makeVal $ App op $ map forceCompile es
+compile (Log lop e1 e2) =
+  Log lop (forceCompile e1) (forceCompile e2)
 compile (If e1 e2 e3) = If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 compile (Mat e pes) = Mat (forceCompile e) (compilePats pes)
-compile (Let xo e1 e2) = --mkRef $ thunkCompile e2
+compile (Let xo e1 e2) =
   Let xo (thunkCompile e1) (thunkCompile e2)
-  where mkRef = Let xo (makeVal ((App OpRef [thunkCompile e1]))) --in
 compile (LetRec funs e) =
   LetRec (recVals funs) (repl (compile e) (fst3 funs))
   where
@@ -46,17 +29,6 @@ compile (LetRec funs e) =
     fst3 ((f,_,_):fs) = (f:fst3 fs)
     repl e []     = e
     repl e (f:fs) = Let (Just f) (makeVal (Var (Short f))) (repl e fs)
-
-  -- LetRec (replace funs invalidNames) (reinstance invalidNames names (thunkCompile e))
-  -- where names = getNames funs
-  --       getNames [] = []
-  --       getNames ((f,_,_):funs') = (f:getNames funs')
-  --       invalidNames = map (++ " ") names
-
-  -- makeVal $
-  -- LetRec (funsCompile funs) (thunkCompile e)
-  -- Let (Just "E") (thunkCompile e) $
-  -- LetRec (funsCompile funs) (Var (Short "E"))
 compile (TAnnot e t) = TAnnot (thunkCompile e) t
 
 forceCompile = force . compile
@@ -67,27 +39,9 @@ recVals []           = []
 recVals ((f,x,e):xs) =
   (f,x, Let (Just f) (makeVal (Var (Short f))) (compile e)):(recVals xs)
 
--- -- | Replace variable names in funs
--- replace :: [(VarN, VarN, Exp)] -> [VarN] -> [(VarN, VarN, Exp)]
--- replace [] _ = []
--- replace ((f,x,e'):funs') (n:ns) =
---   ((n,x,compile (subst f n e')):replace funs' ns)
--- replace fs ns = error $ "replace: xs - " ++ show (length fs) ++ ", ys - " ++ show (length ns)
-
--- -- | Reinstance x as y
--- reinstance :: [VarN] -> [VarN] -> Exp -> Exp
--- reinstance [] [] e = e
--- reinstance (x:xs) (y:ys) e = Let (Just y) (makeVal (Var (Short x))) (reinstance xs ys e)
--- reinstance xs ys _ = error $ "reinstance: xs - " ++ show (length xs) ++ ", ys - " ++ show (length ys)
-
 mapFun :: (Exp -> Exp) -> [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
 mapFun _ [] = []
 mapFun f ((v1,v2,e):funs) = ((v1,v2,f e):(mapFun f funs))
-
--- funsCompile :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
--- funsCompile = mapFun thunkCompile
--- funsCompile []           = []
--- funsCompile ((f,x,e):fs) = ((f,x,thunkCompile e): funsCompile fs)
 
 -- | Changes names of variables
 subst :: VarN -> VarN -> Exp -> Exp
