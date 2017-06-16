@@ -1,17 +1,17 @@
 \chapter{Introduction}
 \label{chapter:intro}
-Lazy evaluation is a style of programming where expressions that are bound by variables
+Lazy evaluation is a style of programming where expressions that are bound to variables
 are not evaluated until their results are needed in another part of the
 program~\cite{Lazyeval6:online}. This is often put in contrast with another
 evaluation style called strict evaluation, which always evaluates expressions
-as they are to be bound by variables. 
+immediately as they are to be bound to variables. 
 
 The main difference between lazy and strict programming languages is the steps
 of evaluation that their respective semantics take. With strict semantics,
 expressions are evaluated when they are created, while with lazy semantics,
 expressions are evaluated when they are needed~\cite{ThunkHas27:online}.
 This means that in lazy semantics you can give a function an argument
-whose evaluation cannot be terminated, and as long as
+whose evaluation does not terminate, and as long as
 that argument is never used, the function itself can still terminate normally.
 
 It has been argued that lazy programming (and functional programming in general)
@@ -28,9 +28,9 @@ be evaluted until it is actually needed, meaning that simply assigning it to a
 variable would not cause the program to not terminate.
 
 While lazy evaluation can be seen as very beneficial, there are cases where it
-would not be optimal to evaluate lazily. For example, programs where there are
+would not be optimal. For example, programs where there are
 no superfluous expressions would not have much use of lazy evaluation. When it
-is known that all expressions bound by variables will be used,
+is known that all expressions bound to variables will be used,
 their evaluation is inevitable. The underlying reason why it would be worse
 to apply lazy evaluation, rather than strict evaluation, is how lazy evaluation
 delays the evaluation of expressions. The act of delaying evaluation creates
@@ -40,7 +40,7 @@ semantics can cause slower evaluation time when compared to
 strict semantics. Despite this potential drawback, laziness can be a desirable
 feature in many use cases. 
 
-\section{An Example of Lazy vs Strict Evaluation}
+\section{An example of lazy vs strict evaluation}
 \label{intro:Example}
 In order to gain a better picture of the benefits of using lazy evaluation,
 this section will illustrate how lazy and strict evaluation differ by using
@@ -50,7 +50,9 @@ A useful feature in lazy programming languages is
 infinite data structures, such as infinite lists. Using
 these infinite data structures will not cause non-termination, as long as the
 program is not trying to access all of its elements. In Haskell, a lazy
-functional language, it is possible to write \texttt{take 5 [1..]} and get the
+functional language, there exists a function \texttt{take n list} that takes the
+first \texttt{n} elements from \texttt{list} and returns a new list with
+these elements. It is possible to write \texttt{take 5 [1..]} and get the
 result \texttt{[1, 2, 3, 4, 5]}, even though \texttt{[1..]} is
 an expression of an infinite list. This is because only the used part of the
 list is generated.
@@ -80,3 +82,10 @@ for any language, but the semantics
 changes the strategy of evaluation. For example, a strict language will evaluate
 all of \texttt{list} when pattern matching, while a lazy language is likely to
 evaluate only part of the list as much as needed. 
+
+The evaluation strategy of strict semantics is restrictive e.g. in the way that
+infinite data structures cannot be used. The example above will not terminate
+with strict semantics, as the evaluation of the infinite list will end up in an
+infinite loop. This thesis will explore the connection between lazy and strict
+semantics and how this connection can be used to allow lazy evaluation in a
+strict language.

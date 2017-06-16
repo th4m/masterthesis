@@ -6,12 +6,12 @@
   that always evaluates expressions when they are bound to variables, while lazy
   evaluation is often implemented as call-by-need semantics that evaluates
   expressions when they are needed for some computation. Lazy semantics makes
-  use of thunks, a data structure that contains an expression whose evaluation
-  has become suspended together with its environment. This thesis presents
+  use of a data structure called thunk that contains an expression, whose evaluation
+  has become suspended, together with its environment. This thesis presents
   (1) a Haskell definition of the existing semantics of CakeML, a strict programming
   language, (2) a Haskell definition of lazy semantics for the pure part
   of CakeML, and (3) a Haskell implementation of a compiler that compiles lazy
-  CakeML to strict CakeML with respect to (1) and (2). The compiler makes
+  CakeML to strict CakeML as defined in (1) and (2). The compiler makes
   use of stateful features in strict CakeML to optimise evaluation so that each
   thunk is evaluated at most once, simulating a call-by-need semantics.
 \end{abstract}

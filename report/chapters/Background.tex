@@ -1,7 +1,7 @@
 \chapter{Background}
 Chapter~\ref{chapter:intro} shortly introduced the basics of lazy and strict
 semantics. This chapter will present a more in-depth description of semantics
-and compilers, as well as present some previous work on the subject.
+and compilers, as well as some previous work on the subject.
 
 \section{Semantics}
 Every programming language has its own \textit{semantics}. Semantics are often
@@ -22,16 +22,17 @@ semantics, each construct is defined by computation steps. These steps are
 often described with the help of transition systems, presenting the computation
 steps as a sequence of transitions. For this project, however,
 the operational semantics will be defined in the form of Haskell functions.
+By defining the operational semantics as Haskell functions, it can be observed
+and executed as Haskell code.
 
-
-\subsection{Strict Semantics}
+\subsection{Strict semantics}
 Strict programming indicates that expressions are always fully evaluated when
 they appear in the chain of evaluation. For example, when an arithmetic expression
 is bound to a variable, the expression is fully evaluated to become a numerical
 value before being assigned to the variable. The value is then accessible
 by simply using the variable.
 
-\subsection{Lazy Semantics}
+\subsection{Lazy semantics}
 \label{back:lazySem}
 The main characteristics of laziness is delaying evaluation of expressions
 until they are needed. This is often done when binding expressions to
@@ -46,14 +47,14 @@ value.
 % Using this
 %mechanic requires more memory usage than when evaluating with strict semantics.
 
-\subsection{Pros and Cons of Both Semantics}
+\subsection{Pros and cons of both semantics}
 One reason to why applications are programmed strictly is because it can be
 necessary to have all values fully evaluated. If the evaluation of an expression
-that is erroneous is delayed, it's impendent error will also be delayed.
+that is erroneous is delayed, the error that it will bring will also be delayed.
 An example would be to consider a stateful system; if an operation is dependent
 on a reference, the value assigned to that reference needs to have been
 evaluated. If the evaluation of that value is delayed until after it is used,
-an error is prone to occur, as that value will not be there.
+an error is prone to occur, as that value may not be there.
 By using strict evaluation, the evaluation is not delayed, avoiding any
 ambiguity of knowing whether or not references will have valid values.
 
@@ -66,7 +67,7 @@ only use a select few, or even none, of the previously assigned variables.
 In such cases, it would not be optimal to actually evaluate them.
 
 Lazy evalution can be motivated with an opposite reason in relation to strict
-evaluation. Programs that have a number of expressions bound by variables may
+evaluation. Programs that have a number of expressions bound to variables may
 not make use of all of them. For example, when using the \texttt{case} construct
 to pattern match in Haskell, the expression that is pattern matched can be
 assigned to a variable as an effect of the pattern matching:
@@ -92,7 +93,7 @@ that the actual content of list can be infinite in length without having the
 evaluation of the program ending up in a non-terminating loop.
 
 Infinite data structures are also a major benefit for using lazy evaluation.
-As described in section~\ref{intro:Example}, the function \texttt{take}
+As described in Section~\ref{intro:Example}, the function \texttt{take}
 in Haskell returns a subset of a given list. \texttt{take} has two arguments,
 an integer \texttt{x} and a list \texttt{xs}. This is used to get the
 $x$ first elements of the list \texttt{xs}. The lazy evaluation of the
@@ -104,7 +105,7 @@ the Fibonacci numbers.
 \section{Compilers}
 When a programmer has written code, the code must be translated into a form such
 that it can be executed by a computer. This translation is the job of a
-\textit{compiler}~\cite{DragonBook}. The compiler is a program that reads
+\textit{compiler}~\cite{DragonBook}. A compiler is a program that reads
 programs in a \textit{source} language and translates it to a \textit{target}
 language. The source language is often some high-level language, while the
 target language is a low-level machine language.
@@ -134,9 +135,25 @@ lazily, but with the use of the native CakeML compiler that evaluates strictly.
 \section{CakeML}
 \label{back:cakeml}
 This section will present CakeML, the language that is the main focus of this
-thesis. \notdone{TODO}
+thesis. CakeML is a strict functional programming language that is based on a
+subset of Standard ML~\cite{CakeML25:online}. Its semantics is defined in
+higher-order logic (with HOL interactive theorem prover)~\cite{HOLInter57:online}
+and its compiler is formally
+proved to transform CakeML programs to semantically equivalent machine
+code~\cite{Kumar:2014:CVI:2535838.2535841}.
 
-\section{Previous Work}
+The semantics provided for this project was specified in
+Lem~\cite{Lem33:online}~\cite{LemPaper}. Lem is a lightweight tool for creating
+and handling large scale semantic definitions. It can also be used as an
+intermediate language for porting definitions between interactive theorem proving
+systems, such as HOL4.
+
+This thesis presents a Haskell translation of the Lem definition of CakeML's
+strict semantics, as well as a newly defined lazy semantics of CakeML. The
+compiler that is the goal of the project draws inspiration from the lazy
+semantics.
+
+\section{Previous work}
 This section will present and discuss previous work that is related to this
 project. Topics include programming language libraries that allow lazy/strict
 evaluation in languages that do not allow it by default, as well as an
@@ -161,18 +178,39 @@ does terminate, the result of \texttt{seq} is equal to \texttt{b}. While both
 \texttt{a} and \texttt{b} are evaluated before returning the result,
 \texttt{seq} does not guarantee that \texttt{a} is evaluated before \texttt{b}.
 
-\begin{itemize}
-\item \$!\notdone{TODO}
-\end{itemize}
+Haskell has a function denoted as \texttt{\$!} that evaluates arguments strictly.
+As arguments are normally evaluated lazily in Haskell, thunks are naturally
+generated, often creating an overhead in the computation. When an argument is
+known to always be evaluated, \texttt{\$!} is recommended to avoid unnecessary
+suspensions~\cite{Performa16:online}.
 
-\subsubsection{.NET}\notdone{TODO}
+\subsubsection{C\#}
+C\# is an object oriented programming language developed by Microsoft. The
+language is strict, but has a Class \texttt{Lazy<T>} that allows lazy
+initialization~\cite{LazyTCla1:online}. The \texttt{Lazy<T>} class allows
+lazy evaluation in a similar way as it is done in Haskell, as
+function calls can be encapsulated for passing the call until it needs to be
+evaluated~\cite{csharp}. The call only happens once, with the use of caching,
+meaning that multiple uses will not cause multiple evaluation of the same
+suspended function.
 
-\subsubsection{Python}\notdone{TODO}
 
 \subsection{Optimistic evaluation}
 
 This section will present and discuss an evaluation strategy that was developed
-for Haskell by Ennals and Peyton Jones. In their paper they state that they
-measure common usage of thunks. This lead them to create an evaluation strategy
-that makes use of their observation. \notdone{Expand more.}
+for Haskell by Ennals and Peyton Jones~\cite{Ennals:2003:OEA:944746.944731}.
+In their paper they state that they measure common usage of thunks. As lazy
+evaluation creates an overhead with thunk utilization, programs can sometimes
+evaluate slower in a lazy semantics than in a strict semantics. This lead
+them to create an evaluation strategy that makes use of their observation.
+Strict evaluation makes use of call-by-value mechanics, where expressions are
+always evaluated to values, while lazy evaluation uses call-by-need mechanics,
+where thunks are exploited to delay the evaluation. The evaluation strategy
+presented in the paper finds expressions that will always be evaluated, applying
+call-by-value semantics on them, and uses an abortion mechanism for evaluation
+that takes too long.
 
+The results of the work showed that the tested set of programs were sped up by
+a mean of about 15\%, while no program was slowed down with more than 15\%.
+Thus, by dynamically choosing between call-by-value and call-by-name,
+performance can be improved by a significant amount.

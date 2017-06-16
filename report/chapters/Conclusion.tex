@@ -1,5 +1,5 @@
 \chapter{Conclusion}
-This thesis has presented a Haskell definition of CakeML's strict semantics,
+This thesis presented a Haskell definition of CakeML's strict semantics,
 a Haskell definition of lazy semantics for CakeML's pure parts, and a Haskell
 implementation of a compiler that compiles lazy CakeML to strict CakeML.
 
@@ -77,9 +77,8 @@ whenever a \texttt{RefExp} was forced to replace the value that the thunk
 reference was pointing at.
 
 The ultimate goal of this project was to produce a compiler that takes lazy
-semantics and enforces it in strict semantics. This goal is considered to have
+semantics and enforces it in strict semantics. This goal has
 been reached with the completion of the third phase. The call-by-need semantics
-optimised the compiler further to achieve true laziness, where forced thunks
+optimised the compiler to achieve true laziness, where forced thunks
 would replace their suspended expressions with the value yielded from
-the evaluation. With these results, this project is considered to have been
-successful.
+the evaluation.

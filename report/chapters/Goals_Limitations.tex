@@ -1,16 +1,20 @@
-\chapter{Goals and Limitations}
-This chapter will describe the goals and limitations of this thesis.
+\chapter{Goals and limitations}
+This chapter will describe the goals and limitations of this thesis. The project
+will first be described in terms of tasks that it was divided into. This is
+followed by the limitations that were imposed on the project in order for it to
+be finished in a realistic time period.
 
-\section{Project Description}
+\section{Project description}
 \label{intro:project}
 The goal of this project is to create a compiler that takes code from a lazy
 programming language and compiles it to a target language that has strict
-evaluation. The resulting code should have the same user-observable evaluation
+evaluation. The resulting code should have the same user-observable semantics
 as the given lazy code.
 The purpose of creating such a compiler is to explore the formal
 connection between lazy and strict evaluation. The compiler will be written in
 the programming language Haskell. The source language for the compiler will be
-a lazy definition of CakeML's semantics and the target language to which the
+a lazy definition of the semantics of CakeML, a strict functional language.
+The target language to which the
 compiler will output will be CakeML, with its original strict semantics. This
 means that the semantics to express laziness will be defined as part of this
 project and used as a base to implement the compiler.
@@ -38,24 +42,31 @@ expressions and steps of evaluation.
 In summary, the project consists of three major parts that were developed
 in parallel:
 \begin{itemize}
- \item Writing lazy semantics for the programming language CakeML
- \item Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML
- \item Testing the compiler by writing operational semantics in the form of functions and running unit tests.
+ \item Writing lazy semantics for the programming language CakeML (Chapter~\ref{lazySem})
+ \item Creating a compiler that translates the lazy semantics to the original strict semantics of CakeML (Chapter~\ref{chapter:compiler})
+ \item Testing the compiler by writing operational semantics in the form of functions and running unit tests. (Described in various chapters)
 \end{itemize}
+
+The artifacts are available in \url{https://github.com/th4m/masterthesis}, as
+well as in the appendices of this thesis. Appendix~\ref{app:ASTExp} contains the
+Haskell definition of CakeML's abstract syntax. Appendix~\ref{app:semprim}
+contains various datatypes used to define the semantics.
+Appendix~\ref{app:compiler} contains the code for the compiler, including helper
+functions.
 
 \section{Limitations}
 \label{sec:limitations}
 Due to the time constraints of this thesis, certain limitations will be enforced
 to keep the workload within a reasonable size. These limitations are:
 
-\paragraph{Only expressions were considered.}
-As expressions make up of the majority of the language, they will be the highest
-category of the grammar that will be implemented. Expressions allow operations
-and values to be represented, which is important for a programming language.
-This limitation means that declarations and modules will not be a part of this
-project.
+\paragraph{Only expressions.}
+As expressions make up of the majority of the language, they will be the topmost
+construct of the input language's grammar that will be implemented. Expressions
+allow operations and values to be represented, which is important for a
+programming language. This limitation means that declarations and modules will
+not be a part of this project.
 
-\paragraph{No parser was developed for the compiler.}
+\paragraph{No parser.}
 No actual parser that takes written CakeML code was created for this thesis.
 Instead, an internal representation of CakeML expressions was created in
 Haskell and used to create the semantics and compiler. A parser that
@@ -63,7 +74,7 @@ takes CakeML code in string format and converts it to the internal
 representation can be created in the future. It should not prove to
 be a challenging task to link the parser together with the compiler.
 
-\paragraph{A fixed version of CakeML was focused on.}
+\paragraph{Chosen version of CakeML.}
 At the time of writing, the programming language CakeML is still evolving,
 meaning that the semantics of the language is prone to change at
 any time. In order to keep a steady workflow, any updates to the semantics after

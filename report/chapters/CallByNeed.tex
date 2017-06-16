@@ -1,27 +1,27 @@
-\chapter{Call-by-need semantics}
-With the completion of the compiler, expressions bound as variables are stored
+\chapter{Optimization: call-by-need semantics}
+With the completion of the compiler, expressions bound to variables are stored
 as thunks, delaying their evaluation until they are called. While this means
 the compiled code exhibits lazy behaviour, the thunks are evaluated every
 time that the variable is called. The optimal behaviour, called
 \textit{call-by-need}, is to evaluate the thunks at most once and reuse the
-resulting value. This chapter will describe how the compiler was optimised to
+resulting value. This chapter will describe how the compiler is optimised to
 use the stateful features of CakeML in order to implement call-by-need.
 
 \section{Implementation}
 \label{cbn:impl}
 With the implementation of the compiler, as described in
-Chapter~\ref{chapter:compiler}, expressions bound by variables have been stored
+Chapter~\ref{chapter:compiler}, expressions bound to variables are stored
 in the environment as thunks and evaluated when called. In order to use
-call-by-need mechanics, the compiler was altered to make use of CakeML's
+call-by-need mechanics, the compiler is altered to make use of CakeML's
 inherent state in order to save thunks, as well as their evaluated value.
 
-Thunks were changed so that instead of containing delayed expressions, they
-contained references that point to the location of the delayed expressions in
-the state. Two new constructors were introduced under a new type to represent
+Thunks are changed so that instead of containing delayed expressions, they
+contain references that point to the location of the delayed expressions in
+the state. Two new constructors are introduced under a new type to represent
 expressions and values stored in the state: \texttt{RefExp} and \texttt{RefVal}.
-Delayed expressions were wrapped in \texttt{Fun} expressions inside the
+Delayed expressions are wrapped in \texttt{Fun} expressions inside the
 \texttt{RefExp} constructor, similarly to how they were with the \texttt{Thunk}
-constructor before the optimisation. Fully evaluated values were wrapped in the
+constructor before the optimisation. Fully evaluated values are wrapped in the
 \texttt{RefVal} constructor without any further modifications, just like with
 the \texttt{Val} constructor.
 
@@ -33,23 +33,23 @@ the \texttt{App} expression. When evaluated, \texttt{App OpRef [e]} creates a ne
 entry in the state for the value that \texttt{e} is evaluated to. The reference
 is then returned as a location value \texttt{Loc n}. \texttt{App OpDeref [e]}
 takes an expression \texttt{e} that is to be evaluated to a reference (e.g. a
-variable that contains the reference), and returns the value that was stored in
+variable that contains the reference), and returns the value that is stored in
 the state for the given reference. \texttt{App OpAssign [e1, e2]} takes a
 reference \texttt{e1} and an expression \texttt{e2}, and changes the value
 stored in the state in the location given by \texttt{e1} to the value that
 \texttt{e2} is evaluated to. The result of evaluating \texttt{App OpAssign}
-is a a constructor expression containing \texttt{Nothing}, which needs to be
+is a constructor expression containing \texttt{Nothing}, which needs to be
 kept in mind when using \texttt{OpAssign}.
 
 By using the operations \texttt{OpRef}, \texttt{OpDeref}, and \texttt{OpAssign},
-two operations in the compiler were changed. The first change of the compiler
-was made to how thunks were generated. This was done in the
+two operations in the compiler are changed. The first change of the compiler
+is made to how thunks were generated. This is done in the
 \texttt{makeThunk} function, which previously took an expression \texttt{e} and
 wrapped it in the \texttt{Thunk} constructor and \texttt{Fun} expression. With
 the optimisation, \texttt{makeThunk}
 takes \texttt{e} and creates a reference in the state for a \texttt{Fun}
 expression wrapped around a \texttt{RefExp} constructor, and finally wraps
-everything with a \texttt{Thunk} constructor:
+the reference with a \texttt{Thunk} constructor:
 \begin{figure}[H]
 \begin{alltt}
   makeThunk e =
@@ -61,9 +61,9 @@ everything with a \texttt{Thunk} constructor:
       ]
 \end{alltt}
 \end{figure}
-When evaluated, this expression will add the delayed expression to the state and
+When evaluated, this expression adds the delayed expression to the state and
 return a reference to its location. This means that each time a thunk is
-created, it will be stored in the state instead of simply being wrapped in a
+created, its expression will be stored in the state instead of simply being wrapped in a
 \texttt{Thunk} constructor and a closure. Similarly, values in the state are
 created with a function called \texttt{makeRefVal}:
 \begin{figure}[H]
@@ -72,16 +72,16 @@ created with a function called \texttt{makeRefVal}:
 \end{alltt}
 \end{figure}
 
-The second change that was made with the optimisation was how \texttt{force}
-behaved. As the \texttt{Thunk} constructor no longer contains a closure, but
+The second change made with the optimisation is how \texttt{force}
+behaves. As the \texttt{Thunk} constructor no longer contains a closure, but
 instead a reference, the \texttt{Thunk} case of the pattern matching in
 \texttt{force} uses the \texttt{OpDeref} operation to get what is stored in
 the state for the given reference. The reference can point at either a
 \texttt{RefExp} or a \texttt{RefVal} constructor, and must thus be pattern
 matched. When a \texttt{RefVal} is caught in the pattern matching, the contained
 value is simply returned as it is. For the \texttt{RefExp} case, the contained
-value is a delayed expression in a closure and must thus be forced.
-The \texttt{RefExp} that the reference was pointing to is then changed with an
+value is a delayed expression in a closure and must therefore be forced.
+The \texttt{RefExp} that the reference is pointing to is then changed with an
 \texttt{OpAssign} operation to a \texttt{RefVal} of the value that the
 \texttt{force} yielded. After the assignment, the evaluated value is returned.
 
@@ -118,30 +118,41 @@ The \texttt{RefExp} that the reference was pointing to is then changed with an
 With these re-definitions, the \texttt{compile} function does not need any
 changes and can be used as before the optimisation.
 
+\section{Example of evaluation}
+Evaluation of expressions is optimized after the implementation of call-by-need.
+The example described in Section~\ref{com:example} shows how \texttt{take} is
+evaluated after being compiled with call-by-name. The evaluation of \texttt{take}
+with call-by-need semantics differs slightly. For example, the thunk that is bound
+to the variable \texttt{n} is not simply overshadowed, but re-assigned, reducing
+the overhead of thunks.
+
+A different example is described in the following section that shows how
+call-by-need was tested.
+
 \section{Testing call-by-need}
-The testing of the call-by-need mechanics mainly consisted of running the tests
+The testing of the call-by-need mechanics mainly consists of running the tests
 that were used in the creation of the \texttt{compile} function, by using
 \texttt{compareEval} described in Section~\ref{compiler:test}. However, with
 the optimisation, the state is used for creating thunks. This means that
 evaluating certain compiled expressions causes the state to grow to a larger
 size than when evaluating the same expressions without compiling them. Thus, the
-state was omitted in the comparison of this testing phase, testing only the
+state is omitted in the comparison of this testing phase, testing only the
 result of the evaluations.
 
-Another factor that needed testing was how the thunks were changed in the state.
+Another factor that needs testing was how the thunks are changed in the state.
 As stated in Section~\ref{cbn:impl}, when thunks are created, they are created
 as delayed evaluations of expressions, represented as \texttt{RefExp}. When they
 are forced, they are changed to become values, represented as \texttt{RefVal}.
 In order to test that evaluated thunks indeed were changed to \texttt{RefVal}
-values, expressions that created and called thunks were evaluated with the
+values, expressions that create and call thunks are evaluated with the
 \texttt{efc} function described in Section~\ref{compiler:test}. Similarly,
-thunks that were not forced were checked to see if they remained as
+thunks that are not forced are checked to see if they remain as
 \texttt{RefExp} values after evaluation. As evaluation yields both the result
-and the state, the thunk references could be investigated to see if they were
+and the state, the thunk references can be investigated to see if they are
 \texttt{RefExp} or \texttt{RefVal} constructors.
 
-Call-by-need was also tested by using thunks that require a noticeable amount of
-time to evaluate. One method was to create a list of a replicated expression:
+Call-by-need is also tested by using thunks that require a noticeable amount of
+time to evaluate. One method is to create a list of a replicated expression:
 \begin{figure}[H]
 \begin{alltt}
   cakeReplicate =
@@ -157,7 +168,7 @@ time to evaluate. One method was to create a list of a replicated expression:
             )] (Var (Short "repeat"))
 \end{alltt}
 \end{figure}
-\noindent This function \texttt{cakeReplicate} was used to create a list with an
+\noindent This function \texttt{cakeReplicate} is used to create a list with an
 expression that counts down to 0 and returns the string literal "OK":
 \begin{figure}[H]
 \begin{alltt}
@@ -169,17 +180,17 @@ expression that counts down to 0 and returns the string literal "OK":
             )] (Var (Short "stopAtZero"))
 \end{alltt}
 \end{figure}
-Replication of \texttt{stopAtZero} was tested with two versions of the compiler:
+Replication of \texttt{stopAtZero} is tested with two versions of the compiler:
 (1) with the call-by-need optimisation and (2) without call-by-need. For a list
-of \texttt{stopAtZero} that counted from 100, (1) printed the whole list much
-faster than (2), which required a noteworthy amount of evaluation time for each
-list element. This result showed that call-by-need in (1) was indeed working as
+of \texttt{stopAtZero} that counts from 100, (1) prints the whole list much
+faster than (2), which requires a noteworthy amount of evaluation time for each
+list element. This result shows that call-by-need in (1) indeed works as
 intended: each thunk's suspended expression is evaluated once and replaced with
 a value, which is used in future calls, reducing the total evaluation time.
 
-When the results of this testing phase were positive, the implementation of the
-call-by-need semantics was deemed to be finished. This would also mark the
-completion of the compiler as a whole, meaning that all the coding had now been
+With the results of this testing phase being positive, the implementation of the
+call-by-need semantics is deemed to be finished. This also marks the
+completion of the compiler as a whole, meaning that all the coding has now been
 finished.
 
 %% TODO: tested the compiler with large lists.

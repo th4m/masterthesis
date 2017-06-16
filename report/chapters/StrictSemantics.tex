@@ -1,14 +1,14 @@
-\chapter{Strict Semantics}
+\chapter{Strict semantics of CakeML}
 \label{chapter:strict}
 As stated in Section~\ref{intro:project}, the first major step of this project
-was to write lazy semantics for CakeML in Haskell. However, before this could be
-done, the existing strict semantics had to be defined in Haskell. The definition
-would include the basic abstract syntax tree and semantic primitives of the
+is to write lazy semantics for CakeML in Haskell. However, before this can be
+done, the existing strict semantics must be defined in Haskell. The definition
+includes the basic abstract syntax tree and semantic primitives of the
 language.
 
 \section{Definition}
 CakeML is a language with a semantics defined prior to this project.
-The compiler for this project is to be written in Haskell and produce CakeML
+The compiler for this project is be written in Haskell and produce CakeML
 syntax in the form of its Haskell representation. This means that
 the semantics must be defined in Haskell in order for it to be compatible with
 the code that the compiler produces. This is
@@ -16,12 +16,12 @@ what this section will describe: defining the strict semantics of CakeML in
 Haskell.
 
 The semantics of CakeML is defined in Lem~\cite{Lem33:online}, as described in
-Section~\ref{back:cakeml}. At the beginning of this thesis, a link to CakeML's
-GitHub repository was provided, in which the semantics was contained in the form
-of \textit{.lem} files. The goal of this part of the thesis was thus to manually
+Section~\ref{back:cakeml}. At the beginning of this project, a link to CakeML's
+GitHub repository was provided, containing the semantics in the form
+of \textit{.lem} files. The goal of this part of the thesis is thus to manually
 translate the semantics from Lem to Haskell.
 
-In order to translate the semantics of CakeML, three items needed to be
+In order to translate the semantics of CakeML, three items must be
 investigated and manually transcribed from Lem to Haskell:
 \begin{itemize}
 \item The abstract syntax of CakeML
@@ -29,23 +29,23 @@ investigated and manually transcribed from Lem to Haskell:
 \item The top level interpreter function \texttt{evaluate}
 \end{itemize}
 
-\noindent All three items were defined as Lem modules in the provided GitHub
-repository and needed to be defined as Haskell modules.
-Details about the contents and implementation of these three items
+\noindent All three items are defined as Lem modules in the provided GitHub
+repository and need to be defined as Haskell modules.
+Details about the contents and definition of these three items
 will be described in the following sections.
 
-\subsection{Abstract Syntax}
+\subsection{Abstract syntax}
 \label{strict:abs}
 The abstract syntax is the basic syntactical representation of the grammar of a
 language~\cite{pltbook}. This includes the representation of literals,
-operations, and expressions. Translating the abstract syntax from Lem to Haskell
-proved to not be all too difficult, as Lem and Haskell are fairly similar in
-structure. With the use of algebraic datatypes, each category in the grammar is
+operations, and expressions. As Lem and Haskell are fairly similar in
+structure, translating the abstract syntax from Lem to Haskell is not an all too
+difficult task. With the use of algebraic datatypes, each construct in the grammar is
 defined as its own type. For example, some of the expressions of CakeML
-are represented in Lem in figure~\ref{fig:lemexp}.
+are represented in Lem in Figure~\ref{fig:lemexp}.
 The constructors are complemented with data from other datatypes,
 e.g. \texttt{lit} and \texttt{op}, that are also defined as a part of the
-language. These datatypes are shown in figures~\ref{fig:lemlit}
+language. These datatypes are shown in Figures~\ref{fig:lemlit}
 to~\ref{fig:lempat}.
 
 \begin{figure}
@@ -149,7 +149,7 @@ to~\ref{fig:lempat}.
 The Lem definition of CakeML expressions in figure~\ref{fig:lemexp} is
 translated to Haskell in figure~\ref{fig:hsexp}.
 Similarly, complementing datatypes, such as \texttt{lit} and
-\texttt{op}, as well as other categories in the grammar, were also translated
+\texttt{op}, as well as other constructs in the grammar, are also translated
 as needed. These datatypes can be seen in figure~\ref{fig:hsdata}.
 
 \begin{figure}
@@ -234,7 +234,7 @@ with the \texttt{Fun} expression, it is possible to create functions that take
 arguments and produces values. For example, \texttt{take} that was described in
 Section~\ref{intro:Example} can be defined by combining a number of expressions.
 The definition of \texttt{take} using CakeML expressions in Haskell can be seen
-in figure~\ref{fig:caketake}.
+in Figure~\ref{fig:caketake}.
 
 \begin{figure}
 \begin{alltt}
@@ -274,7 +274,7 @@ primitives are the inner representations of \textit{values}, \textit{state}, and
 
 Values are represented by the datatype \texttt{v} (in Haskell it is denoted with
 an upper case \texttt{V}) and are what expressions
-ususally are evaluated to. Some of the values of CakeML are represented in
+usually are evaluated to. Some of the values of CakeML are represented in
 Lem as such:
 
 \begin{figure}[H]
@@ -295,7 +295,7 @@ Just as with the expressions described above, other datatypes that represent
 other parts of the grammar are needed. However, these mostly already exist from
 the definition of the abstract syntax and are therefore reused.
 
-The translation of these values to Haskell was performed analogously to the
+The translation of these values to Haskell is performed analogously to the
 abstract syntax described in Section~\ref{strict:abs}:
 
 \begin{figure}[H]
@@ -321,11 +321,9 @@ which is evaluated to the value
   LitV (IntLit 3)
 \end{alltt}
 
-% Should state and environment be described? Too much info?
-% Just refer to appendix for more info?
 
 \subsection{The top level interpreter function \texttt{evaluate}}
-Linking the abstract syntax together with the semantics of CakeML is the
+Linking the abstract syntax to the semantics of CakeML is the
 \texttt{evaluate} function. The job of \texttt{evaluate} is to take a list of
 expressions as input and return a state together with a result. A result can
 consist of a list of values or an error. Also contributing to the evaluation
@@ -380,7 +378,7 @@ functions. For example, the expression \texttt{If e1 e2 e3} requires that
 semantic function \texttt{do\_if} to decide whether \texttt{e2} or
 \texttt{e3} should be evaluated.
 
-%This function has been modified to omit fix_clock, which isn't used for this project
+
 \begin{figure}[H]
 \begin{alltt}
   evaluate st env [If e1 e2 e3] =
@@ -395,15 +393,15 @@ semantic function \texttt{do\_if} to decide whether \texttt{e2} or
 \end{alltt}
 \end{figure}
 
-The translation to Haskell maintained the same structure of \texttt{evaluate}.
-The type declaration for \texttt{evaluate} was transcribed to Haskell as:
+The translation to Haskell maintains the same structure of \texttt{evaluate}.
+The type declaration for \texttt{evaluate} is transcribed to Haskell as:
 \begin{figure}[H]
 \begin{alltt}
   evaluate :: State -> Environment V -> [Exp] -> (State, Result [V] V)
 \end{alltt}
 \end{figure}
 
-\noindent Lists and pattern matching were used in similar ways in the Haskell definition:
+\noindent Lists and pattern matching are used in similar ways in the Haskell definition:
 
 \begin{figure}[H]
 \begin{alltt}
@@ -413,7 +411,7 @@ The type declaration for \texttt{evaluate} was transcribed to Haskell as:
 \end{alltt}
 \end{figure}
 
-\noindent The logic of \texttt{evaluate} was also maintained in the translation
+\noindent The logic of \texttt{evaluate} is also maintained in the translation
 to Haskell. For example, the \texttt{Var n} expression is defined in Haskell as
 follows:
 
@@ -426,63 +424,49 @@ follows:
 \end{alltt}
 \end{figure}
 
-\section{Testing the Definition}
-%% Tested the implementation
-%% Created a Haskell module to run tests
-%% Imported all three above mentioned modules
-%% Created dummy state and environment
-%% Created a function that uses the state and environment, and takes expressions as input
-%%   The function runs evaluate with the dummy state/environment and returns state + result
-%% Created a number of test expressions to run through evaluate
-%% Compared the result of evaluate with expected values
+\section{Example of evaluation}
+\label{strict:example}
+By using \texttt{evaluate}, CakeML expressions are evaluated to values. This
+section will show how such an expression is evaluated by using the definition of
+\texttt{take} described in Section~\ref{intro:Example} and shown in abstract
+syntax at the end of Section~\ref{strict:abs}.
 
-After the implementation was finished, the strict semantics was tested.
-The testing was performed by running \texttt{evaluate} on a number of predefined
+When \texttt{take} is evaluated, the first grammatical construct that is
+encountered is \texttt{LetRec} that creates a \texttt{RecClosure} when evaluated.
+When the \texttt{RecClosure} is applied to an integer literal with the use of the
+\texttt{App OpApp} expression, the literal will be bound to the variable \texttt{n}.
+The expression representing \texttt{take} in the \texttt{RecClosure} is a
+\texttt{Fun}, which is evaluated to a \texttt{Closure} that takes a list
+\texttt{ls}. When the \texttt{Closure} is applied to a list with \texttt{App OpApp},
+the actual logic that is described in
+Section~\ref{intro:Example} will be carried out. When the \texttt{If} expression
+is evaluated, the condition is evaluated first: \texttt{n} is compared with 0 to
+check if they are equal. If they are equal, the constructor \texttt{nil} is
+returned by the \texttt{do\_if} helper function, which will
+be evaluated to a constructor value.
+If \texttt{n} is not equal to 0, the second expression is returned by
+\texttt{do\_if}, which pattern matches on the list \texttt{ls} with the
+\texttt{Mat} expression to check if it is
+either a \texttt{::} or \texttt{nil} constructor. As \texttt{ls} is evaluated
+for this check, it will be fully evaluated by the evaluation steps of the
+\texttt{Con} expression.
+In the case of \texttt{::},
+the head element is stored as the variable \texttt{elem}, and the tail of the
+list is stored as the variable \texttt{rest}. Then a \texttt{Con} expression
+for a list is created with \texttt{elem} as its head element and the application
+of \texttt{take} on \texttt{n} subtracted by 1 and the tail of the list
+\texttt{rest}. In the case of \texttt{nil} being the constructor of \texttt{ls},
+a \texttt{nil} constructor is simply returned, ending the computation.
+
+
+\section{Testing the definition}
+Following the Haskell translation of CakeML's semantics, testing was performed.
+Tests consist of running \texttt{evaluate} on a number of predefined
 expressions together with dummy instances of state and environment.
-The results of the evaluations were compared with values that were expected
-in the form of unit testing to see if there were any deviations. 
+The results of the evaluations are then compared with expected values
+in the form of unit testing to check for any deviations.
 
-Faulty results indicated erroneous implementation of the semantics.
-Through troubleshooting and amending code, the semantics eventually
-reached a satisfactory state that could evaluated expressions correctly.
-
-%% \section{Discussion}\todo{I would like some more discussion, but I can't think of any at the moment.}
-%% The Haskell definition of CakeML's semantics was written as a direct port. \todo{Create subsection?}
-%% As Lem and
-%% Haskell are similar in syntactical structure, it was not a difficult \todo{Okay to say difficult?}
-%% task to transcribe the semantics. However, a different approach of the porting
-%% could be considered by using monads in
-%% Haskell~\cite{MonadHas66:online}~\cite{AllAbout63:online}~\cite{learnhaskell}.
-%% For example, the Lem definition of \texttt{evaluate} explicitly passes the state
-%% from input to output. Haskell has a \texttt{State} monad~\cite{StateMon99:online}
-%% that implicitly passes the state. Operations on the state can be called through
-%% monadic functions such as \texttt{get}, \texttt{put}, and \texttt{assign}.
-%% Using the \texttt{State} monad could prevent possible mistakes of returning the
-%% wrong state at the end of an evaluation. However, using a monadic approach to
-%% define \texttt{evaluate} would also affect any other functions that uses it,
-%% causing the port to possibly deviate from its original definition.
-%% The explicity of the non-monadic approach can also be seen as making the
-%% semantics easy \todo{Okay to say "easy"?} to read and understand.
-
-%% CakeML's semantics always fully evaluate sub-expressions for the evaluation \todo{Create subsection?}
-%% of any expression. This call-by-value behaviour does not allow for infinite
-%% data structures, even when the whole data structure is not used. For example,
-%% the function \texttt{take}, described in Section~\ref{intro:Example} and defined
-%% in CakeML syntax in Section~\ref{strict:abs}, will take a \texttt{Con}
-%% expression that represents a list and fully evaluate it before producing the
-%% final list. This is because when the list is bound to the variable \texttt{ls},
-%% it is evaluated. The evaluation of \texttt{Con} expressions always evaluates the
-%% arguments of the constructors. List constructors are defined as:
-%% \begin{figure}[H]
-%% \begin{alltt}
-%%   Con (Just (Short "nil")) []
-%%   Con (Just (Short "::" )) [e,es]
-%% \end{alltt}
-%% \end{figure}
-%% \noindent The \texttt{nil} constructor denotes an empty list and thus has no arguments.
-%% The \texttt{(::)} constructor denotes the continuation of a list and thus has
-%% an element \texttt{e} and the rest of the list \texttt{es} as arguments.
-%% As \texttt{es} also is a list, it will be either a \texttt{nil} or a
-%% \texttt{(::)} constructor. This means that when a list is evaluated, a chain
-%% of recursive evaluation will continue until a \texttt{nil} is encountered.
-%% Thus, a list will always be fully evaluated when called.
+Faulty results indicate erroneous implementation of the semantics.
+Through repeated troubleshooting and amending code, the semantics translation
+has reached a satisfactory state that evaluate expressions correctly,
+allowing the next phase of the project to begin: defining the lazy semantics.
