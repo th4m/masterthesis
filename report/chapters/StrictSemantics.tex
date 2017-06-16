@@ -142,7 +142,7 @@ to~\ref{fig:lempat}.
     | Pcon of maybe (id conN) * list pat
     ...
 \end{alltt}
-\caption{Some complementing datatypes of CakeML defined in Lem.}
+\caption{Some patterns of CakeML defined in Lem.}
 \label{fig:lempat}
 \end{figure}
 
@@ -231,7 +231,7 @@ as
 when using this abstract syntax. Building more
 complex expressions is as simple as combining multiple expressions. For example,
 with the \texttt{Fun} expression, it is possible to create functions that take
-arguments and produces values. For example, \texttt{take} that was described in
+arguments and produces values. For example, \texttt{take} that is described in
 Section~\ref{intro:Example} can be defined by combining a number of expressions.
 The definition of \texttt{take} using CakeML expressions in Haskell can be seen
 in Figure~\ref{fig:caketake}.
@@ -260,7 +260,7 @@ in Figure~\ref{fig:caketake}.
             App (OPN Minus) [Var (Short "n")
                             ,Literal (IntLit 1)]
 \end{alltt}
-\caption{The list function \texttt{take} defined by combining CakeML expressions.}
+\caption{The recursive function \texttt{take} defined by combining CakeML expressions in Haskell.}
 \label{fig:caketake}
 \end{figure}
 
@@ -275,9 +275,9 @@ primitives are the inner representations of \textit{values}, \textit{state}, and
 Values are represented by the datatype \texttt{v} (in Haskell it is denoted with
 an upper case \texttt{V}) and are what expressions
 usually are evaluated to. Some of the values of CakeML are represented in
-Lem as such:
+Lem as seen in Figure~\ref{fig:vallem}.
 
-\begin{figure}[H]
+\begin{figure}
 \begin{alltt}
   type v =
     (* Literal values *)
@@ -288,6 +288,8 @@ Lem as such:
     | Recclosure of environment v * list (varN * varN * exp) * varN
     ...
 \end{alltt}
+\caption{Some values of CakeML defined in Lem.}
+\label{fig:vallem}
 \end{figure}
 
 \noindent In order, these values represent literals, closures, and recursive closures.
@@ -296,9 +298,10 @@ other parts of the grammar are needed. However, these mostly already exist from
 the definition of the abstract syntax and are therefore reused.
 
 The translation of these values to Haskell is performed analogously to the
-abstract syntax described in Section~\ref{strict:abs}:
+abstract syntax described in Section~\ref{strict:abs} as seen in
+Figure~\ref{fig:valhas}.
 
-\begin{figure}[H]
+\begin{figure}
 \begin{alltt}
   data V
     -- Literal values
@@ -309,6 +312,8 @@ abstract syntax described in Section~\ref{strict:abs}:
     | RecClosure (Environment V) [(VarN, VarN, Exp)] VarN
     ...
 \end{alltt}
+\caption{Some values of CakeML defined in Haskell.}
+\label{fig:valhas}
 \end{figure}
 
 An example of an expression and its value counterpart is the expression $1 + 2$,
@@ -320,6 +325,23 @@ which is evaluated to the value
 \begin{alltt}
   LitV (IntLit 3)
 \end{alltt}
+The helper function used to actually apply the addition to the literals
+is \texttt{do\_app},
+which pattern matches on the given operation and arguments and
+uses another helper function \texttt{opn\_lookup} to find the \texttt{(+)}
+operator:
+\begin{alltt}
+  do_app s op vs =
+    case (op, vs) of
+      (OPN op, [LitV (IntLit n1), LitV (IntLit n2)]) ->
+        Just (s, RVal (LitV (IntLit (opn_lookup op n1 n2))))
+  ...
+
+  opn_lookup n =
+    case n of
+      Plus   -> (+)
+  ...
+\end{alltt}
 
 
 \subsection{The top level interpreter function \texttt{evaluate}}
@@ -330,28 +352,24 @@ consist of a list of values or an error. Also contributing to the evaluation
 of expressions are a state and an environment, which are given as input to
 \texttt{evaluate}. The type of \texttt{evaluate} (in Lem notation) is thus:
 
-\begin{figure}[H]
 \begin{alltt}
   evaluate:state -> environment v -> list exp -> state*result (list v) v
 \end{alltt}
-\end{figure}
 
 \noindent Expressions are taken either as a list in \texttt{evaluate},
 in which case they are evaluated sequentially, or as singletons, in which case
 they are pattern matched to be evaluated with unique strategies:
-
-\begin{figure}[H]
+\newpage
 \begin{alltt}
   let rec
   evaluate st env []           = (st, Rval [])
   and
   evaluate st env (e1::e2::es) = ...
   and
-  evaluate st env [Lit l]      = ...
+  evaluate st env [Lit l]      = (st, RVal [Litv l])
   and
   ...
 \end{alltt}
-\end{figure}
 
 \noindent The logic of each case mostly consists of applying appropriate
 operations from the semantic primitives. For example, when evaluating
@@ -360,7 +378,6 @@ in the semantic primitives is applied to \texttt{n} in order to check if
 a value is assigned to the variable in the environment. In the case it does
 exist, the value is returned:
 
-\begin{figure}[H]
 \begin{alltt}
   evaluate st env [Var n] =
     match lookup_var_id n env with
@@ -368,7 +385,6 @@ exist, the value is returned:
     | Nothing -> (st, Rerr (Rabort Rtype_error))
     end
 \end{alltt}
-\end{figure}
 
 \noindent Expressions that contain subexpressions (e.g. binary arithmetic
 operations) often require that one or more of these subexpressions are
@@ -378,8 +394,6 @@ functions. For example, the expression \texttt{If e1 e2 e3} requires that
 semantic function \texttt{do\_if} to decide whether \texttt{e2} or
 \texttt{e3} should be evaluated.
 
-
-\begin{figure}[H]
 \begin{alltt}
   evaluate st env [If e1 e2 e3] =
     match st (evaluate st env [e1]) with
@@ -391,38 +405,31 @@ semantic function \texttt{do\_if} to decide whether \texttt{e2} or
     | res -> res
     end
 \end{alltt}
-\end{figure}
 
 The translation to Haskell maintains the same structure of \texttt{evaluate}.
 The type declaration for \texttt{evaluate} is transcribed to Haskell as:
-\begin{figure}[H]
 \begin{alltt}
   evaluate :: State -> Environment V -> [Exp] -> (State, Result [V] V)
 \end{alltt}
-\end{figure}
 
 \noindent Lists and pattern matching are used in similar ways in the Haskell definition:
 
-\begin{figure}[H]
 \begin{alltt}
+  evaluate st env []          = (st, RVal [])
   evaluate st env (e1:e2:es)  = ...
-  evaluate st env [Var n]     = ...
-  evaluate st env [Literal l] = ...
+  evaluate st env [Literal l] = (st, RVal [LitV l])
 \end{alltt}
-\end{figure}
 
 \noindent The logic of \texttt{evaluate} is also maintained in the translation
 to Haskell. For example, the \texttt{Var n} expression is defined in Haskell as
 follows:
-
-\begin{figure}[H]
+\newpage
 \begin{alltt}
   evaluate st env [Var n] =
     case lookup_var_id n env of
       Just v  -> (st, RVal [v])
       Nothing -> (st, RErr (RAbort RType_Error))
 \end{alltt}
-\end{figure}
 
 \section{Example of evaluation}
 \label{strict:example}
@@ -460,7 +467,8 @@ a \texttt{nil} constructor is simply returned, ending the computation.
 
 
 \section{Testing the definition}
-Following the Haskell translation of CakeML's semantics, testing was performed.
+To make sure that CakeML's semantics are properly translated to Haskell, testing
+is performed.
 Tests consist of running \texttt{evaluate} on a number of predefined
 expressions together with dummy instances of state and environment.
 The results of the evaluations are then compared with expected values

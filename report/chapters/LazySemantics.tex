@@ -34,31 +34,28 @@ evaluated expressions within. To further evaluate suspended expressions,
 additional information, contained in the environment, is required.
 The \texttt{Thunk} constructor is thus added to the \texttt{V} type:
 
-\begin{figure}[H]
 \begin{alltt}
   data V =
+    LitV Lit
     ...
     | Thunk (Environment V) Exp
 \end{alltt}
-\end{figure}
 
 The function \texttt{evaluateLazy}, the lazy version of \texttt{evaluate}, is
 implemented with the goal of evaluating expressions as little as possible. While
 the type of \texttt{evaluateLazy} needs to stay similar to
 \texttt{evaluate}, minor changes are made; mainly, the state is omitted
 altogether in order to keep the evaluation pure. The type of
-\texttt{evaluateLazy} is thus declared as:
+\texttt{evaluateLazy} is thus declared as follows:
 
-\begin{figure}[H]
 \begin{alltt}
   evaluateLazy :: Environment V -> [Exp] -> Result [V] V
 \end{alltt}
-\end{figure}
 
 \noindent With the addition of the \texttt{Thunk} constructor, \texttt{evaluateLazy}
 returns either a thunk or any other value.
 
-Another vital function that needs to be implemented was \texttt{force}.
+Another vital function that needs to be implemented is \texttt{force}.
 This function is designed to take a value and pattern match for the
 \texttt{Thunk} constructor. When the \texttt{Thunk} case has been entered,
 the expression wrapped inside the thunk is extracted and lazily evaluated until
@@ -68,7 +65,6 @@ When the evaluation of an expression ends at top level, the returned value
 must be an actual non-thunk value, as in the strict semantics of CakeML.
 The function \texttt{force} is defined as such:
 
-\begin{figure}[H]
 \begin{alltt}
   force :: V -> Result [V] V
   force (Thunk env e) =
@@ -77,11 +73,11 @@ The function \texttt{force} is defined as such:
       res -> res
   force v = RVal [v]
 \end{alltt}
-\end{figure}
 
 Using the definition of thunks and \texttt{force}, the definition of
-\texttt{evaluateLazy} was written in two attempts, which
-will be described in the following sections.
+\texttt{evaluateLazy} can be written.
+The following sections will describe how it is defined in two attempts,
+one that is erroneous and one that is correct.
 
 \subsection{Attempt 1}
 The first (erroneous) attempt of implementing \texttt{evaluateLazy} uses a naive
@@ -94,10 +90,9 @@ value. If it is a thunk, wrapped together with a partially evaluated expresion
 create and return a new thunk \texttt{Thunk env' (If e1' e2 e3)}. If any other
 type of value \texttt{v} is returned, it applies \texttt{do\_if} to yield either
 \texttt{e2} or \texttt{e3} as the expression \texttt{e}. This in turn,
-assuming that \texttt{v} was valid, creates and returns a new thunk containing
+assuming that \texttt{v} is valid, creates and returns a new thunk containing
 \texttt{e} and the environment that was given as input to \texttt{evaluateLazy}.
 
-\begin{figure}[H]
 \begin{alltt}
   evaluateLazy st env [If e1 e2 e3]   =
     case evaluateLazy st env [e1] of
@@ -108,7 +103,6 @@ assuming that \texttt{v} was valid, creates and returns a new thunk containing
           Nothing -> (st', RErr (RAbort RType_Error))
       res -> res
 \end{alltt}
-\end{figure}
 
 The problem with this implementation is that the environment is passed along
 in each iteration. The strict \texttt{evaluate} evaluates \texttt{e} with
@@ -129,7 +123,6 @@ creating a function called \texttt{evalAndForce} that applies
 \texttt{evaluateLazy} on the head of the given list of expressions and
 environment, and forces the resulting value.
 
-\begin{figure}[H]
 \begin{alltt}
   evalAndForce :: Environment V -> [Exp] -> Result [V] V
   evalAndForce _env []    = RVal []
@@ -143,7 +136,6 @@ environment, and forces the resulting value.
         res -> res
       res -> res
 \end{alltt}
-\end{figure}
 
 Taking the \texttt{If e1 e2 e3} case as an example again, the condition
 \texttt{e1} is forced to produce a (hopefully boolean) value, which is run
@@ -151,7 +143,6 @@ through \texttt{do\_if}. The resulting expression, which is the branch that is
 to be evaluated in the next step, is wrapped in a thunk and returned as a
 result.
 
-\begin{figure}[H]
 \begin{alltt}
   evaluateLazy env [If e1 e2 e3]   =
     case evalAndForce env [e1] of
@@ -161,9 +152,8 @@ result.
           Nothing -> RErr (RAbort RType_Error)
       res -> res
 \end{alltt}
-\end{figure}
 
-This new idea of forcing sub-expressions was applied to all cases of the
+This new idea of forcing sub-expressions is applied to all cases of the
 pattern matching in \texttt{evaluateLazy}.
 
 \section{Example of evaluation}
@@ -224,36 +214,30 @@ Evaluation with the an empty state (called \texttt{empty\_st}) and
 a dummy environment (called \texttt{ex\_env}) is simplified by defining a
 function for strict evaluation:
 
-\begin{figure}[H]
 \begin{alltt}
   ex e = evaluate empty_st ex_env [e]
 \end{alltt}
-\end{figure}
 
 \noindent Similarly, evaluation for lazy evaluation with \texttt{ex\_env} is
 simplified by defining a function for lazy evaluation:
 
-\begin{figure}[H]
 \begin{alltt}
   exForce e = evalAndForce ex_env [e]
 \end{alltt}
-\end{figure}
 
 \noindent \texttt{evalAndForce} is naturally used, as a pure value is expected
 to be compared with the strict evaluation. With the definition of \texttt{ex}
 and \texttt{exForce}, \texttt{compareEval} is defined as such:
 
-\begin{figure}[H]
 \begin{alltt}
   compareEval expList = map exForce expList == map (snd . ex) expList
 \end{alltt}
-\end{figure}
 
 By collecting a list of expressions, testing is performed by simply running
 \texttt{compareEval} on a given list. This is done whenever the semantics is
 changed and need to be tested to control that the results would not change.
 
-One expression that is not compared was the \texttt{Con} expression. The lazy
+One expression that is not compared is the \texttt{Con} expression. The lazy
 evaluation of \texttt{Con} expressions produces thunks of the constructors'
 contents. When forced, they are not evaluated. This behaviour allows the
 possibility of infinite data structures, such as lists, to exist.
@@ -288,7 +272,6 @@ The definition of \texttt{termExp} uses
 \texttt{inf} by binding it to a variable \texttt{var} in a \texttt{Let}
 expression before returning a string literal "OK".
 
-\begin{figure}[H]
 \begin{alltt}
   termExp =
     Let (Just "var") (inf) (Literal (StrLit "OK"))
@@ -297,7 +280,6 @@ expression before returning a string literal "OK".
                                        ,Literal (IntLit 0)])]
       (App OpApp [Var (Short "fun"), Literal (IntLit 0)])
 \end{alltt}
-\end{figure}
 
 \noindent Running \texttt{termExp} with the strict semantics naturally causes a
 non-terminating loop, while running \texttt{termExp} with the lazy semantics

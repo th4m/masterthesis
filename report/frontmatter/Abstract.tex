@@ -1,6 +1,13 @@
-\thispagestyle{empty}
+\noindent
+A Lazy to Strict Language Compiler\\
+PHILIP THAM\\
+Department of Computer Science and Engineering\\
+Chalmers University of Technology \setlength{\parskip}{0.5cm}
 
-\begin{abstract}
+\thispagestyle{plain}
+\setlength{\parskip}{0pt plus 1.0pt}
+
+\section*{Abstract}
   The evaluation strategies of programming languages can be broadly categorised as strict or lazy.
   A common approach to strict evaluation is to implement a call-by-value semantics
   that always evaluates expressions when they are bound to variables, while lazy
@@ -14,4 +21,8 @@
   CakeML to strict CakeML as defined in (1) and (2). The compiler makes
   use of stateful features in strict CakeML to optimise evaluation so that each
   thunk is evaluated at most once, simulating a call-by-need semantics.
-\end{abstract}
+
+
+\newpage				% Create empty back of side
+\thispagestyle{empty}
+\mbox{}

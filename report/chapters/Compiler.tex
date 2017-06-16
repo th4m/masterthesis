@@ -49,11 +49,9 @@ and values. Thunks and values are separated with constructor names that
 uniquely identify them. For an expression \texttt{e}, thunks are defined and
 simplified with the Haskell function \texttt{makeThunk}:
 
-\begin{figure}[H]
 \begin{alltt}
   makeThunk e = Con (Just (Short "Thunk")) [Fun "" e]
 \end{alltt}
-\end{figure}
 
 \noindent As \texttt{e} is put in a the \texttt{Fun} expression, it is not
 actually evaluated. Instead, it is put inside the resulting closure, awaiting
@@ -68,11 +66,9 @@ is no need to keep the environment with it, as the evaluation is not to be
 delayed. Thus, for an expression \texttt{e}, values are defined and simplified
 with the Haskell function \texttt{makeVal}:
 
-\begin{figure}[H]
 \begin{alltt}
   makeVal e = Con (Just (Short "Val")) [e]
 \end{alltt}
-\end{figure}
 
 In order for the constructors \texttt{Thunk} and \texttt{Val} to be usable,
 they need to be defined under a type identifier in the environment. Thus,
@@ -91,7 +87,6 @@ semantics, a number of CakeML expressions are combined:
 matching, and \texttt{App OpApp} both for applying \texttt{force} recursively
 and forcing an evaluation of the closure contained in a thunk.
 
-\begin{figure}[H]
 \begin{alltt}
 force :: Exp -> Exp
 force e =
@@ -106,7 +101,6 @@ force e =
                      )] (Var (Short "force"))
             , e]
 \end{alltt}
-\end{figure}
 
 \noindent This definition of \texttt{force} is based on the Haskell definition
 seen in Section~\ref{lazySem:impl}. The abstract syntax shown above is used by
@@ -114,10 +108,10 @@ the compiler. The concrete syntax for \texttt{force}, which is easier for the
 human eye to read, can be defined as such:
 
 \begin{alltt}
-fun force e =
-  case e of
-    thunk t => force (t 0)
-    | val v => v
+  fun force e =
+    case e of
+      thunk t => force (t 0)
+      | val v => v
 \end{alltt}
 
 %Show concrete syntax
@@ -137,11 +131,9 @@ step is to utilise them in the \texttt{compile} function.
 As \texttt{compile} takes an expression and returns an expression,the type of
 the function is
 
-\begin{figure}[H]
 \begin{alltt}
   compile :: Exp -> Exp
 \end{alltt}
-\end{figure}
 
 \noindent Pattern matching for all expressions in Haskell allows the function to
 handle each expression uniquely. With the lazy semantics defined in
@@ -160,11 +152,9 @@ which is a function composition of \texttt{force} and \texttt{compile}, and
 \texttt{thunkCompile}, which is a function composition of thunk wrapping and
 \texttt{compile}.
 
-\begin{figure}[H]
 \begin{alltt}
   If (forceCompile e1) (thunkCompile e2) (thunkCompile e3)
 \end{alltt}
-\end{figure}
 
 \noindent When evaluated, this expression takes the following steps:
 
@@ -225,7 +215,6 @@ redefine them as valid values.
 All this is done in the definition of
 \texttt{compile} for \texttt{LetRec}:
 
-\begin{figure}[H]
 \begin{alltt}
   compile (LetRec funs e) =
     LetRec (recVals funs) (repl (compile e) (fst3 funs))
@@ -242,7 +231,6 @@ All this is done in the definition of
          (compile e)
         ):(recVals xs)
 \end{alltt}
-\end{figure}
 
 \noindent The helper functions are defined as such: \texttt{fst3} takes a list
 of tuples of three and creates a list of the first elements of the tuples (this
@@ -281,7 +269,7 @@ In the case where the condition is false, the list \texttt{ls} is pattern matche
 to check its constructor. While the compilation of the \texttt{Mat} expression
 will apply a force on \texttt{ls}, the evaluation of \texttt{Con} does not force
 the arguments, as described in Section~\ref{lazy:example}. Thus, a new
-\texttt{force} function was defined, similar to the one defined for the lazy
+definition of \texttt{force} is needed, similar to the one defined for the lazy
 semantics. This separate \texttt{force} is used after evaluation to yield a
 fully evaluated list.
 
@@ -301,23 +289,19 @@ dummy environment, as when testing the lazy semantics. Evaluation of
 compiled expressions is simplified with a function called \texttt{efc} that
 compiles, forces, and evaluates a given expression:
 
-\begin{figure}[H]
 \begin{alltt}
   efc = ex . force . compile
 \end{alltt}
-\end{figure}
 
 \noindent The two evaluations \texttt{ex} and \texttt{efc} are then compared
 with a function called \texttt{compareEval}:
-
-\begin{figure}[H]
+\newpage
 \begin{alltt}
   compareEval :: Exp -> Bool
   compareEval e = strict == lazy
     where strict = ex e
           lazy   = efc e
 \end{alltt}
-\end{figure}
 
 \noindent
 With the results of \texttt{compareEval} giving a \texttt{True} value,
@@ -328,7 +312,6 @@ that do not terminate when simply evaluated with the strict semantics, but do
 terminate with the lazy semantics. For example, the expression defined for the
 testing of the lazy semantics:
 
-\begin{figure}[H]
 \begin{alltt}
   termExp =
     Let (Just "var") (inf) (Literal (StrLit "OK"))
@@ -337,7 +320,6 @@ testing of the lazy semantics:
                                        ,Literal (IntLit 0)])]
       (App OpApp [Var (Short "fun"), Literal (IntLit 0)])
 \end{alltt}
-\end{figure}
 
 \noindent When executed with \texttt{efc}, this expression gives the literal
 value "OK", which indicates that the compiler indeed produces expressions that

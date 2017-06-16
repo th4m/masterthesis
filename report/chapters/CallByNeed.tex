@@ -43,14 +43,13 @@ kept in mind when using \texttt{OpAssign}.
 
 By using the operations \texttt{OpRef}, \texttt{OpDeref}, and \texttt{OpAssign},
 two operations in the compiler are changed. The first change of the compiler
-is made to how thunks were generated. This is done in the
+is made to how thunks are generated. This is done in the
 \texttt{makeThunk} function, which previously took an expression \texttt{e} and
 wrapped it in the \texttt{Thunk} constructor and \texttt{Fun} expression. With
 the optimisation, \texttt{makeThunk}
 takes \texttt{e} and creates a reference in the state for a \texttt{Fun}
 expression wrapped around a \texttt{RefExp} constructor, and finally wraps
 the reference with a \texttt{Thunk} constructor:
-\begin{figure}[H]
 \begin{alltt}
   makeThunk e =
     Con (Just (Short "Thunk"))
@@ -60,17 +59,14 @@ the reference with a \texttt{Thunk} constructor:
         ]
       ]
 \end{alltt}
-\end{figure}
 When evaluated, this expression adds the delayed expression to the state and
 return a reference to its location. This means that each time a thunk is
 created, its expression will be stored in the state instead of simply being wrapped in a
 \texttt{Thunk} constructor and a closure. Similarly, values in the state are
 created with a function called \texttt{makeRefVal}:
-\begin{figure}[H]
 \begin{alltt}
   makeRefVal e = Con (Just (Short "RefVal")) [e]
 \end{alltt}
-\end{figure}
 
 The second change made with the optimisation is how \texttt{force}
 behaves. As the \texttt{Thunk} constructor no longer contains a closure, but
@@ -84,8 +80,9 @@ value is a delayed expression in a closure and must therefore be forced.
 The \texttt{RefExp} that the reference is pointing to is then changed with an
 \texttt{OpAssign} operation to a \texttt{RefVal} of the value that the
 \texttt{force} yielded. After the assignment, the evaluated value is returned.
+The new definition of \texttt{force} can be seen in Figure
 
-\begin{figure}[H]
+\begin{figure}
 \begin{alltt}
   force :: Exp -> Exp
   force e =
@@ -114,6 +111,7 @@ The \texttt{RefExp} that the reference is pointing to is then changed with an
                       [(refValPat [PVar "RVal"]
                        ,Var (Short "RVal"))]
 \end{alltt}
+\caption{The new definition of \texttt{force} that makes use of the state to add call-by-need semantics.}
 \end{figure}
 With these re-definitions, the \texttt{compile} function does not need any
 changes and can be used as before the optimisation.
@@ -127,11 +125,11 @@ to the variable \texttt{n} is not simply overshadowed, but re-assigned, reducing
 the overhead of thunks.
 
 A different example is described in the following section that shows how
-call-by-need was tested.
+call-by-need is tested.
 
 \section{Testing call-by-need}
 The testing of the call-by-need mechanics mainly consists of running the tests
-that were used in the creation of the \texttt{compile} function, by using
+that used in the creation of the \texttt{compile} function, by using
 \texttt{compareEval} described in Section~\ref{compiler:test}. However, with
 the optimisation, the state is used for creating thunks. This means that
 evaluating certain compiled expressions causes the state to grow to a larger
@@ -139,11 +137,11 @@ size than when evaluating the same expressions without compiling them. Thus, the
 state is omitted in the comparison of this testing phase, testing only the
 result of the evaluations.
 
-Another factor that needs testing was how the thunks are changed in the state.
+Another factor that needs testing is how the thunks are changed in the state.
 As stated in Section~\ref{cbn:impl}, when thunks are created, they are created
 as delayed evaluations of expressions, represented as \texttt{RefExp}. When they
 are forced, they are changed to become values, represented as \texttt{RefVal}.
-In order to test that evaluated thunks indeed were changed to \texttt{RefVal}
+In order to test that evaluated thunks indeed change to \texttt{RefVal}
 values, expressions that create and call thunks are evaluated with the
 \texttt{efc} function described in Section~\ref{compiler:test}. Similarly,
 thunks that are not forced are checked to see if they remain as
@@ -153,7 +151,6 @@ and the state, the thunk references can be investigated to see if they are
 
 Call-by-need is also tested by using thunks that require a noticeable amount of
 time to evaluate. One method is to create a list of a replicated expression:
-\begin{figure}[H]
 \begin{alltt}
   cakeReplicate =
     LetRec [("repeat", "elem",
@@ -167,10 +164,8 @@ time to evaluate. One method is to create a list of a replicated expression:
                             decr]])
             )] (Var (Short "repeat"))
 \end{alltt}
-\end{figure}
 \noindent This function \texttt{cakeReplicate} is used to create a list with an
 expression that counts down to 0 and returns the string literal "OK":
-\begin{figure}[H]
 \begin{alltt}
   stopAtZero =
     LetRec [("stopAtZero", "n",
@@ -179,7 +174,6 @@ expression that counts down to 0 and returns the string literal "OK":
               (App OpApp [Var (Short "stopAtZero"), decr])
             )] (Var (Short "stopAtZero"))
 \end{alltt}
-\end{figure}
 Replication of \texttt{stopAtZero} is tested with two versions of the compiler:
 (1) with the call-by-need optimisation and (2) without call-by-need. For a list
 of \texttt{stopAtZero} that counts from 100, (1) prints the whole list much

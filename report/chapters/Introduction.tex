@@ -65,7 +65,6 @@ constructors:
   \item \texttt{Nil} for the empty list
 \end{itemize}
 
-\begin{figure}[H]
 \begin{alltt}
   take n list =
     if n == 0 then
@@ -75,7 +74,6 @@ constructors:
         Cons (a, as) -> Cons (a, (take n-1 as))
         Nil          -> Nil
 \end{alltt}
-\end{figure}
 
 \noindent The function can be written like this (with some syntax differences)
 for any language, but the semantics
