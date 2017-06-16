@@ -13,8 +13,6 @@ compile (Literal l) = makeVal $ Literal l
 compile (App op es) = case (op, es) of
   (OpApp, [e1, e2])  ->
     makeThunk $ App op [forceCompile e1, thunkCompile e2]
-  (OPN op, [_, _]) ->
-    compOnOpn op es
   _ ->
     makeVal $ App op $ map forceCompile es
 compile (Log lop e1 e2) =
@@ -28,20 +26,20 @@ compile (LetRec funs e) =
     fst3 []     = []
     fst3 ((f,_,_):fs) = (f:fst3 fs)
     repl e []     = e
-    repl e (f:fs) = Let (Just f) (makeVal (Var (Short f))) (repl e fs)
+    repl e (f:fs) =
+      Let (Just f) (makeVal (Var (Short f))) (repl e fs)
+    recVals []           = []
+    recVals ((f,x,e):xs) =
+      (f,x,
+       Let (Just f)
+       (makeVal (Var (Short f)))
+       (compile e))
+      :(recVals xs)
 compile (TAnnot e t) = TAnnot (thunkCompile e) t
 
 forceCompile = force . compile
 thunkCompile = makeThunk . compile
 
-recVals :: [(VarN, VarN, Exp)] -> [(VarN, VarN, Exp)]
-recVals []           = []
-recVals ((f,x,e):xs) =
-  (f,x,
-   Let (Just f)
-   (makeVal (Var (Short f)))
-   (compile e))
-  :(recVals xs)
 
 -- Might be used for pattern matching?
 mapPat :: (Exp -> Exp) -> (Pat, Exp) -> (Pat, Exp)
@@ -93,22 +91,3 @@ valPat   ps = PCon (Just (Short "Val"))   ps
 
 refValPat ps = PCon (Just (Short "RefVal")) ps
 refExpPat ps = PCon (Just (Short "RefExp")) ps
-
-compOnOpn :: Opn -> [Exp] -> Exp
-compOnOpn op [e1, e2]
-  | op `elem` [Times, Divide, Modulo] =
-      -- let XV = (force (compile e1)) in
-      Let (Just "XV") (forceCompile e1) $
-      -- if XV == 0 then 0
-      If (App Equality [Var (Short "XV"), Literal (IntLit 0)]) (makeVal (Literal (IntLit 0))) $
-      -- else let YV == (forceCompile e2) in
-      Let (Just "YV") (forceCompile e2) $
-      -- XV + YV
-      makeVal $ (App (OPN op) [Var (Short "XV"), Var (Short "YV")])
-  | otherwise =
-      -- let XV = (forceCompile e1) in
-      Let (Just "XV") (forceCompile e1) $
-      -- let YV = (forceCompile e2) in
-      Let (Just "YV") (forceCompile e2) $
-      -- XY + YV
-      makeVal $ App (OPN op) [Var (Short "XV"), Var (Short "YV")]

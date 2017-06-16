@@ -279,7 +279,7 @@ getVal (st, RVal [v]) = v
 
 forceCons :: (State, Result [V] V) -> V
 forceCons (st, RVal [ConV name thunks]) =
-  (ConV name $ map (forceCons . forceV) (map (\x -> (st, RVal [x])) thunks)) --TODO
+  (ConV name $ map (forceCons . forceV) (map (\x -> (st, RVal [x])) thunks))
 forceCons (st, RVal [v]) = v
 forceCons (st, RErr err) = error $ show err
 
