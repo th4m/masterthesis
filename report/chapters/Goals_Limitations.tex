@@ -25,7 +25,7 @@ or more strict CakeML expressions in order to get a semantically equivalent
 evaluation. When it comes to handling laziness, lazy expressions will be
 translated to explicit thunk values~\cite{Ingerman:1961:TWC:366062.366084} in
 CakeML. Thunks are expressions that have yet to be evaluated. Thunk values are
-not primitive in CakeML. Our compiler will create code that
+not primitive in CakeML. The compiler will create code that
 implements the thunk values in CakeML. The compiler will target the stateful
 features of CakeML to avoid repeated evaluation of the same thunk values.
 
@@ -78,4 +78,4 @@ be a challenging task to link the parser together with the compiler.
 At the time of writing, the programming language CakeML is still evolving,
 meaning that the semantics of the language is prone to change at
 any time. In order to keep a steady workflow, any updates to the semantics after
-the start of this thesis will not be considered.
+the start of this project will not be considered.

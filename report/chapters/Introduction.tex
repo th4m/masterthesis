@@ -21,17 +21,17 @@ types of programs that cannot be executed by using strict semantics.
 For example, the \textit{Fibonacci numbers} is an infinite sequence of numbers
 where each number is equal to the sum of the two previous numbers.
 Defining the list of all Fibonacci numbers as an expression with strict semantics would
-cause the execution to never terminate, as it is required for the function to be
+cause the execution to never terminate, as it is required for the expression to be
 fully evaluated when assigning it to a variable. In a lazy context, however,
 the expression that defines the list of all Fibonacci numbers would simply not
 be evaluted until it is actually needed, meaning that simply assigning it to a
 variable would not cause the program to not terminate.
 
-While lazy evaluation can be seen as very beneficial, there are cases where it
+While lazy evaluation can be seen as beneficial, there are cases where it
 would not be optimal. For example, programs where there are
 no superfluous expressions would not have much use of lazy evaluation. When it
 is known that all expressions bound to variables will be used,
-their evaluation is inevitable. The underlying reason why it would be worse
+their evaluation is inevitable. The underlying reason to why it would be worse
 to apply lazy evaluation, rather than strict evaluation, is how lazy evaluation
 delays the evaluation of expressions. The act of delaying evaluation creates
 an overhead in both memory and processing time.
@@ -42,7 +42,7 @@ feature in many use cases.
 
 \section{An example of lazy vs strict evaluation}
 \label{intro:Example}
-In order to gain a better picture of the benefits of using lazy evaluation,
+In order to paint a better picture of the benefits of using lazy evaluation,
 this section will illustrate how lazy and strict evaluation differ by using
 an example.
 

@@ -83,20 +83,18 @@ assigned to a variable as an effect of the pattern matching:
 \noindent In the second case, \texttt{list} is assigned to the variable
 \texttt{xs} as an effect of the pattern matching. For the pattern matching,
 \texttt{list} is evaluated to check its outermost constructor. If it is an empty
-list, it will matched to the \texttt{[]} case, while the \texttt{xs} case
+list, it will be matched to the \texttt{[]} case, while the \texttt{xs} case
 handles all other cases, where \texttt{list} is bound to the variable
-\texttt{xs}.
-
-The evaluation of
-\texttt{list} is delayed until \texttt{xs} is called and used, meaning
+\texttt{xs}. Further evaluation of
+\texttt{list} is delayed until \texttt{xs} is used, meaning
 that the actual content of list can be infinite in length without having the
 evaluation of the program ending up in a non-terminating loop.
 
-Infinite data structures are also a major benefit for using lazy evaluation.
+Infinite data structures are a major benefit for using lazy evaluation.
 As described in Section~\ref{intro:Example}, the function \texttt{take}
 in Haskell returns a subset of a given list. \texttt{take} has two arguments,
 an integer \texttt{x} and a list \texttt{xs}. This is used to get the
-$x$ first elements of the list \texttt{xs}. The lazy evaluation of the
+\texttt{x} first elements of the list \texttt{xs}. The lazy evaluation of
 \texttt{xs} in \texttt{take} allows the list to be infinite in size. This
 can be used for a program that e.g. returns the first \texttt{x} elements of
 the Fibonacci numbers.
@@ -118,19 +116,19 @@ high-level language to another high-level language. This category of compilers
 is often referred to as \textit{transpilers} or
 \textit{source-to-source compilers}~\cite{kulkarnitranspiler}.
 The goal of transpilers is to generate code in the target language that behaves
-equivalently as the code in the source language. The compiler defined in this %Should this be here?
+equivalently to the code in the source language. The compiler defined in this %Should this be here?
 thesis can be considered to be of this category. In this case, the source
 language is lazy CakeML and the target language is strict CakeML.
 
 A common practice of compilers is to create an intermediate representation of
-the input code in the form of constructors in the form of a syntax
+the input code in the form of constructors in a syntax
 tree~\cite{DragonBook}. The intermediate representation needs to be
 easy to produce and is used for optimising the code, as well as allowing for
 easy generation of code in the target language.
 For this project, the intermediate representation of CakeML expressions is %Should this be here?
 written as abstract syntax trees (ASTs) in Haskell. The ASTs will be altered so
 that when the target CakeML code is generated, it should be able to be evaluated
-lazily, but with the use of the native CakeML compiler that evaluates strictly.
+lazily, but with the use of the native CakeML semantics that evaluates strictly.
 
 \section{CakeML}
 \label{back:cakeml}
@@ -143,7 +141,7 @@ proved to transform CakeML programs to semantically equivalent machine
 code~\cite{Kumar:2014:CVI:2535838.2535841}.
 
 The semantics provided for this project is specified in
-Lem~\cite{Lem33:online}~\cite{LemPaper}. Lem is a lightweight tool for creating
+Lem~\cite{Lem33:online,LemPaper}. Lem is a lightweight tool for creating
 and handling large scale semantic definitions. It can also be used as an
 intermediate language for porting definitions between interactive theorem proving
 systems, such as HOL4.
@@ -170,15 +168,16 @@ Haskell is one of very few languages that are inherently lazy. All primitive
 operations are lazy by nature, but the language also has certain functions that
 enforce strict evaluation.
 
-An example of a function that enforces strictness is \texttt{seq}. \texttt{seq}
-takes two arguments: \texttt{a} and \texttt{b}, and returns \texttt{b}. The
+An example of a function that enforces strictness is
+\texttt{seq}~\cite{seqHaske29:online}, which is a function that takes two
+arguments: \texttt{a} and \texttt{b}, and returns \texttt{b}. The
 result of \texttt{seq} is dependent on both \texttt{a} and \texttt{b}. If
 \texttt{a} does not terminate, \texttt{seq} does not terminate. If \texttt{a}
 does terminate, the result of \texttt{seq} is equal to \texttt{b}. While both
 \texttt{a} and \texttt{b} are evaluated before returning the result,
 \texttt{seq} does not guarantee that \texttt{a} is evaluated before \texttt{b}.
 
-Haskell has a function denoted as \texttt{\$!} that evaluates arguments strictly.
+Haskell also has a function denoted as \texttt{\$!} that evaluates arguments strictly.
 As arguments are normally evaluated lazily in Haskell, thunks are naturally
 generated, often creating an overhead in the computation. When an argument is
 known to always be evaluated, \texttt{\$!} is recommended to avoid unnecessary
@@ -191,7 +190,7 @@ initialization~\cite{LazyTCla1:online}. The \texttt{Lazy<T>} class allows
 lazy evaluation in a similar way as it is done in Haskell, as
 function calls can be encapsulated for passing the call until it needs to be
 evaluated~\cite{csharp}. The call only happens once, with the use of caching,
-meaning that multiple uses will not cause multiple evaluation of the same
+meaning that multiple uses will not cause multiple evaluations of the same
 suspended function.
 
 
@@ -201,7 +200,7 @@ This section will present and discuss an evaluation strategy that was developed
 for Haskell by Ennals and Peyton Jones~\cite{Ennals:2003:OEA:944746.944731}.
 In their paper they state that they measure common usage of thunks. As lazy
 evaluation creates an overhead with thunk utilization, programs can sometimes
-evaluate slower in a lazy semantics than in a strict semantics. This lead
+evaluate slower in a lazy semantics than in a strict semantics. This led
 them to create an evaluation strategy that makes use of their observation.
 Strict evaluation makes use of call-by-value mechanics, where expressions are
 always evaluated to values, while lazy evaluation uses call-by-need mechanics,
@@ -210,7 +209,7 @@ presented in the paper finds expressions that will always be evaluated, applying
 call-by-value semantics on them, and uses an abortion mechanism for evaluation
 that takes too long.
 
-The results of the work showed that the tested set of programs were sped up by
+The results of the work showed that the tested set of programs was sped up by
 a mean of about 15\%, while no program was slowed down with more than 15\%.
 Thus, by dynamically choosing between call-by-value and call-by-name,
 performance can be improved by a significant amount.

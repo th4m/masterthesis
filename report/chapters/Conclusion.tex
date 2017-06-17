@@ -15,8 +15,8 @@ The abstract syntax represents the grammar of the language, including literals,
 expressions, and operations. The highest level of the grammar that was
 translated was expressions, as it is the most important part of the language
 that allows operations and literals to be represented.
-The semantic primitives of a language are the operations that are needed
-to go produce a value. Some of these operations include arithmetics and
+The semantic helper functions of a language are the operations that are needed
+to produce a value. Some of these operations include arithmetics and
 pattern matching. Also a part of the semantic primitives are the representation
 of values, environment, and state.
 In order to go from an expression to a value, the \texttt{evaluate} function
@@ -33,12 +33,12 @@ consisted of creating a new definition of \texttt{evaluate}, called
 The lazy semantics used the idea of thunks to suspend
 evaluation of expressions until called. Thunks were defined under the value
 datatype in the semantic primitives and contained an expression together with
-its environment. The function \texttt{evaluateLazy} tries to evaluate an
+its environment. The function \texttt{evaluateLazy} was designed to evaluate an
 expression as little as possible before returning either a thunk with the
 partially evaluated expression and its environment, or another type of value.
-When a thunk is \textit{forced} to become a usable value, with a function
-appropriately called \texttt{force}, its expression is repeatedly evaluated with
-its environment until it produces a usable (non-thunk) value.
+The function \texttt{force} was designed to \textit{force} thunks to become
+usable values by repeatedly evaluating the delayed expressions until it produced
+a usable (non-thunk) value.
 
 When the definition of the lazy semantics was finished, the third phase of this
 project began: constructing the compiler. This was formalised with a
@@ -49,7 +49,7 @@ the \texttt{Thunk} constructor, a \texttt{Val} constructor was also created to
 represent all non-thunk values. Values were simply put inside the \texttt{Val}
 constructor, while thunks required more processing. To simulate the
 encapsulation that thunks had in the lazy semantics, an expression was put
-inside a \texttt{Fun} expression to be evaluated to closures. This allows the
+inside a \texttt{Fun} expression to be evaluated to a closure. This would allow the
 expression to stay together with its environment in the \texttt{Thunk}
 constructor. In order for the compiled expressions to evaluate to usable values,
 a \texttt{force} function was defined. The idea behind the compiler's
@@ -63,9 +63,9 @@ The implementation of the compiler allowed evaluation of expressions to be
 delayed until when needed. However, delaying the evaluation only results in
 \textit{call-by-name} semantics, meaning that if the thunks are used on multiple
 occasions, they will be evaluated each time. True laziness is achieved through
-\textit{call-by-need} semantics where thunks retain the value that was yielded
-by the evaluation of their expressions. This optimisation was implemented by
-altering how thunks were produced and how \texttt{force} handled this new
+\textit{call-by-need} semantics where thunks retain the value yielded
+by the evaluation of their expressions. Call-by-need was implemented as an optimization
+by altering how thunks were produced and how \texttt{force} handled this new
 definition of thunks. Thunks were changed to contain a reference to a location
 in the state, where a suspended expression would be stored. Thus, \texttt{force}
 was change to extract the value that the reference pointed to, which would be
@@ -79,6 +79,6 @@ reference was pointing at.
 The ultimate goal of this project was to produce a compiler that takes lazy
 semantics and enforces it in strict semantics. This goal has
 been reached with the completion of the third phase. The call-by-need semantics
-optimised the compiler to achieve true laziness, where forced thunks
+optimized the compiler to achieve true laziness, where forced thunks
 would replace their suspended expressions with the value yielded from
 the evaluation.

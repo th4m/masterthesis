@@ -26,8 +26,8 @@ constructor before the optimisation. Fully evaluated values are wrapped in the
 the \texttt{Val} constructor.
 
 In order to be able to utilise the state, there are three operations that are
-vital: \texttt{OpRef}, \texttt{OpDeref}, and \texttt{OpAssign}. These have all
-been defined under the \texttt{Op} datatype of the CakeML grammar, which is used
+vital: \texttt{OpRef}, \texttt{OpDeref}, and \texttt{OpAssign}. These are all
+defined under the \texttt{Op} datatype of the CakeML grammar, which is used
 in combination with
 the \texttt{App} expression. When evaluated, \texttt{App OpRef [e]} creates a new
 entry in the state for the value that \texttt{e} is evaluated to. The reference
@@ -46,7 +46,7 @@ two operations in the compiler are changed. The first change of the compiler
 is made to how thunks are generated. This is done in the
 \texttt{makeThunk} function, which previously took an expression \texttt{e} and
 wrapped it in the \texttt{Thunk} constructor and \texttt{Fun} expression. With
-the optimisation, \texttt{makeThunk}
+the optimization, \texttt{makeThunk}
 takes \texttt{e} and creates a reference in the state for a \texttt{Fun}
 expression wrapped around a \texttt{RefExp} constructor, and finally wraps
 the reference with a \texttt{Thunk} constructor:
@@ -60,7 +60,7 @@ the reference with a \texttt{Thunk} constructor:
       ]
 \end{alltt}
 When evaluated, this expression adds the delayed expression to the state and
-return a reference to its location. This means that each time a thunk is
+returns a reference to its location. This means that each time a thunk is
 created, its expression will be stored in the state instead of simply being wrapped in a
 \texttt{Thunk} constructor and a closure. Similarly, values in the state are
 created with a function called \texttt{makeRefVal}:
@@ -80,8 +80,7 @@ value is a delayed expression in a closure and must therefore be forced.
 The \texttt{RefExp} that the reference is pointing to is then changed with an
 \texttt{OpAssign} operation to a \texttt{RefVal} of the value that the
 \texttt{force} yielded. After the assignment, the evaluated value is returned.
-The new definition of \texttt{force} can be seen in Figure
-
+The new definition of \texttt{force} can be seen in Figure~\ref{fig:force2abstract}.
 \begin{figure}
 \begin{alltt}
   force :: Exp -> Exp
@@ -112,7 +111,28 @@ The new definition of \texttt{force} can be seen in Figure
                        ,Var (Short "RVal"))]
 \end{alltt}
 \caption{The new definition of \texttt{force} that makes use of the state to add call-by-need semantics.}
+\label{fig:force2abstract}
 \end{figure}
+The concrete syntax of the new definition of \texttt{force} can be seen in
+Figure~\ref{fig:force2Concrete}.
+\begin{figure}
+\begin{alltt}
+  fun force e =
+    case e of
+      thunk ptr => 
+        case !ptr of
+          refVal v => v
+        | refExp e =>
+            let val _ = ptr := refVal (force (e 0))
+            in case !ptr of
+                 refVal v => v
+            end
+    | val v     => v
+\end{alltt}
+\caption{The concrete syntax of the new \texttt{force} definition.}
+\label{fig:force2Concrete}
+\end{figure}
+
 With these re-definitions, the \texttt{compile} function does not need any
 changes and can be used as before the optimisation.
 
@@ -120,16 +140,13 @@ changes and can be used as before the optimisation.
 Evaluation of expressions is optimized after the implementation of call-by-need.
 The example described in Section~\ref{com:example} shows how \texttt{take} is
 evaluated after being compiled with call-by-name. The evaluation of \texttt{take}
-with call-by-need semantics differs slightly. For example, the thunk that is bound
-to the variable \texttt{n} is not simply overshadowed, but re-assigned, reducing
-the overhead of thunks.
-
-A different example is described in the following section that shows how
-call-by-need is tested.
+with call-by-need semantics differs only slightly, as delayed expressions are
+stored in the state instead of the environment. A different example is
+described in the following section that shows how call-by-need is tested.
 
 \section{Testing call-by-need}
 The testing of the call-by-need mechanics mainly consists of running the tests
-that used in the creation of the \texttt{compile} function, by using
+used in the creation of the \texttt{compile} function, by using
 \texttt{compareEval} described in Section~\ref{compiler:test}. However, with
 the optimisation, the state is used for creating thunks. This means that
 evaluating certain compiled expressions causes the state to grow to a larger
@@ -142,7 +159,7 @@ As stated in Section~\ref{cbn:impl}, when thunks are created, they are created
 as delayed evaluations of expressions, represented as \texttt{RefExp}. When they
 are forced, they are changed to become values, represented as \texttt{RefVal}.
 In order to test that evaluated thunks indeed change to \texttt{RefVal}
-values, expressions that create and call thunks are evaluated with the
+values, expressions that create and use thunks are evaluated with the
 \texttt{efc} function described in Section~\ref{compiler:test}. Similarly,
 thunks that are not forced are checked to see if they remain as
 \texttt{RefExp} values after evaluation. As evaluation yields both the result
@@ -164,8 +181,17 @@ time to evaluate. One method is to create a list of a replicated expression:
                             decr]])
             )] (Var (Short "repeat"))
 \end{alltt}
-\noindent This function \texttt{cakeReplicate} is used to create a list with an
+Here, \texttt{decr} is the same function as the one used for the definition of
+\texttt{take}.
+In concrete syntax, \texttt{replicate} can be defined as such:
+\begin{alltt}
+  fun repeat (elem,n) =
+    if n=0 then nil
+    else elem::(repeat (elem,n-1))
+\end{alltt}
+This function \texttt{cakeReplicate} is used to create a list with an
 expression that counts down to 0 and returns the string literal "OK":
+\newpage
 \begin{alltt}
   stopAtZero =
     LetRec [("stopAtZero", "n",
@@ -173,6 +199,12 @@ expression that counts down to 0 and returns the string literal "OK":
               (Literal (StrLit "OK"))
               (App OpApp [Var (Short "stopAtZero"), decr])
             )] (Var (Short "stopAtZero"))
+\end{alltt}
+In concrete syntax, \texttt{stopAtZero} can be defined as such:
+\begin{alltt}
+  fun stopAtZero n =
+    if n=0 then "OK"
+    else stopAtZero (n-1)
 \end{alltt}
 Replication of \texttt{stopAtZero} is tested with two versions of the compiler:
 (1) with the call-by-need optimisation and (2) without call-by-need. For a list

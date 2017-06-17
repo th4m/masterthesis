@@ -57,7 +57,7 @@ returns either a thunk or any other value.
 
 Another vital function that needs to be implemented is \texttt{force}.
 This function is designed to take a value and pattern match for the
-\texttt{Thunk} constructor. When the \texttt{Thunk} case has been entered,
+\texttt{Thunk} constructor. When the \texttt{Thunk} case is entered,
 the expression wrapped inside the thunk is extracted and lazily evaluated until
 an actual value is yielded. When any other value is caught in the pattern matching,
 the value is simply returned as a result.
@@ -82,7 +82,7 @@ one that is erroneous and one that is correct.
 \subsection{Attempt 1}
 The first (erroneous) attempt of implementing \texttt{evaluateLazy} uses a naive
 idea of evaluating expressions as little as possible. This is mainly seen in
-expressions that contained sub-expressions, e.g. \texttt{If e1 e2 e3}. The first
+expressions that contains sub-expressions, e.g. \texttt{If e1 e2 e3}. The first
 version of \texttt{evaluateLazy} on \texttt{If} applies
 \texttt{evaluateLazy} on \texttt{e1} and checks if it returns a thunk or a
 value. If it is a thunk, wrapped together with a partially evaluated expresion
@@ -160,7 +160,7 @@ pattern matching in \texttt{evaluateLazy}.
 \label{lazy:example}
 Similarly to Section~\ref{strict:example}, this section will describe how the
 lazy evaluation of \texttt{take} works. The evaluation described will be using
-\texttt{force} so that the result will not be a thunk value.
+\texttt{force} so that the top-level result will not be a thunk value.
 
 The first step of evaluating \texttt{take} is the evaluation of the
 \texttt{LetRec} expression. It will create a \texttt{RecClosure} and return
@@ -178,9 +178,7 @@ expression that returns a \texttt{nil} constructor. In the other case, the list
 \texttt{ls} is pattern matched with \texttt{Mat} to check if it is either a
 \texttt{::} or \texttt{nil} constructor. When \texttt{ls} is evaluated here,
 both the head element and the tail of the list (applied as argument to
-\texttt{take} with \texttt{n} subtracted by 1) are put into thunks. Thus, for
-both the \texttt{::} and \texttt{nil} cases of the pattern matching, the contents
-of the generated constructors will be thunks. This means
+\texttt{take} with \texttt{n} subtracted by 1) are put into thunks. This means
 that forcing constructors by normal means will not yield
 a fully evaluated constructor value. Instead, a different \texttt{force} function
 is defined to specifically force the contents of constructors. This is done by
@@ -210,7 +208,7 @@ For comparing results between lazy and strict evaluation, a function, called
 \texttt{compareEval} is defined. The function \texttt{compareEval} takes a list
 of expressions and applies \texttt{evaluate} and \texttt{evaluateLazy}
 in separate passes. Both evaluation processes use the same dummy environment.
-Evaluation with the an empty state (called \texttt{empty\_st}) and
+Evaluation with an empty state (called \texttt{empty\_st}) and
 a dummy environment (called \texttt{ex\_env}) is simplified by defining a
 function for strict evaluation:
 
@@ -235,11 +233,11 @@ and \texttt{exForce}, \texttt{compareEval} is defined as such:
 
 By collecting a list of expressions, testing is performed by simply running
 \texttt{compareEval} on a given list. This is done whenever the semantics is
-changed and need to be tested to control that the results would not change.
+changed and needs to be tested to control that the results would not change.
 
 One expression that is not compared is the \texttt{Con} expression. The lazy
 evaluation of \texttt{Con} expressions produces thunks of the constructors'
-contents. When forced, they are not evaluated. This behaviour allows the
+arguments. When forced, they are not evaluated. This behaviour allows the
 possibility of infinite data structures, such as lists, to exist.
 Keeping the contents of a list as thunks can save computation time if,
 for example, \texttt{take} is applied to a significantly large list, but only

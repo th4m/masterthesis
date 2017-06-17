@@ -8,7 +8,7 @@ language.
 
 \section{Definition}
 CakeML is a language with a semantics defined prior to this project.
-The compiler for this project is be written in Haskell and produce CakeML
+The compiler for this project is written in Haskell and produces CakeML
 syntax in the form of its Haskell representation. This means that
 the semantics must be defined in Haskell in order for it to be compatible with
 the code that the compiler produces. This is
@@ -146,11 +146,11 @@ to~\ref{fig:lempat}.
 \label{fig:lempat}
 \end{figure}
 
-The Lem definition of CakeML expressions in figure~\ref{fig:lemexp} is
-translated to Haskell in figure~\ref{fig:hsexp}.
+The Lem definition of CakeML expressions in Figure~\ref{fig:lemexp} is
+translated to Haskell in Figure~\ref{fig:hsexp}.
 Similarly, complementing datatypes, such as \texttt{lit} and
 \texttt{op}, as well as other constructs in the grammar, are also translated
-as needed. These datatypes can be seen in figure~\ref{fig:hsdata}.
+as needed. These datatypes can be seen in Figure~\ref{fig:hsdata}.
 
 \begin{figure}
 \begin{alltt}
@@ -372,9 +372,9 @@ they are pattern matched to be evaluated with unique strategies:
 \end{alltt}
 
 \noindent The logic of each case mostly consists of applying appropriate
-operations from the semantic primitives. For example, when evaluating
-the \texttt{Var n} expression, the \texttt{lookup\_var\_id} function defined
-in the semantic primitives is applied to \texttt{n} in order to check if
+operations from the semantic helper functions. For example, when evaluating
+the \texttt{Var n} expression, the \texttt{lookup\_var\_id} helper function
+is applied to \texttt{n} in order to check if
 a value is assigned to the variable in the environment. In the case it does
 exist, the value is returned:
 
@@ -386,10 +386,11 @@ exist, the value is returned:
     end
 \end{alltt}
 
-\noindent Expressions that contain subexpressions (e.g. binary arithmetic
-operations) often require that one or more of these subexpressions are
-evaluated to values in order to use them as input for the primitive semantics
-functions. For example, the expression \texttt{If e1 e2 e3} requires that
+\noindent Expressions that contain sub-expressions (e.g. binary arithmetic
+operations) often require that one or more of these sub-expressions are
+evaluated to values in order to use them as input for the semantic helper
+functions. For example, the evaluation of the expression \texttt{If e1 e2 e3}
+requires that
 \texttt{e1}, which is the condition, is evaluated first in order to use the
 semantic function \texttt{do\_if} to decide whether \texttt{e2} or
 \texttt{e3} should be evaluated.
