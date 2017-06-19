@@ -28,7 +28,7 @@ be evaluted until it is actually needed, meaning that simply assigning it to a
 variable would not cause the program to not terminate.
 
 While lazy evaluation can be seen as beneficial, there are cases where it
-would not be optimal. For example, programs where there are
+is not optimal. For example, programs where there are
 no superfluous expressions would not have much use of lazy evaluation. When it
 is known that all expressions bound to variables will be used,
 their evaluation is inevitable. The underlying reason to why it would be worse

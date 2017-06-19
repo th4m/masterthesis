@@ -119,7 +119,8 @@ Figure~\ref{fig:force2Concrete}.
 \begin{alltt}
   fun force e =
     case e of
-      thunk ptr => 
+      val v => v
+    | thunk ptr =>
         case !ptr of
           refVal v => v
         | refExp e =>
@@ -127,7 +128,6 @@ Figure~\ref{fig:force2Concrete}.
             in case !ptr of
                  refVal v => v
             end
-    | val v     => v
 \end{alltt}
 \caption{The concrete syntax of the new \texttt{force} definition.}
 \label{fig:force2Concrete}

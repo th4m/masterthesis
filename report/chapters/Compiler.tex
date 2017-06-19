@@ -1,8 +1,9 @@
 \chapter{Lazy to strict compilation}
 \label{chapter:compiler}
 The third major step of this project is to implement the compiler that takes
-lazy CakeML expressions and produces strict CakeML expressions that allows
-lazy evaluation. The compiler is implemented in Haskell by using the ideas
+lazy CakeML expressions and produces CakeML expressions that retain the lazy
+behaviour even when evaluated using the strict semantics.
+The compiler is implemented in Haskell by using the ideas
 behind the definition of the lazy semantics. This chapter will describe the
 implementation of the compiler that compiles CakeML expressions from the lazy
 semantics to the strict semantics in such a way that the lazy behaviour

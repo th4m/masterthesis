@@ -1,7 +1,8 @@
 \chapter{Conclusion}
 This thesis presented a Haskell definition of CakeML's strict semantics,
 a Haskell definition of lazy semantics for CakeML's pure parts, and a Haskell
-implementation of a compiler that compiles lazy CakeML to strict CakeML.
+implementation of a semantics-preserving compiler that compiles lazy CakeML to
+strict CakeML.
 
 The first step of this project, translating CakeML's semantics from Lem to
 Haskell, was performed successfully. Three items were transcribed to Haskell:
@@ -60,7 +61,7 @@ evaluated together with the thunks and values, allowing non-thunk values to be
 produced at the end of the evaluation chain.
 
 The implementation of the compiler allowed evaluation of expressions to be
-delayed until when needed. However, delaying the evaluation only results in
+delayed until needed. However, delaying the evaluation only results in
 \textit{call-by-name} semantics, meaning that if the thunks are used on multiple
 occasions, they will be evaluated each time. True laziness is achieved through
 \textit{call-by-need} semantics where thunks retain the value yielded
